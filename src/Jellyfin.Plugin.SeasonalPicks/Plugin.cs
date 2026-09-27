@@ -42,7 +42,13 @@ public class Plugin : BasePlugin<PluginConfiguration>, IHasWebPages
             new PluginPageInfo
             {
                 Name = "SeasonalPicks",
-                EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.configPage.html"
+                EmbeddedResourcePath = $"{GetType().Namespace}.Configuration.configPage.html",
+
+                // Listed in the dashboard's side menu (under Plugins), not only behind Dashboard > Plugins > My Plugins.
+                EnableInMainMenu = true,
+                DisplayName = "Seasonal Picks",
+                MenuSection = "server",
+                MenuIcon = "movie_filter"
             }
         };
     }
