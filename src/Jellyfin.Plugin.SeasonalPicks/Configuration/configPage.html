@@ -7,47 +7,110 @@
 <body>
 <div id="SeasonalPicksConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
     <style>
-        #SeasonalPicksConfigPage .sp-section { margin: 2em 0; }
-        #SeasonalPicksConfigPage .sp-section > h2 { margin-bottom: .4em; }
+        /* Neutral greys over whatever the Jellyfin theme is, so light and dark themes both work. */
+        #SeasonalPicksConfigPage { --sp-line: rgba(128,128,128,.28); --sp-soft: rgba(128,128,128,.09); --sp-softer: rgba(128,128,128,.05); --sp-accent: #00a4dc; }
+        #SeasonalPicksConfigPage .content-primary { max-width: 1100px; }
         #SeasonalPicksConfigPage .sp-hint { opacity: .7; font-size: .9em; margin: -.2em 0 1em; }
         #SeasonalPicksConfigPage .sp-checks { display: flex; flex-wrap: wrap; gap: 0 1.5em; }
         #SeasonalPicksConfigPage .sp-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1.5em; }
-        #SeasonalPicksConfigPage .sp-season { border: 1px solid rgba(128,128,128,.35); border-left: 6px solid var(--c, #3A6EA5); border-radius: 8px; padding: 1em 1.2em .4em; margin-bottom: 1em; }
-        #SeasonalPicksConfigPage .sp-season-head { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; margin-bottom: .6em; }
+
+        /* Header */
+        #SeasonalPicksConfigPage .sp-hero { position: relative; overflow: hidden; margin: 1em 0 1.2em; padding: 1.4em 1.5em 1.2em; border-radius: 14px; border: 1px solid var(--sp-line);
+            background: linear-gradient(120deg, rgba(0,164,220,.16), rgba(170,92,195,.12) 55%, rgba(255,117,24,.1)); }
+        #SeasonalPicksConfigPage .sp-hero-top { display: flex; align-items: center; gap: .8em; flex-wrap: wrap; }
+        #SeasonalPicksConfigPage .sp-hero h1 { margin: 0; }
+        #SeasonalPicksConfigPage .sp-hero .sp-hint { margin: .5em 0 .9em; max-width: 60em; }
+        #SeasonalPicksConfigPage .sp-pill { font-size: .78em; padding: .2em .7em; border-radius: 999px; border: 1px solid var(--sp-line); background: var(--sp-soft); white-space: nowrap; }
+        #SeasonalPicksConfigPage button.sp-pill { color: inherit; font: inherit; font-size: .78em; cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-status { display: flex; flex-wrap: wrap; gap: .5em; }
+        #SeasonalPicksConfigPage .sp-chip { display: inline-flex; align-items: center; gap: .45em; font-size: .88em; padding: .35em .8em; border-radius: 999px; background: var(--sp-soft); border: 1px solid var(--sp-line); }
+        #SeasonalPicksConfigPage .sp-chip i { width: .7em; height: .7em; border-radius: 50%; background: var(--c, #888); flex: none; }
+        #SeasonalPicksConfigPage .sp-chip b { font-weight: 600; }
+
+        /* Tabs: scroll sideways on phones instead of wrapping */
+        #SeasonalPicksConfigPage .sp-tabs { display: flex; gap: .3em; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--sp-line); margin-bottom: 1.2em; }
+        #SeasonalPicksConfigPage .sp-tabs::-webkit-scrollbar { display: none; }
+        #SeasonalPicksConfigPage .sp-tab { flex: none; padding: .75em 1.1em; border: 0; border-bottom: 3px solid transparent; background: none; color: inherit; font: inherit; opacity: .7; cursor: pointer; white-space: nowrap; }
+        #SeasonalPicksConfigPage .sp-tab:hover { opacity: 1; background: var(--sp-softer); }
+        #SeasonalPicksConfigPage .sp-tab[aria-selected="true"] { opacity: 1; font-weight: 600; border-bottom-color: var(--sp-accent); }
+        #SeasonalPicksConfigPage .sp-tab:focus-visible { outline: 2px solid var(--sp-accent); outline-offset: -2px; }
+        #SeasonalPicksConfigPage [data-panel][hidden] { display: none; }
+
+        /* Cards */
+        #SeasonalPicksConfigPage .sp-section { margin: 0 0 1.2em; padding: 1.2em 1.4em .6em; border-radius: 12px; background: var(--sp-softer); border: 1px solid var(--sp-line); }
+        #SeasonalPicksConfigPage .sp-section > h2 { margin: 0 0 .5em; font-size: 1.25em; }
+        #SeasonalPicksConfigPage .sp-section h3 { margin: 1.2em 0 .4em; font-size: 1.05em; }
+
+        /* Seasons: a one-line summary that opens into the full editor */
+        #SeasonalPicksConfigPage .sp-season { border: 1px solid var(--sp-line); border-left: 6px solid var(--c, #3A6EA5); border-radius: 10px; margin-bottom: .7em; background: var(--sp-softer); }
+        #SeasonalPicksConfigPage .sp-season-summary { display: flex; align-items: center; gap: .9em; padding: .6em .9em; }
+        #SeasonalPicksConfigPage .sp-thumb { width: 52px; height: 52px; flex: none; object-fit: cover; border-radius: 6px; background: var(--sp-soft); cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-thumb:not([src]) { visibility: hidden; }
+        #SeasonalPicksConfigPage .sp-season-toggle { flex: 1 1 auto; min-width: 0; display: flex; flex-direction: column; align-items: flex-start; gap: .1em; padding: .3em 0; border: 0; background: none; color: inherit; font: inherit; text-align: left; cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-season-name { font-weight: 600; font-size: 1.05em; max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        #SeasonalPicksConfigPage .sp-season-when { font-size: .85em; opacity: .7; }
+        #SeasonalPicksConfigPage .sp-chevron { flex: none; width: .6em; height: .6em; border-right: 2px solid currentColor; border-bottom: 2px solid currentColor; transform: rotate(45deg); opacity: .6; margin: 0 .4em; transition: transform .15s; cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-open .sp-chevron { transform: rotate(-135deg); }
+        #SeasonalPicksConfigPage .sp-season-summary .checkboxContainer { margin: 0; flex: none; }
+        #SeasonalPicksConfigPage .sp-season-body { padding: .2em 1.2em .6em; border-top: 1px solid var(--sp-line); }
+        #SeasonalPicksConfigPage .sp-season-body[hidden] { display: none; }
+        #SeasonalPicksConfigPage .sp-season-head { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; margin: .8em 0 .4em; }
         #SeasonalPicksConfigPage .sp-season-head .inputContainer { flex: 1 1 200px; margin: 0; }
-        #SeasonalPicksConfigPage .sp-active { font-size: .8em; padding: 2px 8px; border-radius: 999px; background: var(--c, #3A6EA5); color: #fff; }
+        #SeasonalPicksConfigPage .sp-active { flex: none; font-size: .78em; padding: 2px 9px; border-radius: 999px; background: var(--c, #3A6EA5); color: #fff; text-shadow: 0 1px 2px rgba(0,0,0,.5); }
+        #SeasonalPicksConfigPage .sp-kind { flex: none; font-size: .75em; padding: 2px 8px; border-radius: 999px; border: 1px solid var(--sp-line); opacity: .8; }
+
         #SeasonalPicksConfigPage .sp-cover { display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap; margin: .5em 0 1em; }
-        #SeasonalPicksConfigPage .sp-cover img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; background: rgba(128,128,128,.2); }
+        #SeasonalPicksConfigPage .sp-cover img { width: 120px; height: 120px; object-fit: cover; border-radius: 8px; background: var(--sp-soft); box-shadow: 0 2px 10px rgba(0,0,0,.25); }
         #SeasonalPicksConfigPage .sp-cover img.wide { width: 213px; }
         #SeasonalPicksConfigPage .sp-cover-actions { display: flex; flex-direction: column; gap: .5em; }
-        #SeasonalPicksConfigPage input[type=color] { width: 3em; height: 2.2em; border: 0; padding: 0; background: none; cursor: pointer; }
-        #SeasonalPicksConfigPage .sp-today { margin: .5em 0 1em; }
+        #SeasonalPicksConfigPage input[type=color] { width: 3em; height: 2.2em; border: 0; padding: 0; background: none; cursor: pointer; vertical-align: middle; }
+        #SeasonalPicksConfigPage .sp-today { margin: 0 0 1em; }
         #SeasonalPicksConfigPage .sp-preview-table { width: 100%; border-collapse: collapse; margin: .5em 0 1.5em; font-size: .92em; }
-        #SeasonalPicksConfigPage .sp-preview-table td, #SeasonalPicksConfigPage .sp-preview-table th { text-align: left; padding: .35em .6em; border-bottom: 1px solid rgba(128,128,128,.25); }
+        #SeasonalPicksConfigPage .sp-preview-table td, #SeasonalPicksConfigPage .sp-preview-table th { text-align: left; padding: .45em .6em; border-bottom: 1px solid var(--sp-line); vertical-align: top; }
         #SeasonalPicksConfigPage .sp-preview-table th { opacity: .7; font-weight: 500; }
+        #SeasonalPicksConfigPage .sp-table-wrap { overflow-x: auto; }
         #SeasonalPicksConfigPage .sp-source { font-size: .85em; opacity: .7; }
-        #SeasonalPicksConfigPage .sp-when { font-size: .85em; opacity: .7; margin: -.8em 0 1em; }
-        #SeasonalPicksConfigPage .sp-designer { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 1.2em; margin: .5em 0 1.2em; padding: 1em; border-radius: 8px; background: rgba(128,128,128,.1); }
+        #SeasonalPicksConfigPage .sp-designer { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 1.2em; margin: .5em 0 1.2em; padding: 1em; border-radius: 10px; background: var(--sp-soft); }
         #SeasonalPicksConfigPage .sp-designer[hidden] { display: none; }
         #SeasonalPicksConfigPage .sp-designer-preview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.78fr); gap: .8em; align-content: start; }
-        #SeasonalPicksConfigPage .sp-designer-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: rgba(128,128,128,.2); }
+        #SeasonalPicksConfigPage .sp-designer-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--sp-soft); box-shadow: 0 2px 12px rgba(0,0,0,.3); }
         #SeasonalPicksConfigPage .sp-designer-preview img.wide { aspect-ratio: 16 / 9; }
         #SeasonalPicksConfigPage .sp-designer-preview .sp-hint { grid-column: 1 / -1; margin: 0; }
         #SeasonalPicksConfigPage .sp-designer .inputContainer, #SeasonalPicksConfigPage .sp-designer .selectContainer { margin-bottom: .9em; }
         #SeasonalPicksConfigPage .sp-row { display: flex; flex-wrap: wrap; gap: .6em 1.2em; align-items: center; margin-bottom: .9em; }
         #SeasonalPicksConfigPage .sp-row .checkboxContainer { margin: 0; }
         #SeasonalPicksConfigPage .sp-range { display: block; margin-bottom: .8em; }
-        #SeasonalPicksConfigPage .sp-range input { width: 100%; }
-        #SeasonalPicksConfigPage .sp-catalogue { margin: 1em 0; padding: 1em; border-radius: 8px; background: rgba(128,128,128,.1); }
+        #SeasonalPicksConfigPage .sp-range input { width: 100%; accent-color: var(--sp-accent); }
+        #SeasonalPicksConfigPage .sp-catalogue { margin: 1em 0; padding: 1em; border-radius: 10px; background: var(--sp-soft); }
         #SeasonalPicksConfigPage .sp-catalogue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .8em; }
-        #SeasonalPicksConfigPage .sp-cat-item { text-align: left; padding: .8em 1em; border-radius: 8px; border: 1px solid rgba(128,128,128,.35); border-left: 6px solid var(--c, #3A6EA5); background: transparent; color: inherit; font: inherit; cursor: pointer; }
-        #SeasonalPicksConfigPage .sp-cat-item:hover:not([disabled]) { background: rgba(128,128,128,.15); }
+        #SeasonalPicksConfigPage .sp-cat-item { text-align: left; padding: .8em 1em; border-radius: 8px; border: 1px solid var(--sp-line); border-left: 6px solid var(--c, #3A6EA5); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-cat-item:hover:not([disabled]) { background: var(--sp-soft); }
         #SeasonalPicksConfigPage .sp-cat-item[disabled] { opacity: .45; cursor: default; }
         #SeasonalPicksConfigPage .sp-cat-item b { display: block; }
         #SeasonalPicksConfigPage .sp-cat-item span { display: block; font-size: .85em; opacity: .75; margin-top: .2em; }
+
+        /* What's new */
+        #SeasonalPicksConfigPage .sp-release { position: relative; padding: 0 0 1.1em 1.4em; border-left: 2px solid var(--sp-line); margin-left: .4em; }
+        #SeasonalPicksConfigPage .sp-release::before { content: ''; position: absolute; left: -7px; top: .35em; width: 12px; height: 12px; border-radius: 50%; background: var(--sp-line); }
+        #SeasonalPicksConfigPage .sp-release.sp-current::before { background: var(--sp-accent); box-shadow: 0 0 0 4px rgba(0,164,220,.25); }
+        #SeasonalPicksConfigPage .sp-release h3 { margin: 0 0 .3em; display: flex; gap: .6em; align-items: baseline; flex-wrap: wrap; }
+        #SeasonalPicksConfigPage .sp-release h3 small { font-weight: 400; opacity: .6; font-size: .8em; }
+        #SeasonalPicksConfigPage .sp-release ul { margin: 0; padding-left: 1.2em; }
+        #SeasonalPicksConfigPage .sp-release li { margin: .2em 0; line-height: 1.45; }
+
+        /* Save bar stays in reach while scrolling. Its background is set from the theme in the script. */
+        #SeasonalPicksConfigPage .sp-savebar { position: sticky; bottom: 0; z-index: 2; display: flex; gap: .8em; flex-wrap: wrap; padding: .8em 0 1em; margin-top: 1em; background: var(--sp-bg, #101010); border-top: 1px solid var(--sp-line); }
+        #SeasonalPicksConfigPage .sp-savebar .emby-button { flex: 1 1 220px; margin: 0; }
+
         @media (max-width: 800px) { #SeasonalPicksConfigPage .sp-designer { grid-template-columns: 1fr; } }
-        /* Phones: previews one under the other so they're big enough to judge. */
+        /* Phones: tighter cards, previews one under the other so they're big enough to judge. */
         @media (max-width: 600px) {
+            #SeasonalPicksConfigPage .sp-hero { padding: 1.1em 1em 1em; }
+            #SeasonalPicksConfigPage .sp-section { padding: 1em .9em .4em; }
+            #SeasonalPicksConfigPage .sp-season-summary { gap: .6em; padding: .5em .6em; }
+            #SeasonalPicksConfigPage .sp-thumb { width: 44px; height: 44px; }
+            #SeasonalPicksConfigPage .sp-kind { display: none; }
+            #SeasonalPicksConfigPage .sp-season-body { padding: .2em .8em .5em; }
             #SeasonalPicksConfigPage .sp-designer { padding: .7em; }
             #SeasonalPicksConfigPage .sp-designer-preview { grid-template-columns: 1fr; }
             #SeasonalPicksConfigPage .sp-designer-preview img:not(.wide) { width: 70%; justify-self: center; }
@@ -56,194 +119,229 @@
     <div data-role="content">
         <div class="content-primary">
             <form id="SeasonalPicksConfigForm">
-                <div class="verticalSection">
-                    <h1 class="sectionTitle">Seasonal Picks</h1>
-                    <p class="sp-hint">Picks movies from each user's watch history and the time of year. Playlists, the mirror folder and covers work on every client, including TV apps. The Suggested screen and home row are web only and need the File Transformation plugin.</p>
+                <div class="sp-hero">
+                    <div class="sp-hero-top">
+                        <h1 class="sectionTitle">Seasonal Picks</h1>
+                        <button type="button" class="sp-pill" id="spVersion" data-goto="changes" title="What's new" hidden></button>
+                    </div>
+                    <p class="sp-hint">Picks movies from each user's watch history and the time of year. Playlists, the Suggested library and covers work on every app, including TVs. The Suggested screen and home row are web only and need the File Transformation plugin.</p>
+                    <div class="sp-status" id="spStatus"></div>
                 </div>
 
-                <!-- Picking -->
-                <div class="sp-section">
-                    <h2>How picks are chosen</h2>
-                    <div class="sp-grid2">
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="PickCount" min="1" max="200" label="Movies per user">
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="SeasonalPercent" min="0" max="100" label="In-season share (%)">
-                            <div class="fieldDescription">Used only while a season is active.</div>
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="RecentlyWatchedDays" min="0" label="Hide movies watched in the last (days)">
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="RediscoverAfterDays" min="0" label="Rediscover movies last watched over (days) ago">
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="RediscoverPercent" min="0" max="100" label="Rediscover share of the rest (%)">
-                            <div class="fieldDescription">The rest are movies the user hasn't watched.</div>
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="MinCommunityRating" min="0" max="10" step="0.1" label="Minimum community rating (0 = off)">
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="NewReleasePercent" min="0" max="100" label="New releases share (%)">
-                            <div class="fieldDescription">Unwatched films released recently. 0 = no reserved share (they're still favoured).</div>
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="NewReleaseDays" min="0" label="Counts as new for (days after release)">
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="MaxPerGenrePercent" min="0" max="100" label="Max share per genre (%, 0 = off)">
-                            <div class="fieldDescription">Stops the list filling up with one genre. In-season picks don't count against it.</div>
-                        </div>
-                    </div>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="CollectionAware">
-                        <span>Follow collections: suggest the next film in one you've started, skip films whose earlier parts aren't watched</span>
-                    </label>
-                    <div class="inputContainer">
-                        <input is="emby-input" type="text" id="ExcludeTags" label="Never pick movies tagged (comma separated)">
-                    </div>
-                    <h3>Libraries</h3>
-                    <p class="sp-hint">None ticked = every movie library the user can see.</p>
-                    <div class="sp-checks" id="spLibraries"></div>
-                    <h3>Users</h3>
-                    <p class="sp-hint">None ticked = everyone.</p>
-                    <div class="sp-checks" id="spUsers"></div>
+                <div class="sp-tabs" id="spTabs" role="tablist">
+                    <button type="button" class="sp-tab" role="tab" data-tab="picks" aria-selected="true">Picks</button>
+                    <button type="button" class="sp-tab" role="tab" data-tab="output" aria-selected="false">Where picks show</button>
+                    <button type="button" class="sp-tab" role="tab" data-tab="seasons" aria-selected="false">Seasons</button>
+                    <button type="button" class="sp-tab" role="tab" data-tab="covers" aria-selected="false">Covers</button>
+                    <button type="button" class="sp-tab" role="tab" data-tab="preview" aria-selected="false">Preview</button>
+                    <button type="button" class="sp-tab" role="tab" data-tab="changes" aria-selected="false">What's new</button>
                 </div>
 
-                <!-- Playlists -->
-                <div class="sp-section">
-                    <h2>Playlists (TV and all apps)</h2>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="EnablePlaylists">
-                        <span>Keep a private Suggested playlist for each user</span>
-                    </label>
-                    <div class="sp-grid2">
+                <!-- Picks -->
+                <div data-panel="picks" role="tabpanel">
+                    <div class="sp-section">
+                        <h2>How picks are chosen</h2>
+                        <div class="sp-grid2">
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="PickCount" min="1" max="200" label="Movies per user">
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="SeasonalPercent" min="0" max="100" label="In-season share (%)">
+                                <div class="fieldDescription">Used only while a season is active.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="RecentlyWatchedDays" min="0" label="Hide movies watched in the last (days)">
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="RediscoverAfterDays" min="0" label="Rediscover movies last watched over (days) ago">
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="RediscoverPercent" min="0" max="100" label="Rediscover share of the rest (%)">
+                                <div class="fieldDescription">The rest are movies the user hasn't watched.</div>
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="MinCommunityRating" min="0" max="10" step="0.1" label="Minimum community rating (0 = off)">
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="NewReleasePercent" min="0" max="100" label="New releases share (%)">
+                                <div class="fieldDescription">Unwatched films released recently. 0 = no reserved share (they're still favoured).</div>
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="NewReleaseDays" min="0" label="Counts as new for (days after release)">
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="MaxPerGenrePercent" min="0" max="100" label="Max share per genre (%, 0 = off)">
+                                <div class="fieldDescription">Stops the list filling up with one genre. In-season picks don't count against it.</div>
+                            </div>
+                        </div>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="CollectionAware">
+                            <span>Follow collections: suggest the next film in one you've started, skip films whose earlier parts aren't watched</span>
+                        </label>
                         <div class="inputContainer">
-                            <input is="emby-input" type="text" id="PlaylistName" label="Playlist name">
+                            <input is="emby-input" type="text" id="ExcludeTags" label="Never pick movies tagged (comma separated)">
                         </div>
                     </div>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="PlaylistNameShowsSeason">
-                        <span>Add the season to the name (e.g. "Suggested - Halloween")</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="PlaylistShowsReasons">
-                        <span>List why each film was picked in the playlist's description</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="ReplaceWatchedPicks">
-                        <span>Swap a pick for a new one as soon as it's watched</span>
-                    </label>
-                    <h3>Season playlists</h3>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="EnableSeasonPlaylists">
-                        <span>While a season is on, add a playlist of just that season's films (removed when the season ends)</span>
-                    </label>
-                    <div class="sp-grid2">
-                        <div class="inputContainer">
-                            <input is="emby-input" type="text" id="SeasonPlaylistName" label="Name ({season} = the season's name)">
-                        </div>
-                        <div class="inputContainer">
-                            <input is="emby-input" type="number" id="SeasonPlaylistCount" min="1" max="200" label="Movies per season playlist">
-                        </div>
+                    <div class="sp-section">
+                        <h2>Libraries and users</h2>
+                        <h3>Libraries</h3>
+                        <p class="sp-hint">None ticked = every movie library the user can see.</p>
+                        <div class="sp-checks" id="spLibraries"></div>
+                        <h3>Users</h3>
+                        <p class="sp-hint">None ticked = everyone.</p>
+                        <div class="sp-checks" id="spUsers"></div>
                     </div>
                 </div>
 
-                <!-- Mirror -->
-                <div class="sp-section">
-                    <h2>Mirror library folder</h2>
-                    <p class="sp-hint">Replaces a symlink script: the plugin fills a folder with symlinks to one user's picks. Point a Movies library at that folder and it shows on the TV home screen like any other library. Only symlinks in the folder are ever added or removed.</p>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="EnableMirror">
-                        <span>Maintain the mirror folder</span>
-                    </label>
-                    <div class="sp-grid2">
-                        <div class="inputContainer">
-                            <input is="emby-input" type="text" id="MirrorPath" label="Folder path (as the server sees it, e.g. /media/foryou)">
+                <!-- Where picks show -->
+                <div data-panel="output" role="tabpanel" hidden>
+                    <div class="sp-section">
+                        <h2>Playlists (TV and all apps)</h2>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="EnablePlaylists">
+                            <span>Keep a private Suggested playlist for each user</span>
+                        </label>
+                        <div class="sp-grid2">
+                            <div class="inputContainer">
+                                <input is="emby-input" type="text" id="PlaylistName" label="Playlist name">
+                            </div>
                         </div>
-                        <div class="selectContainer">
-                            <select is="emby-select" id="MirrorUserId" label="Use this user's watch history"></select>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="PlaylistNameShowsSeason">
+                            <span>Add the season to the name (e.g. "Suggested - Halloween")</span>
+                        </label>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="PlaylistShowsReasons">
+                            <span>List why each film was picked in the playlist's description</span>
+                        </label>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="ReplaceWatchedPicks">
+                            <span>Swap a pick for a new one as soon as it's watched</span>
+                        </label>
+                        <h3>Season playlists</h3>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="EnableSeasonPlaylists">
+                            <span>While a season is on, add a playlist of just that season's films (removed when the season ends)</span>
+                        </label>
+                        <div class="sp-grid2">
+                            <div class="inputContainer">
+                                <input is="emby-input" type="text" id="SeasonPlaylistName" label="Name ({season} = the season's name)">
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="SeasonPlaylistCount" min="1" max="200" label="Movies per season playlist">
+                            </div>
                         </div>
                     </div>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="MirrorTriggerLibraryScan">
-                        <span>Scan libraries after the folder changes</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="MirrorRemoveOtherFiles">
-                        <span>Remove anything else in the folder (files and folders that aren't the plugin's links)</span>
-                    </label>
-                    <div class="fieldDescription">Deletes for real. Refused automatically if the folder is, contains, or is inside another library's folder, so it can't touch your Movies or TV folders.</div>
-                </div>
 
-                <!-- Covers -->
-                <div class="sp-section">
-                    <h2>Seasonal covers</h2>
-                    <p class="sp-hint">Sets the cover of each Suggested playlist and the mirror library to match the season. Each season's cover is drawn from a design you can change with "Design cover" (decoration, title, background picture and more), or you can upload a finished image to use as it is.</p>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="EnableSeasonalCovers">
-                        <span>Change covers with the seasons</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="AutoGenerateCovers">
-                        <span>Generate a cover when a season has no uploaded one</span>
-                    </label>
-                    <h3>Out of season</h3>
-                    <div class="sp-covercard" id="spDefaultCard" data-default>
-                        <label>Colour <input type="color" id="DefaultCoverColor"></label>
-                        <div id="spDefaultCover"></div>
+                    <div class="sp-section">
+                        <h2>Suggested library (mirror folder)</h2>
+                        <p class="sp-hint">Replaces a symlink script: the plugin fills a folder with symlinks to one user's picks. Point a Movies library at that folder and it shows on the TV home screen like any other library. Only symlinks in the folder are ever added or removed.</p>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="EnableMirror">
+                            <span>Maintain the mirror folder</span>
+                        </label>
+                        <div class="sp-grid2">
+                            <div class="inputContainer">
+                                <input is="emby-input" type="text" id="MirrorPath" label="Folder path (as the server sees it, e.g. /Suggested)">
+                            </div>
+                            <div class="selectContainer">
+                                <select is="emby-select" id="MirrorUserId" label="Use this user's watch history"></select>
+                            </div>
+                        </div>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="MirrorTriggerLibraryScan">
+                            <span>Scan libraries after the folder changes</span>
+                        </label>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="MirrorRemoveOtherFiles">
+                            <span>Remove anything else in the folder (files and folders that aren't the plugin's links)</span>
+                        </label>
+                        <div class="fieldDescription">Deletes for real. Refused automatically if the folder is, contains, or is inside another library's folder, so it can't touch your Movies or TV folders.</div>
                     </div>
-                </div>
 
-                <!-- Web -->
-                <div class="sp-section">
-                    <h2>Web client</h2>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="EnableWebScreen">
-                        <span>Add the Suggested screen (user menu)</span>
-                    </label>
-                    <label class="checkboxContainer">
-                        <input is="emby-checkbox" type="checkbox" id="EnableHomeRow">
-                        <span>Show a Suggested row on the home page</span>
-                    </label>
-                    <p class="sp-hint">After changing these, refresh the browser (web clients cache index.html).</p>
+                    <div class="sp-section">
+                        <h2>Web client</h2>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="EnableWebScreen">
+                            <span>Add the Suggested screen (user menu)</span>
+                        </label>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="EnableHomeRow">
+                            <span>Show a Suggested row on the home page</span>
+                        </label>
+                        <p class="sp-hint">After changing these, refresh the browser (web clients cache index.html).</p>
+                    </div>
                 </div>
 
                 <!-- Seasons -->
-                <div class="sp-section">
-                    <h2>Seasons</h2>
-                    <p class="sp-hint">Keywords match whole words in the title or overview; tags match exactly. Both count as a strong match. Genres count as a weaker one. "Hide out of season" keeps strong matches out of picks for the rest of the year; a film that matches several seasons belongs to the one with the highest boost. Dates are MM-DD, or relative to Easter Sunday for Easter (e.g. easter-14 to easter+1).</p>
-                    <div class="sp-today" id="spToday"></div>
-                    <div id="spSeasons"></div>
-                    <button is="emby-button" type="button" class="raised" id="spAddSeason"><span>Add a day or season</span></button>
-                    <div class="sp-catalogue" id="spCatalogue" hidden>
-                        <p class="sp-hint">Pick one to add it. Everything can be changed afterwards. Special days push their films forward on the day and never hide them the rest of the year; seasons can hide theirs.</p>
-                        <div class="sp-catalogue-grid" id="spCatalogueGrid"></div>
+                <div data-panel="seasons" role="tabpanel" hidden>
+                    <div class="sp-section">
+                        <h2>Seasons and special days</h2>
+                        <p class="sp-hint">Tap a season to edit it. Keywords match whole words in the title or overview; tags match exactly. Both count as a strong match; genres count as a weaker one. "Hide out of season" keeps strong matches out of picks for the rest of the year; a film that matches several seasons belongs to the one with the highest boost. Dates are MM-DD, or relative to Easter Sunday for Easter (e.g. easter-14 to easter+1).</p>
+                        <div class="sp-today" id="spToday"></div>
+                        <div id="spSeasons"></div>
+                        <button is="emby-button" type="button" class="raised" id="spAddSeason"><span>Add a day or season</span></button>
+                        <div class="sp-catalogue" id="spCatalogue" hidden>
+                            <p class="sp-hint">Pick one to add it. Everything can be changed afterwards. Special days push their films forward on the day and never hide them the rest of the year; seasons can hide theirs.</p>
+                            <div class="sp-catalogue-grid" id="spCatalogueGrid"></div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Covers -->
+                <div data-panel="covers" role="tabpanel" hidden>
+                    <div class="sp-section">
+                        <h2>Seasonal covers</h2>
+                        <p class="sp-hint">Sets the cover of each Suggested playlist and the Suggested library to match the season. Each season's own cover is designed on the Seasons tab ("Design cover"); you can also upload a finished image to use as it is.</p>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="EnableSeasonalCovers">
+                            <span>Change covers with the seasons</span>
+                        </label>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="AutoGenerateCovers">
+                            <span>Generate a cover when a season has no uploaded one</span>
+                        </label>
+                    </div>
+                    <div class="sp-section">
+                        <h2>Out of season</h2>
+                        <p class="sp-hint">Used when no season is on.</p>
+                        <div class="sp-covercard" id="spDefaultCard" data-default>
+                            <label>Colour <input type="color" id="DefaultCoverColor"></label>
+                            <div id="spDefaultCover"></div>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Preview -->
-                <div class="sp-section">
-                    <h2>Preview</h2>
-                    <p class="sp-hint">See what a user would get with the settings on this page (saved or not). Nothing is written: no playlists, links or covers change.</p>
-                    <div class="sp-grid2">
-                        <div class="selectContainer">
-                            <select is="emby-select" id="spPreviewUser" label="User"></select>
+                <div data-panel="preview" role="tabpanel" hidden>
+                    <div class="sp-section">
+                        <h2>Preview picks</h2>
+                        <p class="sp-hint">See what a user would get with the settings on this page (saved or not). Nothing is written: no playlists, links or covers change.</p>
+                        <div class="sp-grid2">
+                            <div class="selectContainer">
+                                <select is="emby-select" id="spPreviewUser" label="User"></select>
+                            </div>
+                            <div>
+                                <button is="emby-button" type="button" class="raised" id="spPreviewBtn"><span>Preview picks</span></button>
+                            </div>
                         </div>
-                        <div>
-                            <button is="emby-button" type="button" class="raised" id="spPreviewBtn"><span>Preview picks</span></button>
-                        </div>
+                        <div id="spPreviewOut"></div>
                     </div>
-                    <div id="spPreviewOut"></div>
+                </div>
+
+                <!-- What's new -->
+                <div data-panel="changes" role="tabpanel" hidden>
+                    <div class="sp-section">
+                        <h2>What's new</h2>
+                        <div id="spChangelog"><p class="sp-hint">Loading…</p></div>
+                    </div>
                 </div>
 
                 <input type="file" id="spCoverFile" accept="image/jpeg,image/png,image/webp" hidden>
 
-                <div>
-                    <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
-                    <button is="emby-button" type="button" class="raised block" id="spSaveRefresh"><span>Save and refresh everyone now</span></button>
+                <div class="sp-savebar">
+                    <button is="emby-button" type="submit" class="raised button-submit"><span>Save</span></button>
+                    <button is="emby-button" type="button" class="raised" id="spSaveRefresh"><span>Save and refresh everyone now</span></button>
                 </div>
             </form>
         </div>
@@ -452,6 +550,9 @@
                         if (seq !== card._smallSeq) return;
                         showImage(img, r.blob);
                         if (wide) return;
+                        // The season's folded-up summary shows the same square cover.
+                        var thumb = card.querySelector('.sp-thumb');
+                        if (thumb) thumb.src = img.src;
                         var uploaded = r.source === 'upload';
                         card._hasUpload = uploaded;
                         card.querySelector('[data-cover-remove]').hidden = !uploaded;
@@ -495,15 +596,27 @@
             }
 
             // ---------- seasons editor ----------
+            // Folded up: a one-line summary (cover, name, dates, on/off). Tapping it opens the full editor below.
             function seasonHtml(s, i) {
                 var active = isActive(s, new Date()) && s.Enabled;
                 var easter = s.StartEasterOffset != null && s.EndEasterOffset != null;
-                return '<div class="sp-season sp-covercard" data-index="' + i + '" data-orig-key="' + esc(s._origKey || slug(s.Name)) + '" style="--c:' + esc(s.Color) + '">' +
+                var open = !!s._open;
+                return '<div class="sp-season sp-covercard' + (open ? ' sp-open' : '') + '" data-index="' + i + '" data-orig-key="' + esc(s._origKey || slug(s.Name)) + '" style="--c:' + esc(s.Color) + '">' +
+                    '<div class="sp-season-summary">' +
+                    '<img class="sp-thumb" alt="" data-toggle>' +
+                    '<button type="button" class="sp-season-toggle" data-toggle aria-expanded="' + open + '">' +
+                    '<span class="sp-season-name" data-name>' + esc(s.Name) + '</span>' +
+                    '<span class="sp-season-when" data-when>' + esc(whenText(s)) + '</span>' +
+                    '</button>' +
+                    (active ? '<span class="sp-active">Active today</span>' : '') +
+                    '<span class="sp-kind">' + (s.HideOutOfSeason ? 'Season' : 'Special day') + '</span>' +
+                    '<label class="checkboxContainer" title="Turn this season on or off"><input is="emby-checkbox" type="checkbox" data-f="Enabled"' + (s.Enabled ? ' checked' : '') + '><span>On</span></label>' +
+                    '<span class="sp-chevron" data-toggle></span>' +
+                    '</div>' +
+                    '<div class="sp-season-body"' + (open ? '' : ' hidden') + '>' +
                     '<div class="sp-season-head">' +
-                    '<label class="checkboxContainer" style="margin:0"><input is="emby-checkbox" type="checkbox" data-f="Enabled"' + (s.Enabled ? ' checked' : '') + '><span>On</span></label>' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="Name" label="Name" value="' + esc(s.Name) + '"></div>' +
                     '<label>Colour <input type="color" data-f="Color" value="' + esc(s.Color) + '"></label>' +
-                    (active ? '<span class="sp-active">Active today</span>' : '') +
                     '<button is="emby-button" type="button" data-remove title="Remove season">Remove</button>' +
                     '</div>' +
                     '<div class="sp-grid2">' +
@@ -511,7 +624,6 @@
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="End" label="Ends (MM-DD or easter+1)" value="' + (easter ? easterText(s.EndEasterOffset) : md(s.EndMonth, s.EndDay)) + '"></div>' +
                     '<div class="inputContainer"><input is="emby-input" type="number" step="0.5" min="0" data-f="Boost" label="Boost" value="' + esc(s.Boost) + '"></div>' +
                     '</div>' +
-                    '<div class="sp-when" data-when>' + esc(whenText(s)) + '</div>' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="Keywords" label="Keywords" value="' + esc((s.Keywords || []).join(', ')) + '"></div>' +
                     '<div class="sp-grid2">' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="Genres" label="Genres" value="' + esc((s.Genres || []).join(', ')) + '"></div>' +
@@ -520,15 +632,23 @@
                     '<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" data-f="HideOutOfSeason"' + (s.HideOutOfSeason ? ' checked' : '') + '><span>Hide out of season</span></label>' +
                     coverBlockHtml() +
                     designerHtml(s.Cover, s.Theme) +
-                    '</div>';
+                    '</div></div>';
+            }
+
+            function toggleSeason(card, open) {
+                if (open == null) open = !card.classList.contains('sp-open');
+                card.classList.toggle('sp-open', open);
+                card.querySelector('.sp-season-body').hidden = !open;
+                card.querySelector('.sp-season-toggle').setAttribute('aria-expanded', String(open));
             }
 
             function readSeason(el) {
                 function f(name) { return el.querySelector('[data-f="' + name + '"]'); }
                 var es = parseEaster(f('Start').value), ee = parseEaster(f('End').value);
                 var easter = es !== null && ee !== null;
-                var start = parseMd(f('Start').value) || [1, 1];
-                var end = parseMd(f('End').value) || [12, 31];
+                // Easter-based seasons keep a sensible fixed window, used only if the Easter dates are removed later.
+                var start = parseMd(f('Start').value) || (easter ? [3, 22] : [1, 1]);
+                var end = parseMd(f('End').value) || (easter ? [4, 26] : [12, 31]);
                 return {
                     Name: f('Name').value.trim() || 'Season',
                     Enabled: f('Enabled').checked,
@@ -544,8 +664,10 @@
                     HideOutOfSeason: f('HideOutOfSeason').checked,
                     Theme: f('Theme').value || 'auto',
                     Cover: readStyle(el),
-                    // The name the season had when loaded, so its uploads can follow a rename. Not saved.
-                    _origKey: el.getAttribute('data-orig-key')
+                    // Page-only (not saved): the name the season had when loaded, so its uploads can follow a
+                    // rename, and whether its editor is open, so re-drawing the list keeps it open.
+                    _origKey: el.getAttribute('data-orig-key'),
+                    _open: el.classList.contains('sp-open')
                 };
             }
 
@@ -561,10 +683,48 @@
             }
 
             function renderToday(seasons) {
-                var active = seasons.filter(function (s) { return s.Enabled && isActive(s, new Date()); });
+                var today = new Date();
+                var active = seasons.filter(function (s) { return s.Enabled && isActive(s, today); });
                 $('#spToday').textContent = active.length
                     ? 'Active today: ' + active.map(function (s) { return s.Name; }).join(', ')
                     : 'No season is active today, so picks follow watch history only.';
+
+                // Header: what's on now and what's next.
+                var chips = active.map(function (s) {
+                    return '<span class="sp-chip" style="--c:' + esc(s.Color) + '"><i></i>On now: <b>' + esc(s.Name) + '</b></span>';
+                });
+                var next = nextSeason(seasons, today);
+                if (next) {
+                    var days = Math.round((next.date - new Date(today.getFullYear(), today.getMonth(), today.getDate())) / 86400000);
+                    chips.push('<span class="sp-chip" style="--c:' + esc(next.season.Color) + '"><i></i>Next: <b>' + esc(next.season.Name) + '</b> ' +
+                        (days === 1 ? 'tomorrow' : 'in ' + days + ' days') + ', ' + next.date.getDate() + ' ' + MONTHS[next.date.getMonth()] + '</span>');
+                }
+                if (!chips.length) chips.push('<span class="sp-chip">No seasons turned on</span>');
+                $('#spStatus').innerHTML = chips.join('');
+            }
+
+            // The enabled season that starts soonest after today (looks up to a year ahead).
+            function nextSeason(seasons, today) {
+                var base = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+                var best = null;
+                seasons.forEach(function (s) {
+                    if (!s.Enabled || isActive(s, today)) return;
+                    [base.getFullYear(), base.getFullYear() + 1].some(function (y) {
+                        var start;
+                        if (s.StartEasterOffset != null && s.EndEasterOffset != null) {
+                            start = easterSunday(y);
+                            start.setDate(start.getDate() + s.StartEasterOffset);
+                        } else {
+                            start = new Date(y, s.StartMonth - 1, s.StartDay);
+                        }
+                        if (start > base) {
+                            if (!best || start < best.date) best = { season: s, date: start };
+                            return true;
+                        }
+                        return false;
+                    });
+                });
+                return best;
             }
 
             function renderDefaultCover() {
@@ -596,6 +756,7 @@
                         ? day('New day', '#8E44AD', m, d, 'auto', [], [])
                         : { Name: 'New season', Enabled: true, Color: '#8E44AD', Theme: 'auto', StartMonth: m, StartDay: 1, EndMonth: m, EndDay: 28, Boost: 2, Keywords: [], Genres: [], Tags: [], HideOutOfSeason: true };
                 }
+                s._open = true;
                 var seasons = readSeasons();
                 seasons.push(s);
                 renderSeasons(seasons);
@@ -650,6 +811,76 @@
                     renderSeasons(config.Seasons || []);
                     renderDefaultCover();
                 }).finally(function () { Dashboard.hideLoadingMsg(); });
+
+                matchSaveBarToTheme();
+                showTab(savedTab() || 'picks');
+                loadVersion();
+                loadChangelog();
+            }
+
+            // ---------- header, tabs, what's new ----------
+            // The save bar sits over the page while scrolling, so it needs the theme's own background colour.
+            function matchSaveBarToTheme() {
+                var el = page, bg = '';
+                while (el && el.nodeType === 1) {
+                    bg = getComputedStyle(el).backgroundColor;
+                    if (bg && bg !== 'transparent' && !/rgba\(.*,\s*0\)$/.test(bg)) break;
+                    bg = '';
+                    el = el.parentNode;
+                }
+                if (bg) page.style.setProperty('--sp-bg', bg);
+            }
+
+            function savedTab() {
+                try { return localStorage.getItem('seasonalpicks-tab'); } catch (e) { return null; }
+            }
+
+            function showTab(name) {
+                if (!page.querySelector('[data-panel="' + name + '"]')) name = 'picks';
+                page.querySelectorAll('[data-tab]').forEach(function (t) {
+                    t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === name));
+                });
+                page.querySelectorAll('[data-panel]').forEach(function (p) {
+                    p.hidden = p.getAttribute('data-panel') !== name;
+                });
+                try { localStorage.setItem('seasonalpicks-tab', name); } catch (e) { /* private mode */ }
+            }
+
+            function loadVersion() {
+                ApiClient.getInstalledPlugins().then(function (plugins) {
+                    var id = pluginId.replace(/-/g, '');
+                    var me = (plugins || []).filter(function (p) { return String(p.Id).replace(/-/g, '').toLowerCase() === id; })[0];
+                    if (!me || !me.Version) return;
+                    $('#spVersion').textContent = 'Version ' + String(me.Version).replace(/\.0$/, '');
+                    $('#spVersion').hidden = false;
+                }, function () { /* no version pill */ });
+            }
+
+            // CHANGELOG.md: "## 1.2.0 - date" headings with "- " bullets.
+            function loadChangelog() {
+                ApiClient.fetch({ url: ApiClient.getUrl('SeasonalPicks/Changelog'), type: 'GET' })
+                    .then(function (res) { return res.text(); })
+                    .then(function (md) {
+                        var releases = [];
+                        md.split(/\r?\n/).forEach(function (line) {
+                            var head = /^##\s+(\S+)\s*(?:-\s*(.*))?$/.exec(line);
+                            if (head) { releases.push({ version: head[1], date: head[2] || '', items: [] }); return; }
+                            if (/^-\s+/.test(line) && releases.length) releases[releases.length - 1].items.push(line.replace(/^-\s+/, ''));
+                        });
+                        $('#spChangelog').innerHTML = releases.map(function (r, i) {
+                            return '<div class="sp-release' + (i === 0 ? ' sp-current' : '') + '">' +
+                                '<h3>' + esc(r.version) + (i === 0 ? ' <small>latest</small>' : '') + (r.date ? ' <small>' + esc(prettyDate(r.date)) + '</small>' : '') + '</h3>' +
+                                '<ul>' + r.items.map(function (t) { return '<li>' + esc(t) + '</li>'; }).join('') + '</ul></div>';
+                        }).join('') || '<p class="sp-hint">No changes listed.</p>';
+                    })
+                    .catch(function () {
+                        $('#spChangelog').innerHTML = '<p class="sp-hint">The list of changes could not be loaded.</p>';
+                    });
+            }
+
+            function prettyDate(iso) {
+                var m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);
+                return m ? (+m[3]) + ' ' + MONTHS[+m[2] - 1] + ' ' + m[1] : iso;
             }
 
             function collect() {
@@ -678,7 +909,7 @@
                 });
                 config.LibraryIds = Array.prototype.map.call(page.querySelectorAll('[data-lib]:checked'), function (c) { return c.getAttribute('data-lib'); });
                 config.EnabledUserIds = Array.prototype.map.call(page.querySelectorAll('[data-user]:checked'), function (c) { return c.getAttribute('data-user'); });
-                config.Seasons = readSeasons().map(function (s) { delete s._origKey; return s; });
+                config.Seasons = readSeasons().map(function (s) { delete s._origKey; delete s._open; return s; });
                 return config;
             }
 
@@ -698,11 +929,14 @@
                     return;
                 }
                 Dashboard.showLoadingMsg();
+                var onPage;
                 moveRenamedUploads().then(function () {
+                    onPage = readSeasons();
                     return ApiClient.updatePluginConfiguration(pluginId, collect());
                 }).then(function (result) {
                     Dashboard.processPluginConfigurationUpdateResult(result);
-                    renderSeasons(config.Seasons);
+                    // Re-draw with the saved names as the new upload keys, keeping open seasons open.
+                    renderSeasons(onPage.map(function (s) { s._origKey = null; return s; }));
                     renderDefaultCover();
                     if (!refreshAfter) return;
                     Dashboard.showLoadingMsg();
@@ -766,6 +1000,16 @@
             });
 
             page.addEventListener('click', function (e) {
+                var tab = e.target.closest('[data-tab], [data-goto]');
+                if (tab) {
+                    showTab(tab.getAttribute('data-tab') || tab.getAttribute('data-goto'));
+                    return;
+                }
+                var toggle = e.target.closest('[data-toggle]');
+                if (toggle) {
+                    toggleSeason(toggle.closest('.sp-season'));
+                    return;
+                }
                 var preset = e.target.closest('[data-preset]');
                 if (preset) {
                     if (!preset.disabled) addFromCatalogue(parseInt(preset.getAttribute('data-preset'), 10));
@@ -812,8 +1056,15 @@
                 var season = t.closest('.sp-season');
                 if (season) {
                     renderToday(readSeasons());
+                    // Keep the folded-up summary in step with the editor.
                     if (t.matches('[data-f="Start"], [data-f="End"]')) {
                         season.querySelector('[data-when]').textContent = whenText(readSeason(season));
+                    }
+                    if (t.matches('[data-f="Name"]')) {
+                        season.querySelector('[data-name]').textContent = t.value.trim() || 'Season';
+                    }
+                    if (t.matches('[data-f="HideOutOfSeason"]')) {
+                        season.querySelector('.sp-kind').textContent = t.checked ? 'Season' : 'Special day';
                     }
                 }
                 var card = t.closest('.sp-covercard');

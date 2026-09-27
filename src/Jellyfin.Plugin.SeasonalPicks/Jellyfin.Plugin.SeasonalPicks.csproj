@@ -3,8 +3,8 @@
   <PropertyGroup>
     <TargetFramework>net10.0</TargetFramework>
     <RootNamespace>Jellyfin.Plugin.SeasonalPicks</RootNamespace>
-    <AssemblyVersion>1.1.1.0</AssemblyVersion>
-    <FileVersion>1.1.1.0</FileVersion>
+    <AssemblyVersion>1.2.0.0</AssemblyVersion>
+    <FileVersion>1.2.0.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>
@@ -28,6 +28,8 @@
     <EmbeddedResource Include="Configuration\configPage.html" />
     <None Remove="Web\forYou.js" />
     <EmbeddedResource Include="Web\forYou.js" />
+    <!-- Shown on the settings page under "What's new". -->
+    <EmbeddedResource Include="..\..\CHANGELOG.md" LogicalName="Jellyfin.Plugin.SeasonalPicks.CHANGELOG.md" />
     <!-- Noto Sans Bold (Jellyfin's own UI font), SIL Open Font License: Fonts\OFL.txt. -->
     <EmbeddedResource Include="Fonts\NotoSans-Bold.ttf" />
     <None Include="Fonts\OFL.txt" CopyToOutputDirectory="PreserveNewest" />

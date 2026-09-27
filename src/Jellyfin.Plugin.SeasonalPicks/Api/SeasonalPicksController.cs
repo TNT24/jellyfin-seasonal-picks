@@ -340,6 +340,22 @@ public class SeasonalPicksController : ControllerBase
         return File(cover.Value.Data, cover.Value.MimeType);
     }
 
+    /// <summary>Admin: the changelog (CHANGELOG.md, built into the plugin) for the settings page's "What's new".</summary>
+    [HttpGet("Changelog")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    [Produces("text/markdown")]
+    public ActionResult Changelog()
+    {
+        var stream = typeof(Plugin).Assembly.GetManifestResourceStream($"{typeof(Plugin).Namespace}.CHANGELOG.md");
+        if (stream is null)
+        {
+            return NotFound();
+        }
+
+        using var reader = new StreamReader(stream);
+        return Content(reader.ReadToEnd(), "text/markdown; charset=utf-8");
+    }
+
     /// <summary>The web client script (loaded by index.html via File Transformation).</summary>
     [HttpGet("ClientScript")]
     [AllowAnonymous]

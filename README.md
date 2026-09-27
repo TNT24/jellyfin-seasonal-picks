@@ -68,10 +68,14 @@ Covers update on every refresh. Uploads follow a season when you rename it (move
 .\build.ps1
 ```
 
-1. Copy `dist\SeasonalPicks\Jellyfin.Plugin.SeasonalPicks.dll` to `/config/plugins/SeasonalPicks/` in the container.
+This builds `dist\SeasonalPicks\` (the DLL, `meta.json` and the font licence) and zips it as `dist\SeasonalPicks_<version>.zip`. `meta.json`'s changelog comes from the newest entry in [CHANGELOG.md](CHANGELOG.md), and the build stops if that entry doesn't match the project version.
+
+1. Copy the three files from `dist\SeasonalPicks\` to `/config/plugins/SeasonalPicks/` in the container.
 2. Install **File Transformation** (for the web screen) if it isn't already.
 3. Restart the container, then clear the browser cache.
-4. Dashboard → Plugins → **Seasonal Picks**: set things up, then **Save and refresh everyone now**.
+4. Open **Seasonal Picks** from the dashboard's side menu (or Dashboard → Plugins). Set things up, then **Save and refresh everyone now**.
+
+The settings page lists every release under **What's new**. When releasing, add an entry at the top of `CHANGELOG.md` and bump the version in the `.csproj`. A test checks the two match.
 
 The refresh runs daily at 04:00 (Dashboard → Scheduled Tasks → *Refresh Seasonal Picks* to change it).
 
@@ -88,7 +92,8 @@ Safety: the plugin only ever creates or deletes **symlinks** in that folder. Rea
 All under `/SeasonalPicks`, authenticated as the calling user:
 
 - `GET Picks`, `POST Refresh`, `POST Picks/{id}/Swap?forever=true|false`, `POST Unhide`
-- Admin: `POST RefreshAll`, `POST|DELETE Covers/{key}`, `GET Covers/{key}/Preview?wide=`, `POST Preview?userId=` (body: settings JSON, or empty for the saved ones)
+- Admin: `POST RefreshAll`, `POST Preview?userId=` (body: settings JSON, or empty for the saved ones), `GET Changelog`
+- Admin, covers: `POST|DELETE Covers/{key}` (finished cover), `POST|DELETE Covers/{key}/Background` (picture behind the design), `POST Covers/{key}/Rename?to=`, `GET Covers/{key}/Preview?wide=`, `POST Covers/Render?wide=&useUpload=` (body: a design from the settings page)
 
 State lives in `/config/plugins/configurations/…` (settings) and the plugin's data folder (`users/*.json`, `covers/*`).
 

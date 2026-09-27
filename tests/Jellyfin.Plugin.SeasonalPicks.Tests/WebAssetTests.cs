@@ -22,6 +22,22 @@ public class WebAssetTests
         => Regex.Match(Resource("Configuration.configPage.html"), "<script type=\"text/javascript\">([\\s\\S]*?)</script>").Groups[1].Value;
 
     [Fact]
+    public void Changelog_ships_with_the_plugin_and_lists_this_version_first()
+    {
+        var changelog = Resource("CHANGELOG.md");
+        var newest = Regex.Match(changelog, @"^## (\S+) - \d{4}-\d{2}-\d{2}\s*$", RegexOptions.Multiline);
+        Assert.True(newest.Success, "CHANGELOG.md needs '## <version> - <yyyy-mm-dd>' headings");
+
+        var version = typeof(Plugin).Assembly.GetName().Version!;
+        Assert.Equal($"{version.Major}.{version.Minor}.{version.Build}", newest.Groups[1].Value);
+
+        // Every release has at least one "- " bullet for the What's new list.
+        var sections = Regex.Split(changelog, @"^## ", RegexOptions.Multiline).Skip(1).ToList();
+        Assert.NotEmpty(sections);
+        Assert.All(sections, s => Assert.Matches(@"(?m)^- \S", s));
+    }
+
+    [Fact]
     public void Config_page_script_parses()
     {
         new Parser(new ParserOptions { EcmaVersion = EcmaVersion.ES2020 }).ParseScript(ConfigScript());
