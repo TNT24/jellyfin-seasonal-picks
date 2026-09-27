@@ -1,0 +1,10 @@
+# Build output
+bin/
+obj/
+# Release zips and the install folder are built by build.ps1 (attach zips to GitHub releases instead)
+dist/
+# IDE
+.vs/
+.vscode/
+.idea/
+*.user

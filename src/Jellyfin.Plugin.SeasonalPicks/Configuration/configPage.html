@@ -1,0 +1,865 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>Seasonal Picks</title>
+</head>
+<body>
+<div id="SeasonalPicksConfigPage" data-role="page" class="page type-interior pluginConfigurationPage" data-require="emby-input,emby-button,emby-select,emby-checkbox">
+    <style>
+        #SeasonalPicksConfigPage .sp-section { margin: 2em 0; }
+        #SeasonalPicksConfigPage .sp-section > h2 { margin-bottom: .4em; }
+        #SeasonalPicksConfigPage .sp-hint { opacity: .7; font-size: .9em; margin: -.2em 0 1em; }
+        #SeasonalPicksConfigPage .sp-checks { display: flex; flex-wrap: wrap; gap: 0 1.5em; }
+        #SeasonalPicksConfigPage .sp-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1.5em; }
+        #SeasonalPicksConfigPage .sp-season { border: 1px solid rgba(128,128,128,.35); border-left: 6px solid var(--c, #3A6EA5); border-radius: 8px; padding: 1em 1.2em .4em; margin-bottom: 1em; }
+        #SeasonalPicksConfigPage .sp-season-head { display: flex; align-items: center; gap: 1em; flex-wrap: wrap; margin-bottom: .6em; }
+        #SeasonalPicksConfigPage .sp-season-head .inputContainer { flex: 1 1 200px; margin: 0; }
+        #SeasonalPicksConfigPage .sp-active { font-size: .8em; padding: 2px 8px; border-radius: 999px; background: var(--c, #3A6EA5); color: #fff; }
+        #SeasonalPicksConfigPage .sp-cover { display: flex; gap: 1em; align-items: flex-start; flex-wrap: wrap; margin: .5em 0 1em; }
+        #SeasonalPicksConfigPage .sp-cover img { width: 120px; height: 120px; object-fit: cover; border-radius: 6px; background: rgba(128,128,128,.2); }
+        #SeasonalPicksConfigPage .sp-cover img.wide { width: 213px; }
+        #SeasonalPicksConfigPage .sp-cover-actions { display: flex; flex-direction: column; gap: .5em; }
+        #SeasonalPicksConfigPage input[type=color] { width: 3em; height: 2.2em; border: 0; padding: 0; background: none; cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-today { margin: .5em 0 1em; }
+        #SeasonalPicksConfigPage .sp-preview-table { width: 100%; border-collapse: collapse; margin: .5em 0 1.5em; font-size: .92em; }
+        #SeasonalPicksConfigPage .sp-preview-table td, #SeasonalPicksConfigPage .sp-preview-table th { text-align: left; padding: .35em .6em; border-bottom: 1px solid rgba(128,128,128,.25); }
+        #SeasonalPicksConfigPage .sp-preview-table th { opacity: .7; font-weight: 500; }
+        #SeasonalPicksConfigPage .sp-source { font-size: .85em; opacity: .7; }
+        #SeasonalPicksConfigPage .sp-when { font-size: .85em; opacity: .7; margin: -.8em 0 1em; }
+        #SeasonalPicksConfigPage .sp-designer { display: grid; grid-template-columns: minmax(0, 1.3fr) minmax(260px, 1fr); gap: 1.2em; margin: .5em 0 1.2em; padding: 1em; border-radius: 8px; background: rgba(128,128,128,.1); }
+        #SeasonalPicksConfigPage .sp-designer[hidden] { display: none; }
+        #SeasonalPicksConfigPage .sp-designer-preview { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.78fr); gap: .8em; align-content: start; }
+        #SeasonalPicksConfigPage .sp-designer-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: rgba(128,128,128,.2); }
+        #SeasonalPicksConfigPage .sp-designer-preview img.wide { aspect-ratio: 16 / 9; }
+        #SeasonalPicksConfigPage .sp-designer-preview .sp-hint { grid-column: 1 / -1; margin: 0; }
+        #SeasonalPicksConfigPage .sp-designer .inputContainer, #SeasonalPicksConfigPage .sp-designer .selectContainer { margin-bottom: .9em; }
+        #SeasonalPicksConfigPage .sp-row { display: flex; flex-wrap: wrap; gap: .6em 1.2em; align-items: center; margin-bottom: .9em; }
+        #SeasonalPicksConfigPage .sp-row .checkboxContainer { margin: 0; }
+        #SeasonalPicksConfigPage .sp-range { display: block; margin-bottom: .8em; }
+        #SeasonalPicksConfigPage .sp-range input { width: 100%; }
+        #SeasonalPicksConfigPage .sp-catalogue { margin: 1em 0; padding: 1em; border-radius: 8px; background: rgba(128,128,128,.1); }
+        #SeasonalPicksConfigPage .sp-catalogue-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: .8em; }
+        #SeasonalPicksConfigPage .sp-cat-item { text-align: left; padding: .8em 1em; border-radius: 8px; border: 1px solid rgba(128,128,128,.35); border-left: 6px solid var(--c, #3A6EA5); background: transparent; color: inherit; font: inherit; cursor: pointer; }
+        #SeasonalPicksConfigPage .sp-cat-item:hover:not([disabled]) { background: rgba(128,128,128,.15); }
+        #SeasonalPicksConfigPage .sp-cat-item[disabled] { opacity: .45; cursor: default; }
+        #SeasonalPicksConfigPage .sp-cat-item b { display: block; }
+        #SeasonalPicksConfigPage .sp-cat-item span { display: block; font-size: .85em; opacity: .75; margin-top: .2em; }
+        @media (max-width: 800px) { #SeasonalPicksConfigPage .sp-designer { grid-template-columns: 1fr; } }
+        /* Phones: previews one under the other so they're big enough to judge. */
+        @media (max-width: 600px) {
+            #SeasonalPicksConfigPage .sp-designer { padding: .7em; }
+            #SeasonalPicksConfigPage .sp-designer-preview { grid-template-columns: 1fr; }
+            #SeasonalPicksConfigPage .sp-designer-preview img:not(.wide) { width: 70%; justify-self: center; }
+        }
+    </style>
+    <div data-role="content">
+        <div class="content-primary">
+            <form id="SeasonalPicksConfigForm">
+                <div class="verticalSection">
+                    <h1 class="sectionTitle">Seasonal Picks</h1>
+                    <p class="sp-hint">Picks movies from each user's watch history and the time of year. Playlists, the mirror folder and covers work on every client, including TV apps. The Suggested screen and home row are web only and need the File Transformation plugin.</p>
+                </div>
+
+                <!-- Picking -->
+                <div class="sp-section">
+                    <h2>How picks are chosen</h2>
+                    <div class="sp-grid2">
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="PickCount" min="1" max="200" label="Movies per user">
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="SeasonalPercent" min="0" max="100" label="In-season share (%)">
+                            <div class="fieldDescription">Used only while a season is active.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="RecentlyWatchedDays" min="0" label="Hide movies watched in the last (days)">
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="RediscoverAfterDays" min="0" label="Rediscover movies last watched over (days) ago">
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="RediscoverPercent" min="0" max="100" label="Rediscover share of the rest (%)">
+                            <div class="fieldDescription">The rest are movies the user hasn't watched.</div>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MinCommunityRating" min="0" max="10" step="0.1" label="Minimum community rating (0 = off)">
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="NewReleasePercent" min="0" max="100" label="New releases share (%)">
+                            <div class="fieldDescription">Unwatched films released recently. 0 = no reserved share (they're still favoured).</div>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="NewReleaseDays" min="0" label="Counts as new for (days after release)">
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="MaxPerGenrePercent" min="0" max="100" label="Max share per genre (%, 0 = off)">
+                            <div class="fieldDescription">Stops the list filling up with one genre. In-season picks don't count against it.</div>
+                        </div>
+                    </div>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="CollectionAware">
+                        <span>Follow collections: suggest the next film in one you've started, skip films whose earlier parts aren't watched</span>
+                    </label>
+                    <div class="inputContainer">
+                        <input is="emby-input" type="text" id="ExcludeTags" label="Never pick movies tagged (comma separated)">
+                    </div>
+                    <h3>Libraries</h3>
+                    <p class="sp-hint">None ticked = every movie library the user can see.</p>
+                    <div class="sp-checks" id="spLibraries"></div>
+                    <h3>Users</h3>
+                    <p class="sp-hint">None ticked = everyone.</p>
+                    <div class="sp-checks" id="spUsers"></div>
+                </div>
+
+                <!-- Playlists -->
+                <div class="sp-section">
+                    <h2>Playlists (TV and all apps)</h2>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="EnablePlaylists">
+                        <span>Keep a private Suggested playlist for each user</span>
+                    </label>
+                    <div class="sp-grid2">
+                        <div class="inputContainer">
+                            <input is="emby-input" type="text" id="PlaylistName" label="Playlist name">
+                        </div>
+                    </div>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="PlaylistNameShowsSeason">
+                        <span>Add the season to the name (e.g. "Suggested - Halloween")</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="PlaylistShowsReasons">
+                        <span>List why each film was picked in the playlist's description</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="ReplaceWatchedPicks">
+                        <span>Swap a pick for a new one as soon as it's watched</span>
+                    </label>
+                    <h3>Season playlists</h3>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="EnableSeasonPlaylists">
+                        <span>While a season is on, add a playlist of just that season's films (removed when the season ends)</span>
+                    </label>
+                    <div class="sp-grid2">
+                        <div class="inputContainer">
+                            <input is="emby-input" type="text" id="SeasonPlaylistName" label="Name ({season} = the season's name)">
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="number" id="SeasonPlaylistCount" min="1" max="200" label="Movies per season playlist">
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Mirror -->
+                <div class="sp-section">
+                    <h2>Mirror library folder</h2>
+                    <p class="sp-hint">Replaces a symlink script: the plugin fills a folder with symlinks to one user's picks. Point a Movies library at that folder and it shows on the TV home screen like any other library. Only symlinks in the folder are ever added or removed.</p>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="EnableMirror">
+                        <span>Maintain the mirror folder</span>
+                    </label>
+                    <div class="sp-grid2">
+                        <div class="inputContainer">
+                            <input is="emby-input" type="text" id="MirrorPath" label="Folder path (as the server sees it, e.g. /media/foryou)">
+                        </div>
+                        <div class="selectContainer">
+                            <select is="emby-select" id="MirrorUserId" label="Use this user's watch history"></select>
+                        </div>
+                    </div>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="MirrorTriggerLibraryScan">
+                        <span>Scan libraries after the folder changes</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="MirrorRemoveOtherFiles">
+                        <span>Remove anything else in the folder (files and folders that aren't the plugin's links)</span>
+                    </label>
+                    <div class="fieldDescription">Deletes for real. Refused automatically if the folder is, contains, or is inside another library's folder, so it can't touch your Movies or TV folders.</div>
+                </div>
+
+                <!-- Covers -->
+                <div class="sp-section">
+                    <h2>Seasonal covers</h2>
+                    <p class="sp-hint">Sets the cover of each Suggested playlist and the mirror library to match the season. Each season's cover is drawn from a design you can change with "Design cover" (decoration, title, background picture and more), or you can upload a finished image to use as it is.</p>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="EnableSeasonalCovers">
+                        <span>Change covers with the seasons</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="AutoGenerateCovers">
+                        <span>Generate a cover when a season has no uploaded one</span>
+                    </label>
+                    <h3>Out of season</h3>
+                    <div class="sp-covercard" id="spDefaultCard" data-default>
+                        <label>Colour <input type="color" id="DefaultCoverColor"></label>
+                        <div id="spDefaultCover"></div>
+                    </div>
+                </div>
+
+                <!-- Web -->
+                <div class="sp-section">
+                    <h2>Web client</h2>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="EnableWebScreen">
+                        <span>Add the Suggested screen (user menu)</span>
+                    </label>
+                    <label class="checkboxContainer">
+                        <input is="emby-checkbox" type="checkbox" id="EnableHomeRow">
+                        <span>Show a Suggested row on the home page</span>
+                    </label>
+                    <p class="sp-hint">After changing these, refresh the browser (web clients cache index.html).</p>
+                </div>
+
+                <!-- Seasons -->
+                <div class="sp-section">
+                    <h2>Seasons</h2>
+                    <p class="sp-hint">Keywords match whole words in the title or overview; tags match exactly. Both count as a strong match. Genres count as a weaker one. "Hide out of season" keeps strong matches out of picks for the rest of the year; a film that matches several seasons belongs to the one with the highest boost. Dates are MM-DD, or relative to Easter Sunday for Easter (e.g. easter-14 to easter+1).</p>
+                    <div class="sp-today" id="spToday"></div>
+                    <div id="spSeasons"></div>
+                    <button is="emby-button" type="button" class="raised" id="spAddSeason"><span>Add a day or season</span></button>
+                    <div class="sp-catalogue" id="spCatalogue" hidden>
+                        <p class="sp-hint">Pick one to add it. Everything can be changed afterwards. Special days push their films forward on the day and never hide them the rest of the year; seasons can hide theirs.</p>
+                        <div class="sp-catalogue-grid" id="spCatalogueGrid"></div>
+                    </div>
+                </div>
+
+                <!-- Preview -->
+                <div class="sp-section">
+                    <h2>Preview</h2>
+                    <p class="sp-hint">See what a user would get with the settings on this page (saved or not). Nothing is written: no playlists, links or covers change.</p>
+                    <div class="sp-grid2">
+                        <div class="selectContainer">
+                            <select is="emby-select" id="spPreviewUser" label="User"></select>
+                        </div>
+                        <div>
+                            <button is="emby-button" type="button" class="raised" id="spPreviewBtn"><span>Preview picks</span></button>
+                        </div>
+                    </div>
+                    <div id="spPreviewOut"></div>
+                </div>
+
+                <input type="file" id="spCoverFile" accept="image/jpeg,image/png,image/webp" hidden>
+
+                <div>
+                    <button is="emby-button" type="submit" class="raised button-submit block"><span>Save</span></button>
+                    <button is="emby-button" type="button" class="raised block" id="spSaveRefresh"><span>Save and refresh everyone now</span></button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script type="text/javascript">
+        (function () {
+            var pluginId = '6e3ba9d2-8036-4708-9ce7-35413b443d8f';
+            var page = document.querySelector('#SeasonalPicksConfigPage');
+            var config = null;
+
+            function $(sel) { return page.querySelector(sel); }
+            function esc(s) {
+                return String(s == null ? '' : s).replace(/[&<>"']/g, function (c) {
+                    return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c];
+                });
+            }
+            function list(s) { return String(s || '').split(',').map(function (x) { return x.trim(); }).filter(Boolean); }
+            function slug(name) { return (String(name || '').toLowerCase().match(/[a-z0-9]/g) || []).join('') || 'season'; }
+            function pad(n) { return (n < 10 ? '0' : '') + n; }
+            function md(m, d) { return pad(m) + '-' + pad(d); }
+            function parseMd(s) {
+                var m = /^\s*(\d{1,2})\s*[-\/]\s*(\d{1,2})\s*$/.exec(s || '');
+                if (!m) return null;
+                var mo = +m[1], d = +m[2];
+                return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? [mo, d] : null;
+            }
+            // "easter", "easter-14", "easter+1": days relative to Easter Sunday (its date moves every year).
+            function parseEaster(s) {
+                var m = /^\s*easter\s*([+-]\s*\d{1,3})?\s*$/i.exec(s || '');
+                return m ? (m[1] ? parseInt(m[1].replace(/\s/g, ''), 10) : 0) : null;
+            }
+            function easterText(n) { return 'easter' + (n > 0 ? '+' + n : n < 0 ? String(n) : ''); }
+            function easterSunday(y) {
+                var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
+                var f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
+                var i = Math.floor(c / 4), k = c % 4, l = (32 + 2 * e + 2 * i - h - k) % 7, m = Math.floor((a + 11 * h + 22 * l) / 451);
+                var month = Math.floor((h + l - 7 * m + 114) / 31), day = ((h + l - 7 * m + 114) % 31) + 1;
+                return new Date(y, month - 1, day);
+            }
+            function isActive(s, date) {
+                if (s.StartEasterOffset != null && s.EndEasterOffset != null) {
+                    var e = easterSunday(date.getFullYear()), today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    var from = new Date(e), to = new Date(e);
+                    from.setDate(e.getDate() + s.StartEasterOffset);
+                    to.setDate(e.getDate() + s.EndEasterOffset);
+                    return today >= from && today <= to;
+                }
+                var t = (date.getMonth() + 1) * 100 + date.getDate();
+                var a = s.StartMonth * 100 + s.StartDay, b = s.EndMonth * 100 + s.EndDay;
+                return a <= b ? t >= a && t <= b : t >= a || t <= b;
+            }
+            var THEMES = [['auto', 'Automatic (from the name)'], ['Christmas', 'Christmas tree, presents and snow'], ['Snow', 'Snow and snowflakes'], ['Halloween', 'Pumpkins, bats and moon'], ['Easter', 'Easter bunny, eggs and blossom'], ['Hearts', 'Hearts'], ['Summer', 'Sun and waves'], ['Fireworks', 'Fireworks over a skyline'], ['Shamrock', 'Shamrocks'], ['Space', 'Stars and a planet'], ['Lightsabers', 'Lightsabers in space'], ['Ghosts', 'Ghosts and slime'], ['Castle', 'Castle and floating candles'], ['Bonfire', 'Bonfire and fireworks'], ['Sparkle', 'Sparkles'], ['None', 'None (just the background)']];
+            var POSITIONS = [['Top', 'Top'], ['Middle', 'Middle'], ['Bottom', 'Bottom']];
+            var BACKGROUNDS = [['Posters', 'Posters of the picks'], ['Picture', 'My picture'], ['Plain', 'Plain season colour']];
+            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow'];
+            var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+
+            // Ready-made days and seasons for "Add a day or season". Day = pushes its films forward on the day, never hides them.
+            function day(name, color, m, d, theme, tags, keywords, endM, endD) {
+                return { Name: name, Color: color, Theme: theme, StartMonth: m, StartDay: d, EndMonth: endM || m, EndDay: endD || d, Tags: tags, Keywords: keywords, Genres: [], Boost: 5, HideOutOfSeason: false, Enabled: true };
+            }
+            var CATALOGUE = [
+                { what: 'Alien and sci-fi horror', preset: day('Alien Day', '#6FBF3F', 4, 26, 'Space', ['alien', 'xenomorph'], ['xenomorph', 'ripley', 'nostromo', 'prometheus', 'alien: covenant', 'alien: romulus', 'aliens']) },
+                { what: '007 films', preset: day('James Bond Day', '#C9A227', 10, 5, 'Sparkle', ['james bond', 'mi6'], ['james bond', '007', 'mi6', 'goldfinger', 'goldeneye', 'skyfall', 'casino royale', 'spectre', 'moonraker', 'thunderball']) },
+                { what: 'Pirate films', preset: day('Talk Like a Pirate Day', '#8D6E63', 9, 19, 'Sparkle', ['pirate', 'pirates'], ['pirate', 'pirates', 'buccaneer', 'treasure island', 'jack sparrow', 'blackbeard', 'caribbean']) },
+                { what: 'Sherlock and detectives', preset: day('Sherlock Holmes Day', '#6D4C41', 1, 6, 'None', ['sherlock holmes'], ['sherlock holmes', 'sherlock', 'dr. watson', 'baker street', 'moriarty']) },
+                { what: 'LGBTQ+ films all June', preset: day('Pride Month', '#D84FD0', 6, 1, 'Hearts', ['lgbt', 'gay', 'lesbian', 'transgender', 'queer'], ['gay', 'lesbian', 'transgender', 'queer', 'drag queen'], 6, 30) },
+                { what: 'War films, 8 to 11 Nov', preset: day('Remembrance', '#B71C1C', 11, 8, 'None', ['world war i', 'world war ii'], ['world war', 'the somme', 'd-day', 'dunkirk', 'normandy'], 11, 11) },
+                { what: 'Snowy films after Christmas', preset: day('Winter Warmers', '#4FA3D1', 1, 3, 'Snow', ['snow', 'winter'], ['snow', 'winter', 'blizzard', 'skiing', 'ice skating'], 2, 28) },
+                { what: 'Your own one-day event', blank: 'day' },
+                { what: 'Your own date range', blank: 'season' }
+            ];
+
+            function whenText(s) {
+                if (s.StartEasterOffset != null && s.EndEasterOffset != null) {
+                    var e = easterSunday(new Date().getFullYear());
+                    var from = new Date(e), to = new Date(e);
+                    from.setDate(e.getDate() + s.StartEasterOffset);
+                    to.setDate(e.getDate() + s.EndEasterOffset);
+                    return 'This year: ' + from.getDate() + ' ' + MONTHS[from.getMonth()] + ' to ' + to.getDate() + ' ' + MONTHS[to.getMonth()];
+                }
+                var a = s.StartDay + ' ' + MONTHS[s.StartMonth - 1], b = s.EndDay + ' ' + MONTHS[s.EndMonth - 1];
+                return a === b ? 'On ' + a + ' each year' : a + ' to ' + b + ' each year';
+            }
+
+            // ---------- cover designer ----------
+            function styleOf(c) {
+                c = c || {};
+                function n(v, d) { return v == null || isNaN(v) ? d : v; }
+                return {
+                    Title: c.Title || '', Label: c.Label || '', ShowLabel: c.ShowLabel !== false,
+                    TitleSize: n(c.TitleSize, 100), TitlePosition: c.TitlePosition || 'Middle', TitleColor: c.TitleColor || '#FFFFFF',
+                    ShowAccent: c.ShowAccent !== false, Background: c.Background || 'Posters',
+                    ColourWash: n(c.ColourWash, 50), Darkness: n(c.Darkness, 50), Decorations: n(c.Decorations, 100)
+                };
+            }
+
+            function options(list, current) {
+                return list.map(function (t) {
+                    return '<option value="' + t[0] + '"' + (String(current || '').toLowerCase() === t[0].toLowerCase() ? ' selected' : '') + '>' + esc(t[1]) + '</option>';
+                }).join('');
+            }
+            function range(key, label, min, max, step, value) {
+                return '<label class="sp-range"><span>' + label + ': <output>' + value + '</output>%</span>' +
+                    '<input type="range" data-s="' + key + '" min="' + min + '" max="' + max + '" step="' + step + '" value="' + value + '"></label>';
+            }
+            function check(key, label, on) {
+                return '<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" data-s="' + key + '"' + (on ? ' checked' : '') + '><span>' + label + '</span></label>';
+            }
+
+            function designerHtml(style, theme) {
+                var st = styleOf(style);
+                return '<div class="sp-designer" hidden>' +
+                    '<div class="sp-designer-preview">' +
+                    '<img data-big alt="Playlist cover preview"><img data-big class="wide" alt="Library tile preview">' +
+                    '<p class="sp-hint">Square: the playlist cover. Wide: the Suggested library tile. Posters come from your own current picks.</p>' +
+                    '<p class="sp-hint" data-upload-note hidden>You have uploaded a finished cover for this, and it is used instead of this design. Remove it to use the design.</p>' +
+                    '</div>' +
+                    '<div class="sp-designer-controls">' +
+                    '<div class="selectContainer"><select is="emby-select" data-f="Theme" label="Decoration">' + options(THEMES, theme || 'auto') + '</select></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-s="Title" label="Title (empty = the name)" value="' + esc(st.Title) + '"></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-s="Label" label="Small label above (empty = playlist or library name)" value="' + esc(st.Label) + '"></div>' +
+                    '<div class="sp-row">' + check('ShowLabel', 'Show the label', st.ShowLabel) + check('ShowAccent', 'Line under the title', st.ShowAccent) + '</div>' +
+                    range('TitleSize', 'Title size', 50, 150, 5, st.TitleSize) +
+                    '<div class="sp-row">' +
+                    '<div class="selectContainer" style="flex:1 1 140px;margin:0"><select is="emby-select" data-s="TitlePosition" label="Title position">' + options(POSITIONS, st.TitlePosition) + '</select></div>' +
+                    '<label>Title colour <input type="color" data-s="TitleColor" value="' + esc(st.TitleColor) + '"></label>' +
+                    '</div>' +
+                    '<div class="selectContainer"><select is="emby-select" data-s="Background" label="Background">' + options(BACKGROUNDS, st.Background) + '</select></div>' +
+                    '<div class="sp-row">' +
+                    '<button is="emby-button" type="button" data-bg-upload>Upload picture</button>' +
+                    '<button is="emby-button" type="button" data-bg-remove>Remove picture</button>' +
+                    '</div>' +
+                    range('ColourWash', 'Season colour wash', 0, 100, 5, st.ColourWash) +
+                    range('Darkness', 'Darkness', 0, 100, 5, st.Darkness) +
+                    range('Decorations', 'Decorations', 0, 100, 5, st.Decorations) +
+                    '<div class="sp-row">' +
+                    '<button is="emby-button" type="button" data-design-reset>Reset design</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-design-close>Done</button>' +
+                    '</div>' +
+                    '</div></div>';
+            }
+
+            function coverBlockHtml() {
+                return '<div class="sp-cover">' +
+                    '<img alt="Playlist cover"><img alt="Library tile" class="wide">' +
+                    '<div class="sp-cover-actions">' +
+                    '<button is="emby-button" type="button" class="raised" data-design>Design cover</button>' +
+                    '<button is="emby-button" type="button" data-cover-upload>Upload finished cover</button>' +
+                    '<button is="emby-button" type="button" data-cover-remove hidden>Remove finished cover</button>' +
+                    '<span class="sp-source" data-source></span>' +
+                    '</div></div>';
+            }
+
+            function readStyle(card) {
+                function v(n) { return card.querySelector('[data-s="' + n + '"]'); }
+                return {
+                    Title: v('Title').value.trim(), Label: v('Label').value.trim(), ShowLabel: v('ShowLabel').checked,
+                    TitleSize: parseInt(v('TitleSize').value, 10), TitlePosition: v('TitlePosition').value, TitleColor: v('TitleColor').value,
+                    ShowAccent: v('ShowAccent').checked, Background: v('Background').value,
+                    ColourWash: parseInt(v('ColourWash').value, 10), Darkness: parseInt(v('Darkness').value, 10), Decorations: parseInt(v('Decorations').value, 10)
+                };
+            }
+
+            // Everything the server needs to draw a card's cover as it stands on the page.
+            function designOf(card) {
+                var isDefault = card.hasAttribute('data-default');
+                var name = isDefault ? '' : (card.querySelector('[data-f="Name"]').value.trim() || 'Season');
+                return {
+                    // Uploads stay under the name the season was loaded with until Save moves them.
+                    Key: isDefault ? 'default' : (card.getAttribute('data-orig-key') || slug(name)),
+                    Name: name,
+                    Color: isDefault ? $('#DefaultCoverColor').value : card.querySelector('[data-f="Color"]').value,
+                    Theme: card.querySelector('[data-f="Theme"]').value || 'auto',
+                    Label: $('#PlaylistName').value.trim(),
+                    Cover: readStyle(card)
+                };
+            }
+
+            // Fetched with the normal auth header (not an api_key in the URL, which newer servers may refuse).
+            function renderCover(design, wide, useUpload) {
+                return ApiClient.fetch({
+                    url: ApiClient.getUrl('SeasonalPicks/Covers/Render', { wide: wide, useUpload: useUpload }),
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(design)
+                }).then(function (res) {
+                    var source = res.headers && res.headers.get ? res.headers.get('X-SP-Source') : null;
+                    return res.blob().then(function (blob) { return { blob: blob, source: source }; });
+                });
+            }
+            function showImage(img, blob) {
+                if (img.src && img.src.indexOf('blob:') === 0) URL.revokeObjectURL(img.src);
+                img.src = URL.createObjectURL(blob);
+                img.title = '';
+            }
+
+            // The small previews: what the server would really use (an uploaded finished cover wins).
+            function refreshSmall(card) {
+                var design = designOf(card);
+                var seq = card._smallSeq = (card._smallSeq || 0) + 1;
+                card.querySelectorAll('.sp-cover img').forEach(function (img) {
+                    var wide = img.classList.contains('wide');
+                    renderCover(design, wide, true).then(function (r) {
+                        if (seq !== card._smallSeq) return;
+                        showImage(img, r.blob);
+                        if (wide) return;
+                        var uploaded = r.source === 'upload';
+                        card._hasUpload = uploaded;
+                        card.querySelector('[data-cover-remove]').hidden = !uploaded;
+                        card.querySelector('[data-source]').textContent = uploaded ? 'Using your uploaded cover' : 'Using the design';
+                        card.querySelector('[data-upload-note]').hidden = !uploaded;
+                    }, function () {
+                        img.removeAttribute('src');
+                        img.title = 'Cover could not be drawn. Check the server log for SeasonalPicks lines.';
+                    });
+                });
+            }
+
+            // The big designer previews: always the design, so changes show even when an upload is in use.
+            function refreshBig(card) {
+                var designer = card.querySelector('.sp-designer');
+                if (!designer || designer.hidden) return;
+                var design = designOf(card);
+                var seq = card._bigSeq = (card._bigSeq || 0) + 1;
+                designer.querySelectorAll('img[data-big]').forEach(function (img) {
+                    renderCover(design, img.classList.contains('wide'), false).then(function (r) {
+                        if (seq === card._bigSeq) showImage(img, r.blob);
+                    }, function () { img.removeAttribute('src'); });
+                });
+            }
+
+            function scheduleRender(card) {
+                clearTimeout(card._timer);
+                var open = !card.querySelector('.sp-designer').hidden;
+                card._timer = setTimeout(function () { if (open) refreshBig(card); else refreshSmall(card); }, open ? 300 : 800);
+            }
+
+            function openDesigner(card, open) {
+                var designer = card.querySelector('.sp-designer');
+                designer.hidden = !open;
+                if (open) {
+                    card.querySelector('[data-upload-note]').hidden = !card._hasUpload;
+                    refreshBig(card);
+                } else {
+                    refreshSmall(card);
+                }
+            }
+
+            // ---------- seasons editor ----------
+            function seasonHtml(s, i) {
+                var active = isActive(s, new Date()) && s.Enabled;
+                var easter = s.StartEasterOffset != null && s.EndEasterOffset != null;
+                return '<div class="sp-season sp-covercard" data-index="' + i + '" data-orig-key="' + esc(s._origKey || slug(s.Name)) + '" style="--c:' + esc(s.Color) + '">' +
+                    '<div class="sp-season-head">' +
+                    '<label class="checkboxContainer" style="margin:0"><input is="emby-checkbox" type="checkbox" data-f="Enabled"' + (s.Enabled ? ' checked' : '') + '><span>On</span></label>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Name" label="Name" value="' + esc(s.Name) + '"></div>' +
+                    '<label>Colour <input type="color" data-f="Color" value="' + esc(s.Color) + '"></label>' +
+                    (active ? '<span class="sp-active">Active today</span>' : '') +
+                    '<button is="emby-button" type="button" data-remove title="Remove season">Remove</button>' +
+                    '</div>' +
+                    '<div class="sp-grid2">' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Start" label="Starts (MM-DD or easter-14)" value="' + (easter ? easterText(s.StartEasterOffset) : md(s.StartMonth, s.StartDay)) + '"></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="End" label="Ends (MM-DD or easter+1)" value="' + (easter ? easterText(s.EndEasterOffset) : md(s.EndMonth, s.EndDay)) + '"></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="number" step="0.5" min="0" data-f="Boost" label="Boost" value="' + esc(s.Boost) + '"></div>' +
+                    '</div>' +
+                    '<div class="sp-when" data-when>' + esc(whenText(s)) + '</div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Keywords" label="Keywords" value="' + esc((s.Keywords || []).join(', ')) + '"></div>' +
+                    '<div class="sp-grid2">' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Genres" label="Genres" value="' + esc((s.Genres || []).join(', ')) + '"></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Tags" label="Tags" value="' + esc((s.Tags || []).join(', ')) + '"></div>' +
+                    '</div>' +
+                    '<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" data-f="HideOutOfSeason"' + (s.HideOutOfSeason ? ' checked' : '') + '><span>Hide out of season</span></label>' +
+                    coverBlockHtml() +
+                    designerHtml(s.Cover, s.Theme) +
+                    '</div>';
+            }
+
+            function readSeason(el) {
+                function f(name) { return el.querySelector('[data-f="' + name + '"]'); }
+                var es = parseEaster(f('Start').value), ee = parseEaster(f('End').value);
+                var easter = es !== null && ee !== null;
+                var start = parseMd(f('Start').value) || [1, 1];
+                var end = parseMd(f('End').value) || [12, 31];
+                return {
+                    Name: f('Name').value.trim() || 'Season',
+                    Enabled: f('Enabled').checked,
+                    Color: f('Color').value,
+                    StartMonth: start[0], StartDay: start[1],
+                    EndMonth: end[0], EndDay: end[1],
+                    StartEasterOffset: easter ? es : null,
+                    EndEasterOffset: easter ? ee : null,
+                    Boost: parseFloat(f('Boost').value) || 1,
+                    Keywords: list(f('Keywords').value),
+                    Genres: list(f('Genres').value),
+                    Tags: list(f('Tags').value),
+                    HideOutOfSeason: f('HideOutOfSeason').checked,
+                    Theme: f('Theme').value || 'auto',
+                    Cover: readStyle(el),
+                    // The name the season had when loaded, so its uploads can follow a rename. Not saved.
+                    _origKey: el.getAttribute('data-orig-key')
+                };
+            }
+
+            function readSeasons() {
+                return Array.prototype.map.call(page.querySelectorAll('.sp-season'), readSeason);
+            }
+
+            function renderSeasons(seasons) {
+                $('#spSeasons').innerHTML = seasons.map(seasonHtml).join('');
+                page.querySelectorAll('#spSeasons .sp-covercard').forEach(refreshSmall);
+                renderToday(seasons);
+                renderCatalogue();
+            }
+
+            function renderToday(seasons) {
+                var active = seasons.filter(function (s) { return s.Enabled && isActive(s, new Date()); });
+                $('#spToday').textContent = active.length
+                    ? 'Active today: ' + active.map(function (s) { return s.Name; }).join(', ')
+                    : 'No season is active today, so picks follow watch history only.';
+            }
+
+            function renderDefaultCover() {
+                $('#spDefaultCover').innerHTML = coverBlockHtml() + designerHtml(config.DefaultCover, config.DefaultCoverTheme || 'Sparkle');
+                refreshSmall($('#spDefaultCard'));
+            }
+
+            // ---------- add a day or season ----------
+            function renderCatalogue() {
+                var names = readSeasons().map(function (s) { return s.Name.toLowerCase(); });
+                $('#spCatalogueGrid').innerHTML = CATALOGUE.map(function (c, i) {
+                    var p = c.preset;
+                    var added = p && names.indexOf(p.Name.toLowerCase()) >= 0;
+                    var title = p ? p.Name : c.blank === 'day' ? 'Blank special day' : 'Blank season';
+                    var sub = p ? whenText(p) + ' · ' + c.what : c.what;
+                    return '<button type="button" class="sp-cat-item" data-preset="' + i + '" style="--c:' + (p ? p.Color : '#8E44AD') + '"' + (added ? ' disabled' : '') + '>' +
+                        '<b>' + esc(title) + '</b><span>' + esc(added ? 'Already added' : sub) + '</span></button>';
+                }).join('');
+            }
+
+            function addFromCatalogue(i) {
+                var c = CATALOGUE[i];
+                var s;
+                if (c.preset) {
+                    s = JSON.parse(JSON.stringify(c.preset));
+                } else {
+                    var now = new Date(), m = now.getMonth() + 1, d = now.getDate();
+                    s = c.blank === 'day'
+                        ? day('New day', '#8E44AD', m, d, 'auto', [], [])
+                        : { Name: 'New season', Enabled: true, Color: '#8E44AD', Theme: 'auto', StartMonth: m, StartDay: 1, EndMonth: m, EndDay: 28, Boost: 2, Keywords: [], Genres: [], Tags: [], HideOutOfSeason: true };
+                }
+                var seasons = readSeasons();
+                seasons.push(s);
+                renderSeasons(seasons);
+                $('#spCatalogue').hidden = true;
+                var cards = page.querySelectorAll('#spSeasons .sp-season');
+                var card = cards[cards.length - 1];
+                card.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                if (!c.preset) card.querySelector('[data-f="Name"]').focus();
+            }
+
+            // ---------- load / save ----------
+            function load() {
+                Dashboard.showLoadingMsg();
+                Promise.all([
+                    ApiClient.getPluginConfiguration(pluginId),
+                    ApiClient.getUsers(),
+                    ApiClient.getVirtualFolders()
+                ]).then(function (r) {
+                    config = r[0];
+                    var users = r[1], folders = r[2];
+
+                    ['PickCount', 'SeasonalPercent', 'RecentlyWatchedDays', 'RediscoverAfterDays', 'RediscoverPercent', 'MinCommunityRating', 'NewReleasePercent', 'NewReleaseDays', 'MaxPerGenrePercent', 'PlaylistName', 'SeasonPlaylistName', 'SeasonPlaylistCount', 'MirrorPath'].forEach(function (k) {
+                        $('#' + k).value = config[k] == null ? '' : config[k];
+                    });
+                    CHECKS.forEach(function (k) {
+                        $('#' + k).checked = !!config[k];
+                    });
+                    $('#ExcludeTags').value = (config.ExcludeTags || []).join(', ');
+                    $('#DefaultCoverColor').value = config.DefaultCoverColor || '#3A6EA5';
+
+                    var libIds = config.LibraryIds || [];
+                    $('#spLibraries').innerHTML = folders.filter(function (f) { return f.CollectionType === 'movies'; }).map(function (f) {
+                        return '<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" data-lib="' + esc(f.ItemId) + '"' +
+                            (libIds.indexOf(f.ItemId) >= 0 ? ' checked' : '') + '><span>' + esc(f.Name) + '</span></label>';
+                    }).join('') || '<p class="sp-hint">No movie libraries found.</p>';
+
+                    var userIds = (config.EnabledUserIds || []).map(function (x) { return x.replace(/-/g, '').toLowerCase(); });
+                    $('#spUsers').innerHTML = users.map(function (u) {
+                        return '<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" data-user="' + esc(u.Id) + '"' +
+                            (userIds.indexOf(u.Id.replace(/-/g, '').toLowerCase()) >= 0 ? ' checked' : '') + '><span>' + esc(u.Name) + '</span></label>';
+                    }).join('');
+
+                    var mirrorUser = (config.MirrorUserId || '').replace(/-/g, '').toLowerCase();
+                    $('#MirrorUserId').innerHTML = '<option value="">Choose a user</option>' + users.map(function (u) {
+                        return '<option value="' + esc(u.Id) + '"' + (u.Id.replace(/-/g, '').toLowerCase() === mirrorUser ? ' selected' : '') + '>' + esc(u.Name) + '</option>';
+                    }).join('');
+
+                    $('#spPreviewUser').innerHTML = users.map(function (u) {
+                        return '<option value="' + esc(u.Id) + '"' + (u.Id === ApiClient.getCurrentUserId() ? ' selected' : '') + '>' + esc(u.Name) + '</option>';
+                    }).join('');
+
+                    renderSeasons(config.Seasons || []);
+                    renderDefaultCover();
+                }).finally(function () { Dashboard.hideLoadingMsg(); });
+            }
+
+            function collect() {
+                function num(id, fallback) { var v = parseFloat($('#' + id).value); return isNaN(v) ? fallback : v; }
+                config.PickCount = Math.max(1, Math.round(num('PickCount', 25)));
+                config.SeasonalPercent = Math.round(num('SeasonalPercent', 40));
+                config.RecentlyWatchedDays = Math.round(num('RecentlyWatchedDays', 60));
+                config.RediscoverAfterDays = Math.round(num('RediscoverAfterDays', 365));
+                config.RediscoverPercent = Math.round(num('RediscoverPercent', 30));
+                config.MinCommunityRating = num('MinCommunityRating', 0);
+                config.MaxPerGenrePercent = Math.round(num('MaxPerGenrePercent', 30));
+                config.NewReleasePercent = Math.round(num('NewReleasePercent', 20));
+                config.NewReleaseDays = Math.max(0, Math.round(num('NewReleaseDays', 365)));
+                config.SeasonPlaylistCount = Math.max(1, Math.round(num('SeasonPlaylistCount', 20)));
+                config.SeasonPlaylistName = $('#SeasonPlaylistName').value.trim() || '{season} Picks';
+                config.ExcludeTags = list($('#ExcludeTags').value);
+                config.PlaylistName = $('#PlaylistName').value.trim() || 'Suggested';
+                config.MirrorPath = $('#MirrorPath').value.trim();
+                config.MirrorUserId = $('#MirrorUserId').value;
+                config.DefaultCoverColor = $('#DefaultCoverColor').value;
+                var defaultCard = $('#spDefaultCard');
+                config.DefaultCoverTheme = defaultCard.querySelector('[data-f="Theme"]').value || 'Sparkle';
+                config.DefaultCover = readStyle(defaultCard);
+                CHECKS.forEach(function (k) {
+                    config[k] = $('#' + k).checked;
+                });
+                config.LibraryIds = Array.prototype.map.call(page.querySelectorAll('[data-lib]:checked'), function (c) { return c.getAttribute('data-lib'); });
+                config.EnabledUserIds = Array.prototype.map.call(page.querySelectorAll('[data-user]:checked'), function (c) { return c.getAttribute('data-user'); });
+                config.Seasons = readSeasons().map(function (s) { delete s._origKey; return s; });
+                return config;
+            }
+
+            // Renamed seasons: move their uploaded cover and background picture to the new name first.
+            function moveRenamedUploads() {
+                return readSeasons().filter(function (s) { return s._origKey && s._origKey !== slug(s.Name); }).reduce(function (p, s) {
+                    return p.then(function () {
+                        return ApiClient.fetch({ url: ApiClient.getUrl('SeasonalPicks/Covers/' + s._origKey + '/Rename', { to: slug(s.Name) }), type: 'POST' })
+                            .catch(function () { /* nothing to move */ });
+                    });
+                }, Promise.resolve());
+            }
+
+            function save(refreshAfter) {
+                if ($('#EnableMirror').checked && (!$('#MirrorPath').value.trim() || !$('#MirrorUserId').value)) {
+                    Dashboard.alert('The mirror folder needs a folder path and a user.');
+                    return;
+                }
+                Dashboard.showLoadingMsg();
+                moveRenamedUploads().then(function () {
+                    return ApiClient.updatePluginConfiguration(pluginId, collect());
+                }).then(function (result) {
+                    Dashboard.processPluginConfigurationUpdateResult(result);
+                    renderSeasons(config.Seasons);
+                    renderDefaultCover();
+                    if (!refreshAfter) return;
+                    Dashboard.showLoadingMsg();
+                    return ApiClient.fetch({ url: ApiClient.getUrl('SeasonalPicks/RefreshAll'), type: 'POST' }).then(function () {
+                        Dashboard.hideLoadingMsg();
+                        page.querySelectorAll('.sp-covercard').forEach(refreshSmall);
+                        Dashboard.alert('Picks, playlists and covers refreshed.');
+                    });
+                }).catch(function () {
+                    Dashboard.hideLoadingMsg();
+                    Dashboard.alert('Something went wrong. Check the server log.');
+                });
+            }
+
+            // ---------- events ----------
+            page.addEventListener('pageshow', load);
+
+            $('#SeasonalPicksConfigForm').addEventListener('submit', function (e) {
+                e.preventDefault();
+                save(false);
+                return false;
+            });
+            $('#spSaveRefresh').addEventListener('click', function () { save(true); });
+
+            // ---------- preview (dry run with the settings as they are on the page) ----------
+            function previewTable(picks) {
+                if (!picks.length) return '<p class="sp-hint">No films match.</p>';
+                return '<table class="sp-preview-table"><thead><tr><th>Film</th><th>Why</th><th>Genre</th></tr></thead><tbody>' +
+                    picks.map(function (p) {
+                        return '<tr><td>' + esc(p.name) + (p.year ? ' (' + p.year + ')' : '') + '</td><td>' + esc(p.reason) + '</td><td>' + esc((p.genres || [])[0] || '') + '</td></tr>';
+                    }).join('') + '</tbody></table>';
+            }
+
+            $('#spPreviewBtn').addEventListener('click', function () {
+                var userId = $('#spPreviewUser').value;
+                if (!userId || !config) return;
+                var out = $('#spPreviewOut');
+                out.innerHTML = '<p class="sp-hint">Working it out…</p>';
+                ApiClient.fetch({
+                    url: ApiClient.getUrl('SeasonalPicks/Preview', { userId: userId }),
+                    type: 'POST',
+                    contentType: 'application/json',
+                    data: JSON.stringify(collect()),
+                    dataType: 'json'
+                }).then(function (r) {
+                    var html = '<p>' + esc(r.user) + ': ' + r.unwatchedCandidates + ' unwatched, ' + r.rediscoverCandidates + ' to rediscover, ' +
+                        r.seasonalCandidates + ' in season. Seasons on today: ' + esc(r.activeSeasons.join(', ') || 'none') + '.</p>' +
+                        '<h3>' + esc($('#PlaylistName').value.trim() || 'Suggested') + ' (' + r.picks.length + ')</h3>' + previewTable(r.picks);
+                    r.seasonPlaylists.forEach(function (s) {
+                        html += '<h3>' + esc(s.name) + ' (' + s.picks.length + ')</h3>' + previewTable(s.picks);
+                    });
+                    out.innerHTML = html;
+                }, function () {
+                    out.innerHTML = '<p class="sp-hint">Preview failed. Check the server log for SeasonalPicks lines.</p>';
+                });
+            });
+
+            $('#spAddSeason').addEventListener('click', function () {
+                renderCatalogue();
+                $('#spCatalogue').hidden = !$('#spCatalogue').hidden;
+            });
+
+            page.addEventListener('click', function (e) {
+                var preset = e.target.closest('[data-preset]');
+                if (preset) {
+                    if (!preset.disabled) addFromCatalogue(parseInt(preset.getAttribute('data-preset'), 10));
+                    return;
+                }
+                var remove = e.target.closest('[data-remove]');
+                if (remove) {
+                    remove.closest('.sp-season').remove();
+                    renderToday(readSeasons());
+                    renderCatalogue();
+                    return;
+                }
+                var card = e.target.closest('.sp-covercard');
+                if (!card) return;
+                if (e.target.closest('[data-design]')) {
+                    openDesigner(card, card.querySelector('.sp-designer').hidden);
+                } else if (e.target.closest('[data-design-close]')) {
+                    openDesigner(card, false);
+                } else if (e.target.closest('[data-design-reset]')) {
+                    var theme = card.querySelector('[data-f="Theme"]').value;
+                    card.querySelector('.sp-designer').outerHTML = designerHtml(null, theme);
+                    openDesigner(card, true);
+                } else if (e.target.closest('[data-cover-upload]')) {
+                    pickFile(card, 'cover');
+                } else if (e.target.closest('[data-bg-upload]')) {
+                    pickFile(card, 'background');
+                } else if (e.target.closest('[data-cover-remove]')) {
+                    ApiClient.fetch({ url: ApiClient.getUrl('SeasonalPicks/Covers/' + designOf(card).Key), type: 'DELETE' })
+                        .then(function () { refreshSmall(card); });
+                } else if (e.target.closest('[data-bg-remove]')) {
+                    ApiClient.fetch({ url: ApiClient.getUrl('SeasonalPicks/Covers/' + designOf(card).Key + '/Background'), type: 'DELETE' })
+                        .then(function () { refreshBig(card); refreshSmall(card); });
+                }
+            });
+
+            function onEdit(e) {
+                var t = e.target;
+                if (t.matches('input[type=range][data-s]')) {
+                    t.parentNode.querySelector('output').textContent = t.value;
+                }
+                if (t.matches('.sp-season [data-f="Color"]')) {
+                    t.closest('.sp-season').style.setProperty('--c', t.value);
+                }
+                var season = t.closest('.sp-season');
+                if (season) {
+                    renderToday(readSeasons());
+                    if (t.matches('[data-f="Start"], [data-f="End"]')) {
+                        season.querySelector('[data-when]').textContent = whenText(readSeason(season));
+                    }
+                }
+                var card = t.closest('.sp-covercard');
+                if (card && (t.matches('[data-s], [data-f="Theme"], [data-f="Name"], [data-f="Color"]') || t.id === 'DefaultCoverColor')) {
+                    scheduleRender(card);
+                }
+            }
+            page.addEventListener('input', onEdit);
+            page.addEventListener('change', onEdit);
+
+            // ---------- uploads (finished covers and background pictures) ----------
+            var pending = null;
+            function pickFile(card, kind) {
+                pending = { card: card, kind: kind, key: designOf(card).Key };
+                $('#spCoverFile').value = '';
+                $('#spCoverFile').click();
+            }
+
+            $('#spCoverFile').addEventListener('change', function () {
+                var file = this.files && this.files[0];
+                if (!file || !pending) return;
+                if (file.size > 15 * 1024 * 1024) { Dashboard.alert('Please pick an image under 15 MB.'); return; }
+                var job = pending;
+                var reader = new FileReader();
+                reader.onload = function () {
+                    Dashboard.showLoadingMsg();
+                    ApiClient.fetch({
+                        url: ApiClient.getUrl('SeasonalPicks/Covers/' + job.key + (job.kind === 'background' ? '/Background' : '')),
+                        type: 'POST',
+                        contentType: 'application/json',
+                        data: JSON.stringify({ MimeType: file.type || 'image/jpeg', Data: reader.result })
+                    }).then(function () {
+                        if (job.kind === 'background') {
+                            // A picture was uploaded to be seen, so switch the background to it.
+                            job.card.querySelector('[data-s="Background"]').value = 'Picture';
+                            refreshBig(job.card);
+                        }
+                        refreshSmall(job.card);
+                    }).catch(function () {
+                        Dashboard.alert('Upload failed.');
+                    }).finally(function () { Dashboard.hideLoadingMsg(); });
+                };
+                reader.readAsDataURL(file);
+            });
+        })();
+    </script>
+</div>
+</body>
+</html>
