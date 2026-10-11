@@ -76,18 +76,31 @@ Covers update on every refresh. Uploads follow a season when you rename it (move
 
 ## Install
 
+### From the plugin repository
+
+1. In Jellyfin, go to **Dashboard → Plugins → Repositories** (the gear on the Catalog tab in some versions) and add a repository:
+   - Name: `Seasonal Picks`
+   - URL: `https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/manifest.json`
+2. Open the **Catalog**, find **Seasonal Picks** under General, and install it.
+3. Install **File Transformation** (for the web screen) if it isn't already.
+4. Restart the server, then clear the browser cache.
+5. Open **Seasonal Picks** from the dashboard's side menu (or Dashboard → Plugins). Set things up, then **Save and refresh everyone now**.
+
+New versions then show up as updates in the dashboard.
+
+### From source
+
 ```powershell
 .\build.ps1
 ```
 
 This builds `dist\SeasonalPicks\` (the DLL, `meta.json` and the font licence) and zips it as `dist\SeasonalPicks_<version>.zip`. `meta.json`'s changelog comes from the newest entry in [CHANGELOG.md](CHANGELOG.md), and the build stops if that entry doesn't match the project version.
 
-1. Copy the three files from `dist\SeasonalPicks\` to `/config/plugins/SeasonalPicks/` in the container.
-2. Install **File Transformation** (for the web screen) if it isn't already.
-3. Restart the container, then clear the browser cache.
-4. Open **Seasonal Picks** from the dashboard's side menu (or Dashboard → Plugins). Set things up, then **Save and refresh everyone now**.
+Copy the three files from `dist\SeasonalPicks\` to `/config/plugins/SeasonalPicks/` in the container, then follow steps 3 to 5 above.
 
-The settings page lists every release under **What's new**. When releasing, add an entry at the top of `CHANGELOG.md` and bump the version in the `.csproj`. A test checks the two match.
+### Releasing
+
+The settings page lists every release under **What's new**. When releasing, add an entry at the top of `CHANGELOG.md` and bump the version in the `.csproj`. A test checks the two match. `build.ps1` also adds the version to `manifest.json`; upload the zip to a GitHub release tagged `v<version>` (e.g. `v1.2.0`), then commit and push `manifest.json`.
 
 The refresh runs daily at 04:00 (Dashboard → Scheduled Tasks → *Refresh Seasonal Picks* to change it).
 

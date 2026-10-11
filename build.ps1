@@ -43,3 +43,33 @@ $zip = Join-Path $PSScriptRoot "dist\SeasonalPicks_$version.zip"
 $files = Get-ChildItem -LiteralPath $out -File | ForEach-Object FullName
 Compress-Archive -LiteralPath $files -DestinationPath $zip -Force
 Write-Host "Plugin $version`: $zip"
+
+# manifest.json: the Jellyfin plugin repository. Adds (or replaces) this version, pointing at the zip on the GitHub release
+# tagged v<major.minor.patch>. Commit it after uploading the zip to that release.
+$repo = 'https://github.com/TNT24/jellyfin-seasonal-picks'
+$tag = 'v' + ($version -replace '\.0$', '')
+$manifestPath = Join-Path $PSScriptRoot 'manifest.json'
+$entry = [ordered]@{
+    version   = $version
+    changelog = $notes
+    targetAbi = $meta.targetAbi
+    sourceUrl = "$repo/releases/download/$tag/SeasonalPicks_$version.zip"
+    checksum  = (Get-FileHash -LiteralPath $zip -Algorithm MD5).Hash.ToLowerInvariant()
+    timestamp = $meta.timestamp
+}
+$old = @()
+if (Test-Path $manifestPath) {
+    $old = @(([IO.File]::ReadAllText($manifestPath, $utf8) | ConvertFrom-Json)[0].versions | Where-Object { $_.version -ne $version })
+}
+$plugin = [ordered]@{
+    guid        = $meta.guid
+    name        = $meta.name
+    description = $meta.description
+    overview    = $meta.overview
+    owner       = $meta.owner
+    category    = $meta.category
+    imageUrl    = 'https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png'
+    versions    = @($entry) + $old
+}
+[IO.File]::WriteAllText($manifestPath, (ConvertTo-Json -InputObject @($plugin) -Depth 5), $utf8)
+Write-Host "Manifest: $tag ($($entry.checksum))"

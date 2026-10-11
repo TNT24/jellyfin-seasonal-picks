@@ -1,0 +1,21 @@
+[
+    {
+        "guid":  "6e3ba9d2-8036-4708-9ce7-35413b443d8f",
+        "name":  "Seasonal Picks",
+        "description":  "Picks movies from your watch history and the time of year.",
+        "overview":  "History- and calendar-aware movie picks as playlists (works on TV), a shared Suggested library, themed seasonal covers and a web Suggested screen.",
+        "owner":  "Mark",
+        "category":  "General",
+        "imageUrl":  "https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png",
+        "versions":  [
+                         {
+                             "version":  "1.2.0.0",
+                             "changelog":  "Seasonal Picks now has its own entry in the dashboard side menu. New look for the settings page: tabs, a header showing what\u0027s on today and what\u0027s next, and seasons that fold up into a one-line summary with a cover thumbnail. The Save buttons stay at the bottom of the screen while you scroll. This changelog, under What\u0027s new.",
+                             "targetAbi":  "12.1.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.2.0/SeasonalPicks_1.2.0.0.zip",
+                             "checksum":  "df3237e293581bc31090756d9ffde525",
+                             "timestamp":  "2026-10-11T10:18:58.0435940Z"
+                         }
+                     ]
+    }
+]
