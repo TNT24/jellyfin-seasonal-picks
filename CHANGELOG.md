@@ -2,6 +2,14 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.2.1 - 2026-10-11
+- Season rows on the settings page are no longer squashed: the name and dates show in full, and on phones the badges and the On box move to a second line.
+- The settings page uses more of a wide screen, and the Picks settings sit in three tidy columns.
+- Buttons such as Remove and Upload picture are readable again, and "Remove finished cover" only shows when there is an uploaded cover.
+- What's new loads again on Jellyfin 12.1.
+- On phones, the chosen tab scrolls into view.
+- The Suggested screen fills the whole screen in older browsers.
+
 ## 1.2.0 - 2026-09-27
 - Seasonal Picks now has its own entry in the dashboard side menu.
 - New look for the settings page: tabs, a header showing what's on today and what's next, and seasons that fold up into a one-line summary with a cover thumbnail.

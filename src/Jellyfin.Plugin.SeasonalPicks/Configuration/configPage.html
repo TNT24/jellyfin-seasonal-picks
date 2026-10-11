@@ -10,9 +10,14 @@
         /* Neutral greys over whatever the Jellyfin theme is, so light and dark themes both work. */
         #SeasonalPicksConfigPage { --sp-line: rgba(128,128,128,.28); --sp-soft: rgba(128,128,128,.09); --sp-softer: rgba(128,128,128,.05); --sp-accent: #00a4dc; }
         #SeasonalPicksConfigPage .content-primary { max-width: 1100px; }
+        /* Jellyfin caps plugin forms at about 54em and makes checkboxes full width; neither suits this layout. */
+        #SeasonalPicksConfigPage form { max-width: none; }
+        #SeasonalPicksConfigPage .checkboxContainer { width: auto; }
+        /* Jellyfin's button styles beat the hidden attribute otherwise. */
+        #SeasonalPicksConfigPage [hidden] { display: none !important; }
         #SeasonalPicksConfigPage .sp-hint { opacity: .7; font-size: .9em; margin: -.2em 0 1em; }
         #SeasonalPicksConfigPage .sp-checks { display: flex; flex-wrap: wrap; gap: 0 1.5em; }
-        #SeasonalPicksConfigPage .sp-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 0 1.5em; }
+        #SeasonalPicksConfigPage .sp-grid2 { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 0 1.5em; }
 
         /* Header */
         #SeasonalPicksConfigPage .sp-hero { position: relative; overflow: hidden; margin: 1em 0 1.2em; padding: 1.4em 1.5em 1.2em; border-radius: 14px; border: 1px solid var(--sp-line);
@@ -28,7 +33,7 @@
         #SeasonalPicksConfigPage .sp-chip b { font-weight: 600; }
 
         /* Tabs: scroll sideways on phones instead of wrapping */
-        #SeasonalPicksConfigPage .sp-tabs { display: flex; gap: .3em; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--sp-line); margin-bottom: 1.2em; }
+        #SeasonalPicksConfigPage .sp-tabs { position: relative; display: flex; gap: .3em; overflow-x: auto; scrollbar-width: none; border-bottom: 1px solid var(--sp-line); margin-bottom: 1.2em; }
         #SeasonalPicksConfigPage .sp-tabs::-webkit-scrollbar { display: none; }
         #SeasonalPicksConfigPage .sp-tab { flex: none; padding: .75em 1.1em; border: 0; border-bottom: 3px solid transparent; background: none; color: inherit; font: inherit; opacity: .7; cursor: pointer; white-space: nowrap; }
         #SeasonalPicksConfigPage .sp-tab:hover { opacity: 1; background: var(--sp-softer); }
@@ -109,7 +114,11 @@
             #SeasonalPicksConfigPage .sp-section { padding: 1em .9em .4em; }
             #SeasonalPicksConfigPage .sp-season-summary { gap: .6em; padding: .5em .6em; }
             #SeasonalPicksConfigPage .sp-thumb { width: 44px; height: 44px; }
-            #SeasonalPicksConfigPage .sp-kind { display: none; }
+            /* Season rows: picture, name and dates get the first line; badges, the On box and the arrow go on a second. */
+            #SeasonalPicksConfigPage .sp-season-summary { flex-wrap: wrap; row-gap: .3em; }
+            #SeasonalPicksConfigPage .sp-season-toggle { flex-basis: calc(100% - 44px - .6em); }
+            #SeasonalPicksConfigPage .sp-season-name, #SeasonalPicksConfigPage .sp-season-when { white-space: normal; }
+            #SeasonalPicksConfigPage .sp-season-summary .checkboxContainer { margin-left: auto; }
             #SeasonalPicksConfigPage .sp-season-body { padding: .2em .8em .5em; }
             #SeasonalPicksConfigPage .sp-designer { padding: .7em; }
             #SeasonalPicksConfigPage .sp-designer-preview { grid-template-columns: 1fr; }
@@ -473,14 +482,14 @@
                     '</div>' +
                     '<div class="selectContainer"><select is="emby-select" data-s="Background" label="Background">' + options(BACKGROUNDS, st.Background) + '</select></div>' +
                     '<div class="sp-row">' +
-                    '<button is="emby-button" type="button" data-bg-upload>Upload picture</button>' +
-                    '<button is="emby-button" type="button" data-bg-remove>Remove picture</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-bg-upload>Upload picture</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-bg-remove>Remove picture</button>' +
                     '</div>' +
                     range('ColourWash', 'Season colour wash', 0, 100, 5, st.ColourWash) +
                     range('Darkness', 'Darkness', 0, 100, 5, st.Darkness) +
                     range('Decorations', 'Decorations', 0, 100, 5, st.Decorations) +
                     '<div class="sp-row">' +
-                    '<button is="emby-button" type="button" data-design-reset>Reset design</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-design-reset>Reset design</button>' +
                     '<button is="emby-button" type="button" class="raised" data-design-close>Done</button>' +
                     '</div>' +
                     '</div></div>';
@@ -491,8 +500,8 @@
                     '<img alt="Playlist cover"><img alt="Library tile" class="wide">' +
                     '<div class="sp-cover-actions">' +
                     '<button is="emby-button" type="button" class="raised" data-design>Design cover</button>' +
-                    '<button is="emby-button" type="button" data-cover-upload>Upload finished cover</button>' +
-                    '<button is="emby-button" type="button" data-cover-remove hidden>Remove finished cover</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-cover-upload>Upload finished cover</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-cover-remove hidden>Remove finished cover</button>' +
                     '<span class="sp-source" data-source></span>' +
                     '</div></div>';
             }
@@ -617,7 +626,7 @@
                     '<div class="sp-season-head">' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="Name" label="Name" value="' + esc(s.Name) + '"></div>' +
                     '<label>Colour <input type="color" data-f="Color" value="' + esc(s.Color) + '"></label>' +
-                    '<button is="emby-button" type="button" data-remove title="Remove season">Remove</button>' +
+                    '<button is="emby-button" type="button" class="raised" data-remove title="Remove season">Remove</button>' +
                     '</div>' +
                     '<div class="sp-grid2">' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="Start" label="Starts (MM-DD or easter-14)" value="' + (easter ? easterText(s.StartEasterOffset) : md(s.StartMonth, s.StartDay)) + '"></div>' +
@@ -840,6 +849,11 @@
                 page.querySelectorAll('[data-tab]').forEach(function (t) {
                     t.setAttribute('aria-selected', String(t.getAttribute('data-tab') === name));
                 });
+                // On phones the tab strip scrolls sideways: bring the chosen tab into view (without scrolling the page).
+                var strip = $('#spTabs'), tab = strip.querySelector('[data-tab="' + name + '"]');
+                if (tab.offsetLeft < strip.scrollLeft || tab.offsetLeft + tab.offsetWidth > strip.scrollLeft + strip.clientWidth) {
+                    strip.scrollLeft = tab.offsetLeft - (strip.clientWidth - tab.offsetWidth) / 2;
+                }
                 page.querySelectorAll('[data-panel]').forEach(function (p) {
                     p.hidden = p.getAttribute('data-panel') !== name;
                 });
@@ -859,7 +873,8 @@
             // CHANGELOG.md: "## 1.2.0 - date" headings with "- " bullets.
             function loadChangelog() {
                 ApiClient.fetch({ url: ApiClient.getUrl('SeasonalPicks/Changelog'), type: 'GET' })
-                    .then(function (res) { return res.text(); })
+                    // Jellyfin 12.1 hands text responses back already read; older clients return the Response.
+                    .then(function (res) { return typeof res === 'string' ? res : res.text(); })
                     .then(function (md) {
                         var releases = [];
                         md.split(/\r?\n/).forEach(function (line) {

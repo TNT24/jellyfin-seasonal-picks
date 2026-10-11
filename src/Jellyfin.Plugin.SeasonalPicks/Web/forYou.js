@@ -73,7 +73,7 @@
     function injectStyles() {
         if (document.getElementById('sp-styles')) return;
         var css = [
-            '.sp-overlay{position:fixed;inset:0;z-index:10000;background:rgba(12,12,16,.97);color:#fff;overflow-y:auto;font-family:inherit;-webkit-overflow-scrolling:touch}',
+            '.sp-overlay{position:fixed;top:0;right:0;bottom:0;left:0;z-index:10000;background:rgba(12,12,16,.97);color:#fff;overflow-y:auto;font-family:inherit;-webkit-overflow-scrolling:touch}',
             '.sp-wrap{max-width:1600px;margin:0 auto;padding:24px 16px 48px}',
             '.sp-head{display:flex;flex-wrap:wrap;gap:12px;align-items:center;justify-content:space-between;margin-bottom:16px}',
             '.sp-head h1{margin:0;font-size:1.9em;font-weight:600}',
