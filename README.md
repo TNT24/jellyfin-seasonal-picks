@@ -1,6 +1,18 @@
-# Seasonal Picks (Jellyfin 12.1 plugin)
+<p align="center">
+  <img src="docs/logo.svg" alt="Seasonal Picks logo" width="160">
+</p>
 
-Picks movies for each user from their watch history and the time of year, then puts them where every client can see them, **TV apps included**.
+<h1 align="center">Seasonal Picks</h1>
+
+<p align="center">A Jellyfin plugin that picks movies for each user from their watch history and the time of year.</p>
+
+Seasonal Picks puts its picks where every client can see them, **TV apps included**: private playlists, season playlists, an optional mirror library, and themed covers drawn on the server.
+
+## Requirements
+
+- Jellyfin 12.1
+- Optional: [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) for the web client's Suggested screen and home row
+- To build from source: the .NET 10 SDK and PowerShell
 
 ## What you get
 

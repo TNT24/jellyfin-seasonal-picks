@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
+  <title id="t">Seasonal Picks</title>
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#1c1830"/>
+      <stop offset="1" stop-color="#0d1420"/>
+    </linearGradient>
+    <linearGradient id="play" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#aa5cc3"/>
+      <stop offset="1" stop-color="#00a4dc"/>
+    </linearGradient>
+  </defs>
+  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
+  <!-- Four season arcs: Valentine's, Easter, Halloween, Christmas -->
+  <g fill="none" stroke-width="18" stroke-linecap="round">
+    <path d="M128 40 A88 88 0 0 1 216 128" stroke="#e85d9e" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
+    <path d="M216 128 A88 88 0 0 1 128 216" stroke="#5cbf6a" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
+    <path d="M128 216 A88 88 0 0 1 40 128" stroke="#f28c28" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
+    <path d="M40 128 A88 88 0 0 1 128 40" stroke="#e03a4a" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
+  </g>
+  <path d="M106 86 L178 128 L106 170 Z" fill="url(#play)" stroke="url(#play)" stroke-width="14" stroke-linejoin="round"/>
+</svg>
