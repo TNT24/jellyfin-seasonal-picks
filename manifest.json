@@ -9,6 +9,14 @@
         "imageUrl":  "https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png",
         "versions":  [
                          {
+                             "version":  "1.2.2.0",
+                             "changelog":  "New logo, shown in the plugin catalog and on the plugin\u0027s page in the dashboard. Rewritten README with install steps, a getting started guide and answers to common questions.",
+                             "targetAbi":  "12.1.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.2.2/SeasonalPicks_1.2.2.0.zip",
+                             "checksum":  "379a224f6fda54c760476b5ef0bd4af2",
+                             "timestamp":  "2026-10-12T23:13:34.1805797Z"
+                         },
+                         {
                              "version":  "1.2.1.0",
                              "changelog":  "Season rows on the settings page are no longer squashed: the name and dates show in full, and on phones the badges and the On box move to a second line. The settings page uses more of a wide screen, and the Picks settings sit in three tidy columns. Buttons such as Remove and Upload picture are readable again, and \"Remove finished cover\" only shows when there is an uploaded cover. What\u0027s new loads again on Jellyfin 12.1. On phones, the chosen tab scrolls into view. The Suggested screen fills the whole screen in older browsers.",
                              "targetAbi":  "12.1.0.0",

@@ -1,4 +1,4 @@
-# Builds the plugin into .\dist\SeasonalPicks\ (DLL, meta.json, font licence) and zips it as .\dist\SeasonalPicks_<version>.zip,
+# Builds the plugin into .\dist\SeasonalPicks\ (DLL, meta.json, logo, font licence) and zips it as .\dist\SeasonalPicks_<version>.zip,
 # ready to copy to /config/plugins/SeasonalPicks/ on the server.
 $ErrorActionPreference = 'Stop'
 $proj = Join-Path $PSScriptRoot 'src\Jellyfin.Plugin.SeasonalPicks\Jellyfin.Plugin.SeasonalPicks.csproj'
@@ -12,6 +12,8 @@ New-Item -ItemType Directory -Force $out | Out-Null
 Copy-Item (Join-Path $PSScriptRoot 'src\Jellyfin.Plugin.SeasonalPicks\bin\Release\net10.0\Jellyfin.Plugin.SeasonalPicks.dll') $out -Force
 # Licence for the Noto Sans font embedded in the DLL.
 Copy-Item (Join-Path $PSScriptRoot 'src\Jellyfin.Plugin.SeasonalPicks\Fonts\OFL.txt') (Join-Path $out 'NotoSans-OFL.txt') -Force
+# Shown on the plugin's page in the dashboard.
+Copy-Item (Join-Path $PSScriptRoot 'docs\logo.png') $out -Force
 
 # meta.json: version from the project, changelog from the newest CHANGELOG.md entry (which must match the version).
 $version = ([xml][IO.File]::ReadAllText($proj)).Project.PropertyGroup.AssemblyVersion | Where-Object { $_ } | Select-Object -First 1
@@ -36,6 +38,7 @@ $meta = [ordered]@{
     status      = 'Active'
     autoUpdate  = $false
     assemblies  = @('Jellyfin.Plugin.SeasonalPicks.dll')
+    imagePath   = 'logo.png'
 }
 [IO.File]::WriteAllText((Join-Path $out 'meta.json'), ($meta | ConvertTo-Json), $utf8)
 

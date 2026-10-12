@@ -2,6 +2,10 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.2.2 - 2026-10-13
+- New logo, shown in the plugin catalog and on the plugin's page in the dashboard.
+- Rewritten README with install steps, a getting started guide and answers to common questions.
+
 ## 1.2.1 - 2026-10-11
 - Season rows on the settings page are no longer squashed: the name and dates show in full, and on phones the badges and the On box move to a second line.
 - The settings page uses more of a wide screen, and the Picks settings sit in three tidy columns.

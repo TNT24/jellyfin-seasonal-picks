@@ -1,22 +1,86 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 256 256" width="256" height="256" role="img" aria-labelledby="t">
-  <title id="t">Seasonal Picks</title>
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="450" viewBox="0 0 800 450">
   <defs>
     <linearGradient id="bg" x1="0" y1="0" x2="1" y2="1">
-      <stop offset="0" stop-color="#1c1830"/>
-      <stop offset="1" stop-color="#0d1420"/>
+      <stop offset="0" stop-color="#1a1340"/>
+      <stop offset="0.55" stop-color="#3b1d6e"/>
+      <stop offset="1" stop-color="#0e3a5c"/>
     </linearGradient>
-    <linearGradient id="play" x1="0" y1="0" x2="1" y2="1">
+    <linearGradient id="screen" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#0b0b1a"/>
+      <stop offset="1" stop-color="#16162e"/>
+    </linearGradient>
+    <linearGradient id="jf" x1="0" y1="0" x2="1" y2="1">
       <stop offset="0" stop-color="#aa5cc3"/>
       <stop offset="1" stop-color="#00a4dc"/>
     </linearGradient>
+    <linearGradient id="val" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e85d9e"/>
+      <stop offset="1" stop-color="#7a2352"/>
+    </linearGradient>
+    <linearGradient id="eas" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#5cbf6a"/>
+      <stop offset="1" stop-color="#255c33"/>
+    </linearGradient>
+    <linearGradient id="hal" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#f28c28"/>
+      <stop offset="1" stop-color="#7a3c0a"/>
+    </linearGradient>
+    <linearGradient id="xms" x1="0" y1="0" x2="0" y2="1">
+      <stop offset="0" stop-color="#e03a4a"/>
+      <stop offset="1" stop-color="#6e1520"/>
+    </linearGradient>
+    <filter id="glow" x="-20%" y="-20%" width="140%" height="140%">
+      <feGaussianBlur stdDeviation="18"/>
+    </filter>
   </defs>
-  <rect width="256" height="256" rx="56" fill="url(#bg)"/>
-  <!-- Four season arcs: Valentine's, Easter, Halloween, Christmas -->
-  <g fill="none" stroke-width="18" stroke-linecap="round">
-    <path d="M128 40 A88 88 0 0 1 216 128" stroke="#e85d9e" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
-    <path d="M216 128 A88 88 0 0 1 128 216" stroke="#5cbf6a" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
-    <path d="M128 216 A88 88 0 0 1 40 128" stroke="#f28c28" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
-    <path d="M40 128 A88 88 0 0 1 128 40" stroke="#e03a4a" transform="rotate(8 128 128)" stroke-dasharray="104 999"/>
+
+  <rect width="800" height="450" fill="url(#bg)"/>
+  <circle cx="640" cy="80" r="160" fill="#00a4dc" opacity="0.12" filter="url(#glow)"/>
+  <circle cx="140" cy="400" r="180" fill="#aa5cc3" opacity="0.14" filter="url(#glow)"/>
+
+  <!-- screen -->
+  <rect x="150" y="62" width="500" height="250" rx="22" fill="url(#jf)"/>
+  <rect x="158" y="70" width="484" height="234" rx="16" fill="url(#screen)"/>
+
+  <!-- row title -->
+  <rect x="186" y="94" width="120" height="10" rx="5" fill="#ffd34d"/>
+  <rect x="316" y="94" width="60" height="10" rx="5" fill="#ffffff" opacity="0.18"/>
+
+  <!-- picks row: one poster per season -->
+  <g transform="translate(186 118)">
+    <rect width="92" height="138" rx="10" fill="url(#val)"/>
+    <path d="M46 84 C46 84 22 68 22 54 C22 45 29 40 36 40 C41 40 44 43 46 46 C48 43 51 40 56 40 C63 40 70 45 70 54 C70 68 46 84 46 84 Z" fill="#ffffff" opacity="0.85"/>
   </g>
-  <path d="M106 86 L178 128 L106 170 Z" fill="url(#play)" stroke="url(#play)" stroke-width="14" stroke-linejoin="round"/>
+  <g transform="translate(296 118)">
+    <rect width="92" height="138" rx="10" fill="url(#eas)"/>
+    <ellipse cx="46" cy="66" rx="20" ry="26" fill="#ffffff" opacity="0.85"/>
+    <path d="M27 64 L35 58 L43 64 L51 58 L59 64 L65 60" fill="none" stroke="#5cbf6a" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(406 118)">
+    <rect width="92" height="138" rx="10" fill="url(#hal)"/>
+    <rect x="43" y="38" width="7" height="12" rx="3" fill="#2e5c22"/>
+    <ellipse cx="46" cy="68" rx="26" ry="20" fill="#ffffff" opacity="0.85"/>
+    <path d="M34 62 L39 56 L44 62 Z M48 62 L53 56 L58 62 Z M34 74 Q46 82 58 74" fill="#7a3c0a" stroke="#7a3c0a" stroke-width="2" stroke-linejoin="round"/>
+  </g>
+  <g transform="translate(516 118)">
+    <rect width="92" height="138" rx="10" fill="url(#xms)"/>
+    <path d="M46 34 L68 66 L56 66 L72 88 L20 88 L36 66 L24 66 Z" fill="#ffffff" opacity="0.85"/>
+    <rect x="41" y="88" width="10" height="10" rx="2" fill="#ffffff" opacity="0.85"/>
+  </g>
+
+  <!-- poster captions -->
+  <rect x="186" y="270" width="72" height="8" rx="4" fill="#ffffff" opacity="0.18"/>
+  <rect x="296" y="270" width="60" height="8" rx="4" fill="#ffffff" opacity="0.18"/>
+  <rect x="406" y="270" width="78" height="8" rx="4" fill="#ffd34d"/>
+  <rect x="516" y="270" width="66" height="8" rx="4" fill="#ffffff" opacity="0.18"/>
+
+  <!-- IN SEASON badge -->
+  <g transform="translate(518 40)">
+    <rect width="166" height="46" rx="23" fill="#ffd34d"/>
+    <text x="83" y="31" text-anchor="middle" font-family="Segoe UI, Noto Sans, sans-serif" font-size="22" font-weight="800" letter-spacing="2" fill="#1a1340">IN SEASON</text>
+  </g>
+
+  <!-- wordmark -->
+  <text x="400" y="380" text-anchor="middle" font-family="Segoe UI, Noto Sans, sans-serif" font-size="48" font-weight="700" fill="#ffffff">Seasonal Picks</text>
+  <text x="400" y="416" text-anchor="middle" font-family="Segoe UI, Noto Sans, sans-serif" font-size="20" fill="#c9c3e6" letter-spacing="1">the right film for the time of year</text>
 </svg>
