@@ -11,7 +11,7 @@
 
 <p align="center">
   <a href="https://github.com/TNT24/jellyfin-seasonal-picks/releases/latest"><img src="https://img.shields.io/github/v/release/TNT24/jellyfin-seasonal-picks?label=release" alt="Latest release"></a>
-  <img src="https://img.shields.io/badge/Jellyfin-12.1-00a4dc" alt="Jellyfin 12.1">
+  <img src="https://img.shields.io/badge/Jellyfin-12.x%20%7C%2010.11.x-00a4dc" alt="Jellyfin 12.x and 10.11.x">
   <img src="https://img.shields.io/badge/works%20on-TV%20%7C%20mobile%20%7C%20web-aa5cc3" alt="Works on TV, mobile and web">
 </p>
 
@@ -59,11 +59,15 @@ Seasonal Picks works out a fresh list for each user every day and publishes it i
 4. Optional: install [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) for the web client's Suggested screen and home row.
 5. **Restart Jellyfin**, then clear the browser cache.
 
-New releases appear in the catalog as updates.
+Jellyfin picks the build that matches your server version. New releases install themselves through the daily *Update Plugins* task (or update by hand from the plugin's page).
 
 ### Manual install
 
-1. Download the zip from the [latest release](https://github.com/TNT24/jellyfin-seasonal-picks/releases/latest), or build it yourself (see [Building from source](#building-from-source)).
+1. Download the zip for your server from the [latest release](https://github.com/TNT24/jellyfin-seasonal-picks/releases/latest), or build it yourself (see [Building from source](#building-from-source)):
+   - `SeasonalPicks_<version>.12.zip` for Jellyfin **12.x**
+   - `SeasonalPicks_<version>.11.zip` for Jellyfin **10.11.x**
+
+   Your server version is shown under *Dashboard → General*.
 2. Extract the four files into `SeasonalPicks/` in your Jellyfin plugins folder:
 
    | Platform | Plugins folder |
@@ -196,11 +200,15 @@ All under `/SeasonalPicks`, authenticated as the calling user:
 You need the [.NET 10 SDK](https://dotnet.microsoft.com/download) and PowerShell.
 
 ```powershell
-.\build.ps1                                                 # builds dist\SeasonalPicks\ and dist\SeasonalPicks_<version>.zip
-dotnet test tests\Jellyfin.Plugin.SeasonalPicks.Tests
+.\build.ps1                                                          # builds both zips into dist\
+dotnet test tests\Jellyfin.Plugin.SeasonalPicks.Tests                   # tests the Jellyfin 12 build
+dotnet test tests\Jellyfin.Plugin.SeasonalPicks.Tests -p:JellyfinTarget=10.11   # tests the 10.11 build
 ```
 
-The build produces the DLL, `meta.json`, the logo and the font licence. `meta.json`'s changelog comes from the newest entry in
+The build makes two zips from the same code: `SeasonalPicks_<version>.12.zip` for Jellyfin 12 (.NET 10) and
+`SeasonalPicks_<version>.11.zip` for Jellyfin 10.11 (.NET 9; the few server calls that differ are in `ServerCompat.cs`). Each
+holds the DLL, `meta.json`, the logo and the font licence. The 12 build always has the higher version, so a Jellyfin 12
+server picks it. `meta.json`'s changelog comes from the newest entry in
 [CHANGELOG.md](CHANGELOG.md), and the build stops if that entry doesn't match the project version.
 
 The tests cover the pick rules (seasons, hide out of season, history windows, copies, collections, genre cap, season
@@ -210,10 +218,10 @@ playlists, replacements), settings and state files, cover rendering, and that th
 
 1. Add an entry at the top of `CHANGELOG.md` and bump the version in the `.csproj` (a test checks the two match). The
    settings page lists every release under **What's new**.
-2. Run `.\build.ps1`. It also adds the version to `manifest.json`.
-3. Create the GitHub release tagged `v<version>` (e.g. `v1.2.0`) and attach the zip:
+2. Run `.\build.ps1`. It also adds both builds to `manifest.json`.
+3. Create the GitHub release tagged `v<version>` (e.g. `v1.3.1`) and attach both zips:
    ```powershell
-   gh release create v<version> dist\SeasonalPicks_<version>.0.zip   # e.g. v1.2.2 and SeasonalPicks_1.2.2.0.zip
+   gh release create v1.3.1 dist\SeasonalPicks_1.3.1.12.zip dist\SeasonalPicks_1.3.1.11.zip
    ```
 4. Commit and push `manifest.json`. Jellyfin servers will see the update.
 

@@ -1,7 +1,12 @@
 <Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
-    <TargetFramework>net10.0</TargetFramework>
+    <!-- Same switch as the plugin: -p:JellyfinTarget=10.11 tests the 10.11 build. -->
+    <JellyfinTarget Condition="'$(JellyfinTarget)' == ''">12</JellyfinTarget>
+    <TargetFramework Condition="'$(JellyfinTarget)' == '12'">net10.0</TargetFramework>
+    <TargetFramework Condition="'$(JellyfinTarget)' == '10.11'">net9.0</TargetFramework>
+    <SkiaSharpVersion Condition="'$(JellyfinTarget)' == '12'">3.119.4</SkiaSharpVersion>
+    <SkiaSharpVersion Condition="'$(JellyfinTarget)' == '10.11'">3.116.1</SkiaSharpVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
@@ -12,7 +17,7 @@
     <PackageReference Include="xunit" Version="2.*" />
     <PackageReference Include="xunit.runner.visualstudio" Version="3.*" />
     <!-- The plugin compiles against SkiaSharp without its native parts (the server provides them); tests need them. -->
-    <PackageReference Include="SkiaSharp" Version="3.119.4" />
+    <PackageReference Include="SkiaSharp" Version="$(SkiaSharpVersion)" />
     <!-- JavaScript parser, to check the embedded page scripts are valid. -->
     <PackageReference Include="Acornima" Version="1.*" />
   </ItemGroup>

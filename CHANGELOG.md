@@ -2,6 +2,9 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.3.1 - 2026-10-13
+- Now also runs on Jellyfin 10.11. Each release comes in two builds, one for 10.11 and one for 12, and Jellyfin installs the right one by itself.
+
 ## 1.3.0 - 2026-10-13
 - Longer seasons now change their cover each week: Halloween (pumpkin patch, graveyard, haunted house, witch's cauldron), Christmas (tree, living room by the fire, Santa's sleigh, baubles and holly), winter (snowfall, snowy forest), Easter (bunny and eggs, basket of chicks), Valentine's (floating hearts, hearts and roses, heart balloons) and Chinese New Year (red lanterns, lantern festival).
 - New Scene option in the cover designer: change each week, or always use one scene. It also lets you preview every scene.

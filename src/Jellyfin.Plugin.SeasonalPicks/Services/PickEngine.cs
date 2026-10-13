@@ -169,7 +169,7 @@ public class PickEngine
     public List<Candidate> BuildCandidates(User user, PluginConfiguration cfg, PickContext ctx)
     {
         var list = GetMovies(user, cfg);
-        var userData = _userData.GetUserDataBatch(list, user);
+        var userData = _userData.UserDataFor(list, user);
         var entries = list.Select(i => (i, userData.TryGetValue(i.Id, out var ud) ? WatchInfo.From(ud) : default));
 
         var result = new List<Candidate>();
@@ -240,7 +240,7 @@ public class PickEngine
                 continue;
             }
 
-            var userData = _userData.GetUserDataBatch(movies.Cast<BaseItem>().ToList(), user);
+            var userData = _userData.UserDataFor(movies.Cast<BaseItem>().ToList(), user);
             var films = MergeCopies(movies.Select(m => ((BaseItem)m, userData.TryGetValue(m.Id, out var ud) ? WatchInfo.From(ud) : default)));
             foreach (var (key, pos) in SeriesPositions(set.Name, films))
             {

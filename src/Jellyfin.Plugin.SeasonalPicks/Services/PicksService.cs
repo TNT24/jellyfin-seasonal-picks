@@ -85,7 +85,7 @@ public class PicksService
     public async Task RefreshAllAsync(IProgress<double> progress, CancellationToken ct)
     {
         var cfg = Config;
-        var users = _users.GetUsers().Where(u => !u.HasPermission(PermissionKind.IsDisabled) && IsEnabledFor(u)).ToList();
+        var users = _users.AllUsers().Where(u => !u.HasPermission(PermissionKind.IsDisabled) && IsEnabledFor(u)).ToList();
 
         var mirrorUser = cfg.EnableMirror ? ResolveMirrorUser(cfg) : null;
         var total = users.Count + (mirrorUser is not null ? 1 : 0);
