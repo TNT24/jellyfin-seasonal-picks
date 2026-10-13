@@ -9,6 +9,14 @@
         "imageUrl":  "https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png",
         "versions":  [
                          {
+                             "version":  "1.3.0.0",
+                             "changelog":  "Longer seasons now change their cover each week: Halloween (pumpkin patch, graveyard, haunted house, witch\u0027s cauldron), Christmas (tree, living room by the fire, Santa\u0027s sleigh, baubles and holly), winter (snowfall, snowy forest), Easter (bunny and eggs, basket of chicks), Valentine\u0027s (floating hearts, hearts and roses, heart balloons) and Chinese New Year (red lanterns, lantern festival). New Scene option in the cover designer: change each week, or always use one scene. It also lets you preview every scene. New days: Pancake Day (Shrove Tuesday, follows Easter) and Chinese New Year (New Year\u0027s Day to the Lantern Festival, follows the lunar calendar). Dates relative to Chinese New Year are written lunar+0, lunar+14 and so on. Remastered covers for New Year, Star Wars Day, Ghostbusters Day, Back to Hogwarts, St Patrick\u0027s Day, Bonfire Night and the out-of-season cover. Covers are more detailed, and decorations no longer cross the title or each other. The plugin now updates itself: new releases are installed by Jellyfin\u0027s Update Plugins task.",
+                             "targetAbi":  "12.1.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.3.0/SeasonalPicks_1.3.0.0.zip",
+                             "checksum":  "ddddbaef9476ce827db3d67aed941f42",
+                             "timestamp":  "2026-10-13T00:11:24.3819369Z"
+                         },
+                         {
                              "version":  "1.2.2.0",
                              "changelog":  "New logo, shown in the plugin catalog and on the plugin\u0027s page in the dashboard. Rewritten README with install steps, a getting started guide and answers to common questions.",
                              "targetAbi":  "12.1.0.0",

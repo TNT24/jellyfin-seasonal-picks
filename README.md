@@ -36,10 +36,10 @@ Seasonal Picks works out a fresh list for each user every day and publishes it i
 ## Features
 
 - **Knows what you've seen.** Recently watched and half-watched films are left out; long-forgotten favourites come back as rediscoveries.
-- **Follows the calendar.** Halloween, Christmas, Easter, Valentine's and New Year out of the box, plus special days like Star Wars Day and Back to Hogwarts. Holiday films stay hidden the rest of the year.
+- **Follows the calendar.** Halloween, Christmas, Easter, Valentine's and New Year out of the box, plus special days like Pancake Day, Chinese New Year and Star Wars Day. Holiday films stay hidden the rest of the year.
 - **Keeps the list moving.** Watch a pick or mark it played and it's replaced straight away. Last refresh's picks are down-weighted so the list rotates.
 - **Understands collections and copies.** The next film in a series you've started is favoured, and 4K and HD copies of the same film count as one.
-- **Draws its own covers.** Playlist and library covers are generated on the server in the season's colours, or designed in a live-preview designer, or uploaded.
+- **Draws its own covers.** Playlist and library covers are drawn on the server for each season, with a new scene each week in the longer seasons. Design them in a live-preview designer, or upload your own.
 - **Preview before you commit.** See exactly what any user would get with the settings on the page, without writing anything.
 
 ---
@@ -118,9 +118,9 @@ Each season has a date window (can wrap the new year), keywords (whole words in 
 | Valentine's | Feb 1 – 14 |
 | New Year | Dec 27 – Jan 2 |
 
-Each comes with common words, famous titles and TMDb keyword tags. Edit, add or remove them in the plugin settings; Easter-style dates are written `easter-14` / `easter+1`.
+Each comes with common words, famous titles and TMDb keyword tags. Edit, add or remove them in the plugin settings. Dates that move each year are written relative to Easter Sunday (`easter-14` / `easter+1`) or to Chinese New Year (`lunar+0` / `lunar+14`).
 
-There are also **special days** that push their films to the front on the day but never hide them the rest of the year: Star Wars Day (May 4–5), Ghostbusters Day (Jun 8), Back to Hogwarts (Sep 1), St Patrick's Day (Mar 17) and Bonfire Night (Nov 1–5).
+There are also **special days** that push their films to the front on the day but never hide them the rest of the year: Chinese New Year (New Year's Day to the Lantern Festival, following the lunar calendar), Pancake Day (Shrove Tuesday, 47 days before Easter), St Patrick's Day (Mar 17), Star Wars Day (May 4–5), Ghostbusters Day (Jun 8), Back to Hogwarts (Sep 1) and Bonfire Night (Nov 1–5).
 
 **Add a day or season** offers ready-made extras (Alien Day, James Bond Day, Talk Like a Pirate Day, Sherlock Holmes Day, Pride Month, Remembrance, Winter Warmers) plus a blank day or season to fill in yourself.
 
@@ -129,9 +129,22 @@ There are also **special days** that push their films to the front on the day bu
 For the active season, in this order:
 
 1. A finished cover you uploaded for that season, used as it is (settings page, per season, plus one "out of season" cover).
-2. Otherwise a generated cover: the current picks' posters in the season colour, decorated for the season (a Christmas tree in the snow, pumpkins/bats/moon, an Easter bunny with eggs, hearts, fireworks, shamrocks, crossed lightsabers, ghosts, a lit castle, a bonfire, or sparkles out of season) with the name large in the centre. Square for playlists, 16:9 for the library tile.
+2. Otherwise a generated cover: the current picks' posters in the season colour, decorated for the season, with the name large in the centre. Square for playlists, 16:9 for the library tile. Decorations are kept clear of the title.
 
-**Design cover** (per season, and for out of season) opens a designer with a live preview. It sets the decoration, the title text, size, position (top, middle or bottom) and colour, the small label above the title, and the line under it. The background can be the picks' posters, **your own picture** (upload one and the decorations and title are drawn over it), or plain season colour. Sliders set the colour wash, darkness and how strong the decorations are. The preview is drawn by the server, so it's exactly what TVs will show.
+Longer seasons change scene every week, then start again:
+
+| Season | Scenes, week by week |
+|---|---|
+| Halloween | Pumpkin patch, graveyard, haunted house, witch's cauldron |
+| Christmas | Christmas tree, living room by the fire, Santa's sleigh, baubles and holly |
+| Winter (snow) | Snowfall, snowy forest |
+| Easter | Bunny and eggs, basket of chicks |
+| Valentine's | Floating hearts, hearts and roses, heart balloons |
+| Chinese New Year | Red lanterns, lantern festival |
+
+Special days have one scene each: fireworks over a clock tower (New Year), a stack of pancakes (Pancake Day), a rainbow and a pot of gold (St Patrick's Day), clashing lightsabers, ghosts over the city, a castle on a lake with floating candles, and a bonfire. Out of season it's a night at the pictures.
+
+**Design cover** (per season, and for out of season) opens a designer with a live preview. It sets the decoration and **scene** (change each week, or always one), the title text, size, position (top, middle or bottom) and colour, the small label above the title, and the line under it. The background can be the picks' posters, **your own picture** (upload one and the decorations and title are drawn over it), or plain season colour. Sliders set the colour wash, darkness and how strong the decorations are. The preview is drawn by the server, so it's exactly what TVs will show.
 
 Covers update on every refresh. Uploads follow a season when you rename it (moved on Save).
 

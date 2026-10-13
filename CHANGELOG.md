@@ -2,6 +2,14 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.3.0 - 2026-10-13
+- Longer seasons now change their cover each week: Halloween (pumpkin patch, graveyard, haunted house, witch's cauldron), Christmas (tree, living room by the fire, Santa's sleigh, baubles and holly), winter (snowfall, snowy forest), Easter (bunny and eggs, basket of chicks), Valentine's (floating hearts, hearts and roses, heart balloons) and Chinese New Year (red lanterns, lantern festival).
+- New Scene option in the cover designer: change each week, or always use one scene. It also lets you preview every scene.
+- New days: Pancake Day (Shrove Tuesday, follows Easter) and Chinese New Year (New Year's Day to the Lantern Festival, follows the lunar calendar). Dates relative to Chinese New Year are written lunar+0, lunar+14 and so on.
+- Remastered covers for New Year, Star Wars Day, Ghostbusters Day, Back to Hogwarts, St Patrick's Day, Bonfire Night and the out-of-season cover.
+- Covers are more detailed, and decorations no longer cross the title or each other.
+- The plugin now updates itself: new releases are installed by Jellyfin's Update Plugins task.
+
 ## 1.2.2 - 2026-10-13
 - New logo, shown in the plugin catalog and on the plugin's page in the dashboard.
 - Rewritten README with install steps, a getting started guide and answers to common questions.

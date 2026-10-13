@@ -25,6 +25,10 @@ public class CoverArtTests
     [InlineData("Ghostbusters Day", CoverTheme.Ghosts)]
     [InlineData("Back to Hogwarts", CoverTheme.Castle)]
     [InlineData("Star Trek Day", CoverTheme.Space)]
+    [InlineData("Pancake Day", CoverTheme.Pancakes)]
+    [InlineData("Shrove Tuesday", CoverTheme.Pancakes)]
+    [InlineData("Chinese New Year", CoverTheme.LunarNewYear)]
+    [InlineData("Lunar New Year", CoverTheme.LunarNewYear)]
     public void Theme_is_guessed_from_the_season_name(string name, CoverTheme expected)
     {
         Assert.Equal(expected, CoverArt.ThemeFor("auto", name));
@@ -62,6 +66,8 @@ public class CoverArtTests
             [CoverTheme.Ghosts] = ("Ghostbusters Day", "#4CAF50"),
             [CoverTheme.Castle] = ("Back to Hogwarts", "#740001"),
             [CoverTheme.Bonfire] = ("Bonfire Night", "#FF6D00"),
+            [CoverTheme.Pancakes] = ("Pancake Day", "#E0A030"),
+            [CoverTheme.LunarNewYear] = ("Chinese New Year", "#C62828"),
             [CoverTheme.Sparkle] = ("Suggested", "#3A6EA5"),
             [CoverTheme.None] = ("A Much Longer Season Name", "#3A6EA5")
         };
@@ -114,6 +120,44 @@ public class CoverArtTests
         {
             File.WriteAllLines(Path.Combine(outDir, "seasons.tsv"), lines);
         }
+    }
+
+    public static IEnumerable<object[]> AllScenes()
+        => SeasonRule.Defaults()
+            .Select(s => (Name: s.Name, Color: s.Color, Theme: CoverArt.ThemeFor(s.Theme, s.Name)))
+            .Append((Name: "Winter Warmers", Color: "#4A7BB0", Theme: CoverTheme.Snow))
+            .SelectMany(t => Enumerable.Range(1, CoverArt.Scenes(t.Theme).Length).Select(n => new object[] { t.Name, t.Color, t.Theme, n }));
+
+    [Theory]
+    [MemberData(nameof(AllScenes))]
+    public void Every_scene_renders_at_both_sizes(string name, string colour, CoverTheme theme, int scene)
+    {
+        var posters = FakePosters();
+        var outDir = Environment.GetEnvironmentVariable("SP_COVER_OUT");
+        foreach (var wide in new[] { false, true })
+        {
+            var bytes = CoverService.Generate(posters, colour, name, "Suggested", wide, theme, new CoverStyle { Scene = scene });
+            Assert.NotNull(bytes);
+            if (!string.IsNullOrEmpty(outDir))
+            {
+                Directory.CreateDirectory(outDir);
+                File.WriteAllBytes(Path.Combine(outDir, $"scene-{SeasonRule.Slug(name)}-{scene}-{(wide ? "wide" : "square")}.jpg"), bytes!);
+            }
+        }
+    }
+
+    [Fact]
+    public void The_scene_changes_each_week_and_can_be_pinned()
+    {
+        Assert.Equal(new[] { 0, 1, 2, 3, 0 }, Enumerable.Range(0, 5).Select(week => CoverArt.SceneFor(CoverTheme.Halloween, 0, week)));
+        Assert.Equal(2, CoverArt.SceneFor(CoverTheme.Halloween, 3, 0));
+        Assert.Equal(0, CoverArt.SceneFor(CoverTheme.Lightsabers, 0, 3)); // one scene: always it
+
+        var a = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, week: 0);
+        var b = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, week: 1);
+        var pinned = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, new CoverStyle { Scene = 1 }, week: 1);
+        Assert.NotEqual(a, b);
+        Assert.Equal(a, pinned);
     }
 
     [Fact]

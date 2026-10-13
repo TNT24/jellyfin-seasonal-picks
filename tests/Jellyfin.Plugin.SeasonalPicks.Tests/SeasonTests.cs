@@ -36,7 +36,7 @@ public class SeasonTests
     }
 
     private static readonly string[] FilmDays =
-        { "Star Wars Day", "Ghostbusters Day", "Back to Hogwarts", "St Patrick's Day", "Bonfire Night" };
+        { "Star Wars Day", "Ghostbusters Day", "Back to Hogwarts", "St Patrick's Day", "Bonfire Night", "Pancake Day", "Chinese New Year" };
 
     [Fact]
     public void Holidays_hide_their_films_out_of_season_but_film_days_do_not()
@@ -61,6 +61,20 @@ public class SeasonTests
     public void New_year_runs_over_the_turn_of_the_year(int y, int m, int d, bool expected)
     {
         Assert.Equal(expected, SeasonRule.Defaults().Single(s => s.Name == "New Year").IsActive(new DateTime(y, m, d)));
+    }
+
+    [Theory]
+    [InlineData("Halloween", 2026, 10, 1, 0)]
+    [InlineData("Halloween", 2026, 10, 7, 0)]
+    [InlineData("Halloween", 2026, 10, 8, 1)]
+    [InlineData("Halloween", 2026, 10, 31, 4)]
+    [InlineData("Halloween", 2026, 11, 8, 0)]   // not active
+    [InlineData("Christmas", 2026, 12, 25, 5)]
+    [InlineData("New Year", 2027, 1, 2, 0)]     // opened on Dec 27 the year before
+    [InlineData("Easter", 2027, 3, 21, 1)]      // Easter Sunday 2027 is Mar 28, so the window opened on Mar 14
+    public void Week_of_season_counts_from_the_window_opening(string name, int y, int m, int d, int expected)
+    {
+        Assert.Equal(expected, SeasonRule.Defaults().Single(s => s.Name == name).WeekOfSeason(new DateTime(y, m, d)));
     }
 
     [Fact]
@@ -166,8 +180,8 @@ public class SeasonTests
 
         Assert.True(old.MigrateToLatest());
 
-        // 4 kept (Summer removed) + Easter + New Year + 3 film days + St Patrick's Day + Bonfire Night.
-        Assert.Equal(11, old.Seasons.Length);
+        // 4 kept (Summer removed) + Easter + New Year + 3 film days + St Patrick's Day + Bonfire Night + Pancake Day + Chinese New Year.
+        Assert.Equal(13, old.Seasons.Length);
         Assert.DoesNotContain(old.Seasons, s => s.Name == "Summer");
         Assert.Contains(old.Seasons, s => s.Name == "Easter" && s.IsEasterBased);
         Assert.Contains(old.Seasons, s => s.Name == "New Year");
@@ -181,7 +195,8 @@ public class SeasonTests
         // Second load: nothing changes, nothing duplicates.
         var again = RoundTrip(old);
         Assert.False(again.MigrateToLatest());
-        Assert.Equal(11, again.Seasons.Length);
+        Assert.Equal(13, again.Seasons.Length);
+        Assert.Contains(again.Seasons, s => s.Name == "Chinese New Year" && s.IsLunarBased); // lunar dates survive saving
     }
 
     [Fact]
@@ -221,10 +236,56 @@ public class SeasonTests
 
         Assert.True(cfg.MigrateToLatest());
 
-        Assert.Equal(new[] { "Star Wars Day", "Ghostbusters Day", "Bonfire Night" }, cfg.Seasons.Select(s => s.Name));
+        Assert.Equal(new[] { "Star Wars Day", "Ghostbusters Day", "Bonfire Night", "Pancake Day", "Chinese New Year" }, cfg.Seasons.Select(s => s.Name));
         Assert.Equal("Lightsabers", cfg.Seasons[0].Theme);
         Assert.Equal("Hearts", cfg.Seasons[1].Theme);
         Assert.Equal("Bonfire", cfg.Seasons[2].Theme);
+    }
+
+    [Fact]
+    public void Version_1_2_settings_get_pancake_day_and_chinese_new_year_once()
+    {
+        var cfg = new PluginConfiguration { ConfigVersion = 6, Seasons = new[] { new SeasonRule { Name = "Halloween" } } };
+        Assert.True(cfg.MigrateToLatest());
+        Assert.Equal(new[] { "Halloween", "Pancake Day", "Chinese New Year" }, cfg.Seasons.Select(s => s.Name));
+
+        // Deleted afterwards: not brought back.
+        cfg.Seasons = cfg.Seasons.Take(1).ToArray();
+        Assert.False(cfg.MigrateToLatest());
+        Assert.Single(cfg.Seasons);
+    }
+
+    [Theory]
+    [InlineData(2024, 2, 10)]
+    [InlineData(2025, 1, 29)]
+    [InlineData(2026, 2, 17)]
+    [InlineData(2027, 2, 6)]
+    [InlineData(2028, 1, 26)]
+    public void Lunar_new_year_is_on_the_right_day(int year, int month, int day)
+    {
+        Assert.Equal(new DateTime(year, month, day), SeasonRule.LunarNewYear(year));
+    }
+
+    [Theory]
+    [InlineData(2027, 2, 6, true, 0)]    // New Year's Day
+    [InlineData(2027, 2, 13, true, 1)]   // second week
+    [InlineData(2027, 2, 20, true, 2)]   // Lantern Festival, the last day
+    [InlineData(2027, 2, 21, false, 0)]
+    [InlineData(2027, 2, 5, false, 0)]
+    public void Chinese_new_year_runs_to_the_lantern_festival(int y, int m, int d, bool active, int week)
+    {
+        var season = SeasonRule.Defaults().Single(s => s.Name == "Chinese New Year");
+        Assert.Equal(active, season.IsActive(new DateTime(y, m, d)));
+        Assert.Equal(week, season.WeekOfSeason(new DateTime(y, m, d)));
+    }
+
+    [Theory]
+    [InlineData(2026, 2, 17, true)]   // Easter 2026 is 5 April
+    [InlineData(2026, 2, 16, false)]
+    [InlineData(2027, 2, 9, true)]    // Easter 2027 is 28 March
+    public void Pancake_day_is_shrove_tuesday(int y, int m, int d, bool expected)
+    {
+        Assert.Equal(expected, SeasonRule.Defaults().Single(s => s.Name == "Pancake Day").IsActive(new DateTime(y, m, d)));
     }
 
     [Fact]

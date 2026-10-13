@@ -223,6 +223,15 @@ public class PluginConfiguration : BasePluginConfiguration
             ConfigVersion = 6;
         }
 
+        if (ConfigVersion < 7)
+        {
+            // v7: Pancake Day and Chinese New Year.
+            var added = new[] { "Pancake Day", "Chinese New Year" };
+            Seasons = Seasons.Concat(SeasonRule.Defaults().Where(d => added.Contains(d.Name)
+                && !Seasons.Any(s => string.Equals(s.Name, d.Name, StringComparison.OrdinalIgnoreCase)))).ToArray();
+            ConfigVersion = 7;
+        }
+
         return ConfigVersion != start;
     }
 }

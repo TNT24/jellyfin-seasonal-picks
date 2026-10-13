@@ -286,7 +286,7 @@
                 <div data-panel="seasons" role="tabpanel" hidden>
                     <div class="sp-section">
                         <h2>Seasons and special days</h2>
-                        <p class="sp-hint">Tap a season to edit it. Keywords match whole words in the title or overview; tags match exactly. Both count as a strong match; genres count as a weaker one. "Hide out of season" keeps strong matches out of picks for the rest of the year; a film that matches several seasons belongs to the one with the highest boost. Dates are MM-DD, or relative to Easter Sunday for Easter (e.g. easter-14 to easter+1).</p>
+                        <p class="sp-hint">Tap a season to edit it. Keywords match whole words in the title or overview; tags match exactly. Both count as a strong match; genres count as a weaker one. "Hide out of season" keeps strong matches out of picks for the rest of the year; a film that matches several seasons belongs to the one with the highest boost. Dates are MM-DD, or for days that move each year, relative to Easter Sunday (e.g. easter-14 to easter+1) or Chinese New Year (e.g. lunar+0 to lunar+14).</p>
                         <div class="sp-today" id="spToday"></div>
                         <div id="spSeasons"></div>
                         <button is="emby-button" type="button" class="raised" id="spAddSeason"><span>Add a day or season</span></button>
@@ -378,12 +378,44 @@
                 var mo = +m[1], d = +m[2];
                 return mo >= 1 && mo <= 12 && d >= 1 && d <= 31 ? [mo, d] : null;
             }
-            // "easter", "easter-14", "easter+1": days relative to Easter Sunday (its date moves every year).
-            function parseEaster(s) {
-                var m = /^\s*easter\s*([+-]\s*\d{1,3})?\s*$/i.exec(s || '');
-                return m ? (m[1] ? parseInt(m[1].replace(/\s/g, ''), 10) : 0) : null;
+            // "easter-14", "easter+1", "lunar+14": days relative to Easter Sunday or to Chinese (Lunar) New Year,
+            // whose dates move every year.
+            function parseMoving(s) {
+                var m = /^\s*(easter|lunar)\s*([+-]\s*\d{1,3})?\s*$/i.exec(s || '');
+                return m ? { anchor: m[1].toLowerCase(), offset: m[2] ? parseInt(m[2].replace(/\s/g, ''), 10) : 0 } : null;
             }
-            function easterText(n) { return 'easter' + (n > 0 ? '+' + n : n < 0 ? String(n) : ''); }
+            function movingText(anchor, n) { return anchor + (n > 0 ? '+' + n : n < 0 ? String(n) : ''); }
+            function anchorOf(s) {
+                if (s.StartEasterOffset != null && s.EndEasterOffset != null) return 'easter';
+                if (s.StartLunarOffset != null && s.EndLunarOffset != null) return 'lunar';
+                return null;
+            }
+            // This year's dates for a season that moves with Easter or Lunar New Year; null for a fixed one.
+            function movingWindow(s, y) {
+                var anchor = anchorOf(s);
+                if (!anchor) return null;
+                var base = anchor === 'easter' ? easterSunday(y) : lunarNewYear(y);
+                var from = new Date(base), to = new Date(base);
+                from.setDate(base.getDate() + (anchor === 'easter' ? s.StartEasterOffset : s.StartLunarOffset));
+                to.setDate(base.getDate() + (anchor === 'easter' ? s.EndEasterOffset : s.EndLunarOffset));
+                return { from: from, to: to };
+            }
+            // First day of the first month in the browser's Chinese calendar (always between 21 Jan and 20 Feb).
+            var lunarCache = {};
+            function lunarNewYear(y) {
+                if (lunarCache[y]) return new Date(lunarCache[y]);
+                var found = new Date(y, 1, 1);
+                try {
+                    var fmt = new Intl.DateTimeFormat('en-u-ca-chinese', { month: 'numeric', day: 'numeric' });
+                    for (var d = new Date(y, 0, 21); d <= new Date(y, 1, 20); d.setDate(d.getDate() + 1)) {
+                        var parts = fmt.formatToParts(d), mo = '', dy = '';
+                        parts.forEach(function (p) { if (p.type === 'month') mo = p.value; if (p.type === 'day') dy = p.value; });
+                        if (mo === '1' && dy === '1') { found = new Date(d); break; }
+                    }
+                } catch (e) { /* no Chinese calendar in this browser: early February is close enough for the page */ }
+                lunarCache[y] = found.getTime();
+                return new Date(found);
+            }
             function easterSunday(y) {
                 var a = y % 19, b = Math.floor(y / 100), c = y % 100, d = Math.floor(b / 4), e = b % 4;
                 var f = Math.floor((b + 8) / 25), g = Math.floor((b - f + 1) / 3), h = (19 * a + b - d - g + 15) % 30;
@@ -392,18 +424,16 @@
                 return new Date(y, month - 1, day);
             }
             function isActive(s, date) {
-                if (s.StartEasterOffset != null && s.EndEasterOffset != null) {
-                    var e = easterSunday(date.getFullYear()), today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
-                    var from = new Date(e), to = new Date(e);
-                    from.setDate(e.getDate() + s.StartEasterOffset);
-                    to.setDate(e.getDate() + s.EndEasterOffset);
-                    return today >= from && today <= to;
+                var win = movingWindow(s, date.getFullYear());
+                if (win) {
+                    var today = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    return today >= win.from && today <= win.to;
                 }
                 var t = (date.getMonth() + 1) * 100 + date.getDate();
                 var a = s.StartMonth * 100 + s.StartDay, b = s.EndMonth * 100 + s.EndDay;
                 return a <= b ? t >= a && t <= b : t >= a || t <= b;
             }
-            var THEMES = [['auto', 'Automatic (from the name)'], ['Christmas', 'Christmas tree, presents and snow'], ['Snow', 'Snow and snowflakes'], ['Halloween', 'Pumpkins, bats and moon'], ['Easter', 'Easter bunny, eggs and blossom'], ['Hearts', 'Hearts'], ['Summer', 'Sun and waves'], ['Fireworks', 'Fireworks over a skyline'], ['Shamrock', 'Shamrocks'], ['Space', 'Stars and a planet'], ['Lightsabers', 'Lightsabers in space'], ['Ghosts', 'Ghosts and slime'], ['Castle', 'Castle and floating candles'], ['Bonfire', 'Bonfire and fireworks'], ['Sparkle', 'Sparkles'], ['None', 'None (just the background)']];
+            var THEMES = [['auto', 'Automatic (from the name)'], ['Christmas', 'Christmas tree, presents and snow'], ['Snow', 'Snow and snowflakes'], ['Halloween', 'Pumpkins, bats and moon'], ['Easter', 'Easter bunny, eggs and blossom'], ['Hearts', 'Hearts'], ['Summer', 'Sun and waves'], ['Fireworks', 'Fireworks over a skyline'], ['Shamrock', 'Shamrocks'], ['Space', 'Stars and a planet'], ['Lightsabers', 'Lightsabers in space'], ['Ghosts', 'Ghosts and slime'], ['Castle', 'Castle and floating candles'], ['Bonfire', 'Bonfire and fireworks'], ['Pancakes', 'Stack of pancakes'], ['LunarNewYear', 'Red lanterns and blossom'], ['Sparkle', 'A night at the pictures'], ['None', 'None (just the background)']];
             var POSITIONS = [['Top', 'Top'], ['Middle', 'Middle'], ['Bottom', 'Bottom']];
             var BACKGROUNDS = [['Posters', 'Posters of the picks'], ['Picture', 'My picture'], ['Plain', 'Plain season colour']];
             var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow'];
@@ -426,12 +456,10 @@
             ];
 
             function whenText(s) {
-                if (s.StartEasterOffset != null && s.EndEasterOffset != null) {
-                    var e = easterSunday(new Date().getFullYear());
-                    var from = new Date(e), to = new Date(e);
-                    from.setDate(e.getDate() + s.StartEasterOffset);
-                    to.setDate(e.getDate() + s.EndEasterOffset);
-                    return 'This year: ' + from.getDate() + ' ' + MONTHS[from.getMonth()] + ' to ' + to.getDate() + ' ' + MONTHS[to.getMonth()];
+                var win = movingWindow(s, new Date().getFullYear());
+                if (win) {
+                    var from = win.from.getDate() + ' ' + MONTHS[win.from.getMonth()], to = win.to.getDate() + ' ' + MONTHS[win.to.getMonth()];
+                    return 'This year: ' + (from === to ? from : from + ' to ' + to);
                 }
                 var a = s.StartDay + ' ' + MONTHS[s.StartMonth - 1], b = s.EndDay + ' ' + MONTHS[s.EndMonth - 1];
                 return a === b ? 'On ' + a + ' each year' : a + ' to ' + b + ' each year';
@@ -445,7 +473,7 @@
                     Title: c.Title || '', Label: c.Label || '', ShowLabel: c.ShowLabel !== false,
                     TitleSize: n(c.TitleSize, 100), TitlePosition: c.TitlePosition || 'Middle', TitleColor: c.TitleColor || '#FFFFFF',
                     ShowAccent: c.ShowAccent !== false, Background: c.Background || 'Posters',
-                    ColourWash: n(c.ColourWash, 50), Darkness: n(c.Darkness, 50), Decorations: n(c.Decorations, 100)
+                    ColourWash: n(c.ColourWash, 50), Darkness: n(c.Darkness, 50), Decorations: n(c.Decorations, 100), Scene: n(c.Scene, 0)
                 };
             }
 
@@ -462,6 +490,24 @@
                 return '<label class="checkboxContainer"><input is="emby-checkbox" type="checkbox" data-s="' + key + '"' + (on ? ' checked' : '') + '><span>' + label + '</span></label>';
             }
 
+            // Which scene the decoration draws. The real scene names arrive with the first preview (see showScenes).
+            function sceneSelectHtml(scene) {
+                var opts = '<option value="0">Changes each week</option>';
+                for (var i = 1; i <= 4; i++) opts += '<option value="' + i + '"' + (scene === i ? ' selected' : '') + '>Scene ' + i + '</option>';
+                return '<div class="selectContainer" data-scene-box><select is="emby-select" data-s="Scene" label="Scene">' + opts + '</select></div>';
+            }
+            function showScenes(card, names, current) {
+                var select = card.querySelector('[data-s="Scene"]');
+                if (!select || !names) return;
+                var list = names.split('|');
+                var value = parseInt(select.value, 10) || 0;
+                var opts = '<option value="0">Changes each week (this week: ' + esc(list[current] || list[0]) + ')</option>';
+                list.forEach(function (n, i) { opts += '<option value="' + (i + 1) + '">Always: ' + esc(n) + '</option>'; });
+                select.innerHTML = opts;
+                select.value = String(value <= list.length ? value : 0);
+                card.querySelector('[data-scene-box]').hidden = list.length < 2;
+            }
+
             function designerHtml(style, theme) {
                 var st = styleOf(style);
                 return '<div class="sp-designer" hidden>' +
@@ -472,6 +518,7 @@
                     '</div>' +
                     '<div class="sp-designer-controls">' +
                     '<div class="selectContainer"><select is="emby-select" data-f="Theme" label="Decoration">' + options(THEMES, theme || 'auto') + '</select></div>' +
+                    sceneSelectHtml(st.Scene) +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-s="Title" label="Title (empty = the name)" value="' + esc(st.Title) + '"></div>' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-s="Label" label="Small label above (empty = playlist or library name)" value="' + esc(st.Label) + '"></div>' +
                     '<div class="sp-row">' + check('ShowLabel', 'Show the label', st.ShowLabel) + check('ShowAccent', 'Line under the title', st.ShowAccent) + '</div>' +
@@ -512,7 +559,8 @@
                     Title: v('Title').value.trim(), Label: v('Label').value.trim(), ShowLabel: v('ShowLabel').checked,
                     TitleSize: parseInt(v('TitleSize').value, 10), TitlePosition: v('TitlePosition').value, TitleColor: v('TitleColor').value,
                     ShowAccent: v('ShowAccent').checked, Background: v('Background').value,
-                    ColourWash: parseInt(v('ColourWash').value, 10), Darkness: parseInt(v('Darkness').value, 10), Decorations: parseInt(v('Decorations').value, 10)
+                    ColourWash: parseInt(v('ColourWash').value, 10), Darkness: parseInt(v('Darkness').value, 10), Decorations: parseInt(v('Decorations').value, 10),
+                    Scene: parseInt(v('Scene').value, 10) || 0
                 };
             }
 
@@ -539,8 +587,9 @@
                     contentType: 'application/json',
                     data: JSON.stringify(design)
                 }).then(function (res) {
-                    var source = res.headers && res.headers.get ? res.headers.get('X-SP-Source') : null;
-                    return res.blob().then(function (blob) { return { blob: blob, source: source }; });
+                    function header(name) { return res.headers && res.headers.get ? res.headers.get(name) : null; }
+                    var info = { source: header('X-SP-Source'), scenes: header('X-SP-Scenes'), scene: parseInt(header('X-SP-Scene'), 10) || 0 };
+                    return res.blob().then(function (blob) { info.blob = blob; return info; });
                 });
             }
             function showImage(img, blob) {
@@ -581,8 +630,11 @@
                 var design = designOf(card);
                 var seq = card._bigSeq = (card._bigSeq || 0) + 1;
                 designer.querySelectorAll('img[data-big]').forEach(function (img) {
-                    renderCover(design, img.classList.contains('wide'), false).then(function (r) {
-                        if (seq === card._bigSeq) showImage(img, r.blob);
+                    var wide = img.classList.contains('wide');
+                    renderCover(design, wide, false).then(function (r) {
+                        if (seq !== card._bigSeq) return;
+                        showImage(img, r.blob);
+                        if (!wide) showScenes(card, r.scenes, r.scene);
                     }, function () { img.removeAttribute('src'); });
                 });
             }
@@ -608,7 +660,9 @@
             // Folded up: a one-line summary (cover, name, dates, on/off). Tapping it opens the full editor below.
             function seasonHtml(s, i) {
                 var active = isActive(s, new Date()) && s.Enabled;
-                var easter = s.StartEasterOffset != null && s.EndEasterOffset != null;
+                var anchor = anchorOf(s);
+                var startText = anchor ? movingText(anchor, anchor === 'easter' ? s.StartEasterOffset : s.StartLunarOffset) : md(s.StartMonth, s.StartDay);
+                var endText = anchor ? movingText(anchor, anchor === 'easter' ? s.EndEasterOffset : s.EndLunarOffset) : md(s.EndMonth, s.EndDay);
                 var open = !!s._open;
                 return '<div class="sp-season sp-covercard' + (open ? ' sp-open' : '') + '" data-index="' + i + '" data-orig-key="' + esc(s._origKey || slug(s.Name)) + '" style="--c:' + esc(s.Color) + '">' +
                     '<div class="sp-season-summary">' +
@@ -629,8 +683,8 @@
                     '<button is="emby-button" type="button" class="raised" data-remove title="Remove season">Remove</button>' +
                     '</div>' +
                     '<div class="sp-grid2">' +
-                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Start" label="Starts (MM-DD or easter-14)" value="' + (easter ? easterText(s.StartEasterOffset) : md(s.StartMonth, s.StartDay)) + '"></div>' +
-                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="End" label="Ends (MM-DD or easter+1)" value="' + (easter ? easterText(s.EndEasterOffset) : md(s.EndMonth, s.EndDay)) + '"></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="Start" label="Starts (MM-DD, easter-14 or lunar+0)" value="' + startText + '"></div>' +
+                    '<div class="inputContainer"><input is="emby-input" type="text" data-f="End" label="Ends (MM-DD, easter+1 or lunar+14)" value="' + endText + '"></div>' +
                     '<div class="inputContainer"><input is="emby-input" type="number" step="0.5" min="0" data-f="Boost" label="Boost" value="' + esc(s.Boost) + '"></div>' +
                     '</div>' +
                     '<div class="inputContainer"><input is="emby-input" type="text" data-f="Keywords" label="Keywords" value="' + esc((s.Keywords || []).join(', ')) + '"></div>' +
@@ -653,19 +707,21 @@
 
             function readSeason(el) {
                 function f(name) { return el.querySelector('[data-f="' + name + '"]'); }
-                var es = parseEaster(f('Start').value), ee = parseEaster(f('End').value);
-                var easter = es !== null && ee !== null;
-                // Easter-based seasons keep a sensible fixed window, used only if the Easter dates are removed later.
-                var start = parseMd(f('Start').value) || (easter ? [3, 22] : [1, 1]);
-                var end = parseMd(f('End').value) || (easter ? [4, 26] : [12, 31]);
+                var ms = parseMoving(f('Start').value), me = parseMoving(f('End').value);
+                var moving = ms && me && ms.anchor === me.anchor ? ms.anchor : null;
+                // Moving seasons keep a sensible fixed window, used only if their moving dates are removed later.
+                var start = parseMd(f('Start').value) || (moving === 'easter' ? [3, 22] : moving === 'lunar' ? [2, 1] : [1, 1]);
+                var end = parseMd(f('End').value) || (moving === 'easter' ? [4, 26] : moving === 'lunar' ? [2, 15] : [12, 31]);
                 return {
                     Name: f('Name').value.trim() || 'Season',
                     Enabled: f('Enabled').checked,
                     Color: f('Color').value,
                     StartMonth: start[0], StartDay: start[1],
                     EndMonth: end[0], EndDay: end[1],
-                    StartEasterOffset: easter ? es : null,
-                    EndEasterOffset: easter ? ee : null,
+                    StartEasterOffset: moving === 'easter' ? ms.offset : null,
+                    EndEasterOffset: moving === 'easter' ? me.offset : null,
+                    StartLunarOffset: moving === 'lunar' ? ms.offset : null,
+                    EndLunarOffset: moving === 'lunar' ? me.offset : null,
                     Boost: parseFloat(f('Boost').value) || 1,
                     Keywords: list(f('Keywords').value),
                     Genres: list(f('Genres').value),
@@ -719,13 +775,8 @@
                 seasons.forEach(function (s) {
                     if (!s.Enabled || isActive(s, today)) return;
                     [base.getFullYear(), base.getFullYear() + 1].some(function (y) {
-                        var start;
-                        if (s.StartEasterOffset != null && s.EndEasterOffset != null) {
-                            start = easterSunday(y);
-                            start.setDate(start.getDate() + s.StartEasterOffset);
-                        } else {
-                            start = new Date(y, s.StartMonth - 1, s.StartDay);
-                        }
+                        var win = movingWindow(s, y);
+                        var start = win ? win.from : new Date(y, s.StartMonth - 1, s.StartDay);
                         if (start > base) {
                             if (!best || start < best.date) best = { season: s, date: start };
                             return true;

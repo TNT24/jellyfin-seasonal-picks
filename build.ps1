@@ -36,7 +36,8 @@ $meta = [ordered]@{
     timestamp   = (Get-Date).ToUniversalTime().ToString('o')
     version     = $version
     status      = 'Active'
-    autoUpdate  = $false
+    # Lets Jellyfin's daily Update Plugins task install new releases from the repository by itself.
+    autoUpdate  = $true
     assemblies  = @('Jellyfin.Plugin.SeasonalPicks.dll')
     imagePath   = 'logo.png'
 }

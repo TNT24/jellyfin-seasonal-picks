@@ -230,7 +230,7 @@ public class CoverService
         {
             var bytes = season is null
                 ? Design(pickIds, key, null, cfg.DefaultCoverColor, cfg.DefaultCoverTheme, cfg.DefaultCover, title, wide)
-                : Design(pickIds, key, season.Name, season.Color, season.Theme, season.Cover, title, wide);
+                : Design(pickIds, key, season.Name, season.Color, season.Theme, season.Cover, title, wide, season.WeekOfSeason(DateTime.Now));
             return bytes is null ? null : (bytes, "image/jpeg");
         }
         catch (Exception ex)
@@ -243,9 +243,10 @@ public class CoverService
 
     /// <summary>
     /// A generated cover for one design. <paramref name="seasonName"/> is null for the out-of-season cover;
-    /// <paramref name="label"/> is the playlist or library name. Used for real covers and the settings page's live preview.
+    /// <paramref name="label"/> is the playlist or library name; <paramref name="week"/> is the week of the season, which
+    /// picks the scene unless the design pins one. Used for real covers and the settings page's live preview.
     /// </summary>
-    public byte[]? Design(IReadOnlyList<Guid> pickIds, string key, string? seasonName, string color, string? theme, CoverStyle? style, string label, bool wide)
+    public byte[]? Design(IReadOnlyList<Guid> pickIds, string key, string? seasonName, string color, string? theme, CoverStyle? style, string label, bool wide, int week = 0)
     {
         style ??= new CoverStyle();
         var posters = pickIds
@@ -256,10 +257,13 @@ public class CoverService
             .ToList();
 
         var name = seasonName ?? label;
-        var coverTheme = seasonName is null && string.IsNullOrWhiteSpace(theme) ? CoverTheme.Sparkle : CoverArt.ThemeFor(theme, name);
         var background = IsValidKey(key) ? FindBackground(key) : null;
-        return Generate(posters, color, name, label, wide, coverTheme, style, background);
+        return Generate(posters, color, name, label, wide, ThemeOf(seasonName, theme, label), style, background, week);
     }
+
+    /// <summary>The decoration a design uses. <paramref name="seasonName"/> is null for the out-of-season cover.</summary>
+    public static CoverTheme ThemeOf(string? seasonName, string? theme, string label)
+        => seasonName is null && string.IsNullOrWhiteSpace(theme) ? CoverTheme.Sparkle : CoverArt.ThemeFor(theme, seasonName ?? label);
 
     /// <summary>Kept separate so a missing/mismatched SkiaSharp fails here, inside the caller's try.</summary>
     [MethodImpl(MethodImplOptions.NoInlining)]
@@ -271,7 +275,8 @@ public class CoverService
         bool wide,
         CoverTheme theme = CoverTheme.Sparkle,
         CoverStyle? style = null,
-        string? backgroundPath = null)
+        string? backgroundPath = null,
+        int week = 0)
     {
         style ??= new CoverStyle();
         int width = wide ? 1280 : 1000, height = wide ? 720 : 1000;
@@ -319,7 +324,7 @@ public class CoverService
             // Drawn onto a layer so the whole scene can be faded, letting a background picture show through.
             using var layer = new SKPaint { Color = SKColors.White.WithAlpha(decorations) };
             canvas.SaveLayer(layer);
-            CoverArt.DrawTheme(canvas, theme, width, height, tint, name);
+            CoverArt.DrawTheme(canvas, theme, width, height, tint, name, CoverArt.SceneFor(theme, style.Scene, week));
             canvas.Restore();
         }
 

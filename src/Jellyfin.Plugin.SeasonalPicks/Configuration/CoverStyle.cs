@@ -33,4 +33,7 @@ public class CoverStyle
 
     /// <summary>Opacity of the decorations, 0-100.</summary>
     public int Decorations { get; set; } = 100;
+
+    /// <summary>Which of the decoration's scenes to draw: 0 = a different one each week of the season, 1+ = always that one.</summary>
+    public int Scene { get; set; }
 }

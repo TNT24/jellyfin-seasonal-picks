@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.Linq;
 using System.Xml.Serialization;
 
@@ -55,13 +56,41 @@ public class SeasonRule
     [XmlIgnore]
     public bool IsEasterBased => StartEasterOffset.HasValue && EndEasterOffset.HasValue;
 
-    public bool IsActive(DateTime date)
+    /// <summary>
+    /// For seasons tied to Chinese (Lunar) New Year, which also moves every year: days relative to its first day,
+    /// e.g. 0 and 14 for the fortnight up to the Lantern Festival. When both are set they replace the fixed window.
+    /// </summary>
+    public int? StartLunarOffset { get; set; }
+
+    public int? EndLunarOffset { get; set; }
+
+    [XmlIgnore]
+    public bool IsLunarBased => StartLunarOffset.HasValue && EndLunarOffset.HasValue && !IsEasterBased;
+
+    /// <summary>This year's window when it moves with Easter or Lunar New Year; null for a fixed one.</summary>
+    private (DateTime Start, DateTime End)? MovingWindow(int year)
     {
         if (IsEasterBased)
         {
-            var easter = EasterSunday(date.Year);
+            var easter = EasterSunday(year);
+            return (easter.AddDays(StartEasterOffset!.Value), easter.AddDays(EndEasterOffset!.Value));
+        }
+
+        if (IsLunarBased)
+        {
+            var lunar = LunarNewYear(year);
+            return (lunar.AddDays(StartLunarOffset!.Value), lunar.AddDays(EndLunarOffset!.Value));
+        }
+
+        return null;
+    }
+
+    public bool IsActive(DateTime date)
+    {
+        if (MovingWindow(date.Year) is { } window)
+        {
             var day = date.Date;
-            return day >= easter.AddDays(StartEasterOffset!.Value) && day <= easter.AddDays(EndEasterOffset!.Value);
+            return day >= window.Start && day <= window.End;
         }
 
         var today = (date.Month * 100) + date.Day;
@@ -70,6 +99,31 @@ public class SeasonRule
         return start <= end
             ? today >= start && today <= end
             : today >= start || today <= end; // wraps the new year, e.g. Dec 20 - Jan 5
+    }
+
+    /// <summary>Whole weeks since this year's window opened (0 in its first week, and whenever it isn't active).</summary>
+    public int WeekOfSeason(DateTime date)
+    {
+        if (!IsActive(date))
+        {
+            return 0;
+        }
+
+        var day = date.Date;
+        DateTime start;
+        if (MovingWindow(day.Year) is { } window)
+        {
+            start = window.Start;
+        }
+        else
+        {
+            // A window that wraps the new year and is in its January part opened last year.
+            var year = (day.Month * 100) + day.Day >= (StartMonth * 100) + StartDay ? day.Year : day.Year - 1;
+            var month = Math.Clamp(StartMonth, 1, 12);
+            start = new DateTime(year, month, Math.Clamp(StartDay, 1, DateTime.DaysInMonth(year, month)));
+        }
+
+        return Math.Max(0, (day - start).Days / 7);
     }
 
     /// <summary>Western (Gregorian) Easter Sunday: the anonymous Gregorian algorithm.</summary>
@@ -81,6 +135,15 @@ public class SeasonRule
         int m = (a + (11 * h) + (22 * l)) / 451;
         int month = (h + l - (7 * m) + 114) / 31, day = ((h + l - (7 * m) + 114) % 31) + 1;
         return new DateTime(year, month, day);
+    }
+
+    private static readonly ChineseLunisolarCalendar Lunar = new();
+
+    /// <summary>The first day of Chinese (Lunar) New Year in a Gregorian year, from .NET's Chinese lunisolar calendar.</summary>
+    public static DateTime LunarNewYear(int year)
+    {
+        var y = Math.Clamp(year, Lunar.MinSupportedDateTime.Year + 1, Lunar.MaxSupportedDateTime.Year - 1);
+        return Lunar.ToDateTime(y, 1, 1, 0, 0, 0, 0);
     }
 
     /// <summary>File-name-safe key for this season's uploaded cover.</summary>
@@ -160,6 +223,37 @@ public class SeasonRule
             Tags = new[] { "new year's eve", "new year", "new year's party", "countdown" },
             Keywords = new[] { "new year's eve", "new year's", "new year", "new years eve", "stroke of midnight", "countdown to midnight" },
             Boost = 3.5
+        },
+
+        // Days whose date moves each year. Like film days they push their films forward without hiding them.
+        new SeasonRule
+        {
+            Name = "Pancake Day",
+            Color = "#E0A030",
+            Theme = "Pancakes",
+            StartEasterOffset = -47, EndEasterOffset = -47, // Shrove Tuesday, 47 days before Easter Sunday
+            StartMonth = 2, StartDay = 17, EndMonth = 2, EndDay = 17,
+            Tags = new[] { "pancakes", "cooking", "chef", "restaurant" },
+            Keywords = new[] { "pancake", "pancakes", "crepe", "crepes", "crêpe", "waffle", "waffles", "chef", "ratatouille", "chocolat", "julie & julia", "the menu", "the hundred-foot journey" },
+            Boost = 3,
+            HideOutOfSeason = false
+        },
+        new SeasonRule
+        {
+            Name = "Chinese New Year",
+            Color = "#C62828",
+            Theme = "LunarNewYear",
+            StartLunarOffset = 0, EndLunarOffset = 14, // New Year's Day to the Lantern Festival
+            StartMonth = 2, StartDay = 1, EndMonth = 2, EndDay = 15,
+            Tags = new[] { "chinese new year", "lunar new year", "martial arts", "kung fu", "china", "hong kong" },
+            Keywords = new[]
+            {
+                "chinese new year", "lunar new year", "spring festival", "kung fu", "hong kong", "shanghai", "beijing",
+                "mulan", "kung fu panda", "crouching tiger", "house of flying daggers", "in the mood for love",
+                "the farewell", "crazy rich asians", "everything everywhere all at once", "turning red", "raya"
+            },
+            Boost = 4,
+            HideOutOfSeason = false
         },
 
         // Film days: a film's own day. They push its films to the front on the day but never hide them the rest of the year.

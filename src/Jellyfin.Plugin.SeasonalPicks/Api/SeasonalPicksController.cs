@@ -1,4 +1,5 @@
 using System;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading;
@@ -268,13 +269,19 @@ public class SeasonalPicksController : ControllerBase
         try
         {
             var name = string.IsNullOrWhiteSpace(req.Name) ? null : req.Name.Trim();
-            var bytes = _covers.Design(ids, req.Key!, name, req.Color ?? cfg.DefaultCoverColor, req.Theme, req.Cover, label, wide);
+
+            // The scene this week, going by the saved season's dates (a season that isn't saved yet shows its first).
+            var week = name is null ? 0 : cfg.Seasons.FirstOrDefault(s => s.CoverKey == req.Key)?.WeekOfSeason(DateTime.Now) ?? 0;
+            var bytes = _covers.Design(ids, req.Key!, name, req.Color ?? cfg.DefaultCoverColor, req.Theme, req.Cover, label, wide, week);
             if (bytes is null)
             {
                 return NotFound();
             }
 
+            var theme = CoverService.ThemeOf(name, req.Theme, label);
             Response.Headers["X-SP-Source"] = "design";
+            Response.Headers["X-SP-Scenes"] = string.Join('|', CoverArt.Scenes(theme));
+            Response.Headers["X-SP-Scene"] = CoverArt.SceneFor(theme, 0, week).ToString(CultureInfo.InvariantCulture);
             return File(bytes, "image/jpeg");
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
