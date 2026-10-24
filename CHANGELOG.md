@@ -2,6 +2,9 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.3.2 - 2026-10-24
+- Fixed the web Suggested screen and home row sometimes not appearing, especially alongside Theme Builder or other plugins that add to the web client. The plugin now keeps retrying at startup, and checks every few minutes that the web client still has the screen.
+
 ## 1.3.1 - 2026-10-13
 - Now also runs on Jellyfin 10.11. Each release comes in two builds, one for 10.11 and one for 12, and Jellyfin installs the right one by itself.
 

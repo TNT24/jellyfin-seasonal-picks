@@ -10,6 +10,8 @@
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <IsPackable>false</IsPackable>
+    <!-- Lets the 10.11 (net9.0) tests run on a machine that only has the .NET 10 runtime. -->
+    <RollForward>Major</RollForward>
   </PropertyGroup>
 
   <ItemGroup>

@@ -48,7 +48,7 @@ foreach ($t in $targets) {
         guid        = '6e3ba9d2-8036-4708-9ce7-35413b443d8f'
         name        = 'Seasonal Picks'
         overview    = 'History- and calendar-aware movie picks as playlists (works on TV), a shared Suggested library, themed seasonal covers and a web Suggested screen.'
-        owner       = 'Mark'
+        owner       = 'TNT24'
         targetAbi   = $t.Abi
         timestamp   = $timestamp
         version     = $version
@@ -89,7 +89,7 @@ $plugin = [ordered]@{
     name        = 'Seasonal Picks'
     description = 'Picks movies from your watch history and the time of year.'
     overview    = 'History- and calendar-aware movie picks as playlists (works on TV), a shared Suggested library, themed seasonal covers and a web Suggested screen.'
-    owner       = 'Mark'
+    owner       = 'TNT24'
     category    = 'General'
     imageUrl    = 'https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png'
     versions    = @($entries) + $old

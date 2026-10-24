@@ -54,7 +54,8 @@ Repo: https://github.com/IAmParadox27/jellyfin-plugin-file-transformation
 
 - Call it via **reflection** (no compile-time dependency):
   find the assembly containing `.FileTransformation`, type `Jellyfin.Plugin.FileTransformation.PluginInterface`,
-  method `RegisterTransformation`, and pass a **Newtonsoft `JObject`** (resolve `Newtonsoft.Json.Linq.JObject` at runtime and call `Parse`).
+  method `RegisterTransformation`, and pass a **Newtonsoft `JObject`** (call `Parse` on that method's own parameter type,
+  so a second Newtonsoft copy can't cause a type mismatch).
 - Payload fields: `id` (GUID), `fileNamePattern`, `callbackAssembly` (`Assembly.FullName`),
   `callbackClass` (`Type.FullName`), `callbackMethod`.
 - Callback signature: `public static string Method(PayloadClass payload)` where the payload has
@@ -66,11 +67,28 @@ Repo: https://github.com/IAmParadox27/jellyfin-plugin-file-transformation
 put a `<link>` at the start of a JS chunk → `SyntaxError: Unexpected token '<'` + `ChunkLoadError` →
 **item detail pages rendered black/empty**. It took several wrong CSS "fixes" before the console showed it.
 
+But you can't simply fix the pattern: File Transformation groups transformations by the exact pattern
+string and runs **one** group per file. An exact file name match wins; otherwise the first key whose regex
+matches. Other plugins (Theme Builder and others) register `"index.html"`, so a different pattern (`index\.html`,
+anchored, etc.) is a separate group that **never runs for index.html**: the script silently stops being injected.
+Up to 1.3.1 this plugin used `(^|/)index\.html$` and lost the web Suggested screen that way.
+
 Always:
-- Escape and anchor: `@"(^|/)index\.html$"`.
-- Guard inside the callback: only transform content that contains `</head>` **and** `</body>`.
+- Register exactly `"index.html"` so you join the shared group.
+- Guard inside the callback (this is the real protection): only transform content that contains
+  `</head>` **and** `</body>`, because that group is also run on `*-index-html.*.chunk.js`.
 - Return the original contents on any exception. Never blank a file.
 - Skip if already injected (check for your own marker/URL).
+
+### ⚠️ File Transformation 3.x: registering in `StartAsync` fails
+
+From 3.0, `RegisterTransformation` resolves services from the provider File Transformation was constructed with,
+and Jellyfin can load several copies of File Transformation at startup. Registering once in `StartAsync`, with the
+first copy found, often hits one whose provider is disposed: `ObjectDisposedException` (inside a
+`TargetInvocationException`), and nothing is injected. `WebInjectionService` therefore:
+- retries in the background for 2 minutes, registering with **every** loaded copy that accepts (newest first);
+- every 5 minutes fetches `http://localhost:{HttpPort}{BaseUrl}/web/index.html` and registers again if the
+  script marker is missing (File Transformation reloaded or updated without a restart).
 
 ### Paths
 
