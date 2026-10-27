@@ -9,6 +9,22 @@
         "imageUrl":  "https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png",
         "versions":  [
                          {
+                             "version":  "1.4.1.12",
+                             "changelog":  "The home row has ‹ › buttons beside See all instead of a scrollbar (swipe still works on phones and tablets). A little more space between the home row title and its cards.",
+                             "targetAbi":  "12.1.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.4.1/SeasonalPicks_1.4.1.12.zip",
+                             "checksum":  "107e11d147fa0554b658a7e48475b68a",
+                             "timestamp":  "2026-10-27T11:28:13.2480394Z"
+                         },
+                         {
+                             "version":  "1.4.1.11",
+                             "changelog":  "The home row has ‹ › buttons beside See all instead of a scrollbar (swipe still works on phones and tablets). A little more space between the home row title and its cards.",
+                             "targetAbi":  "10.11.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.4.1/SeasonalPicks_1.4.1.11.zip",
+                             "checksum":  "656f874cf5ea7f886135ed7bd66b6c1d",
+                             "timestamp":  "2026-10-27T11:28:13.2480394Z"
+                         },
+                         {
                              "version":  "1.4.0.12",
                              "changelog":  "Each pick\u0027s reason is now a readable line under the title, instead of small text over the poster. The home row\u0027s cards are the same size as Jellyfin\u0027s other home rows. Choose where the home row goes: at the top, after any of the first six rows, or at the bottom. Choose portrait (poster) or thumb (landscape) cards for the home row. Suggested is no longer in the profile menu. Open the full Suggested screen with See all on the home row.",
                              "targetAbi":  "12.1.0.0",
