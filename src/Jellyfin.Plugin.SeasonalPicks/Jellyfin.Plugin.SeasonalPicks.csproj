@@ -12,8 +12,8 @@
     <SkiaSharpVersion Condition="'$(JellyfinTarget)' == '10.11'">3.116.1</SkiaSharpVersion>
     <DefineConstants Condition="'$(JellyfinTarget)' == '10.11'">$(DefineConstants);JELLYFIN_10_11</DefineConstants>
     <RootNamespace>Jellyfin.Plugin.SeasonalPicks</RootNamespace>
-    <AssemblyVersion>1.4.1.0</AssemblyVersion>
-    <FileVersion>1.4.1.0</FileVersion>
+    <AssemblyVersion>1.4.2.0</AssemblyVersion>
+    <FileVersion>1.4.2.0</FileVersion>
     <Nullable>enable</Nullable>
     <ImplicitUsings>disable</ImplicitUsings>
     <GenerateDocumentationFile>false</GenerateDocumentationFile>

@@ -118,9 +118,9 @@
             '.sp-foot{margin-top:28px;font-size:.85em;opacity:.6;display:flex;gap:12px;flex-wrap:wrap;align-items:center}',
             '.sp-foot button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;padding:0}',
             '.sp-empty{padding:48px 0;text-align:center;opacity:.7}',
-            '.sp-home .sp-row{display:flex;gap:12px;overflow-x:auto;padding:4px 3.3% 12px;scroll-snap-type:x proximity}',
+            '.sp-home .sp-row{position:relative;display:flex;gap:12px;overflow-x:auto;padding:4px 3.3% 12px}',
             // Roughly the widths of Jellyfin's own portrait rows, so this row lines up with the others.
-            '.sp-home .sp-row .sp-card{flex:0 0 auto;width:30vw;scroll-snap-align:start}',
+            '.sp-home .sp-row .sp-card{flex:0 0 auto;width:30vw}',
             '@media (min-width:600px){.sp-home .sp-row .sp-card{width:20vw}}',
             '@media (min-width:1000px){.sp-home .sp-row .sp-card{width:14vw}}',
             '@media (min-width:1600px){.sp-home .sp-row .sp-card{width:11vw}}',
@@ -286,13 +286,11 @@
                 if (!btn) return;
                 var act = btn.getAttribute('data-act');
                 if (act === 'see-all') { e.preventDefault(); openOverlay(); }
-                else if (act === 'prev' || act === 'next') {
-                    var row = section.querySelector('.sp-row');
-                    row.scrollBy({ left: (act === 'next' ? 1 : -1) * row.clientWidth * 0.9, behavior: 'smooth' });
-                }
+                else if (act === 'prev' || act === 'next') scrollRow(section.querySelector('.sp-row'), act === 'next' ? 1 : -1);
             });
             section.addEventListener('scroll', function () { updateArrows(section); }, true); // scroll doesn't bubble
             placeHomeRow(container, section);
+            section.querySelector('.sp-row').scrollLeft = 0;
             updateArrows(section);
         }, function () { homeBusy = false; });
     }
@@ -315,6 +313,20 @@
             '<button class="sp-btn sp-arrow" data-act="next" aria-label="Scroll right">›</button>' +
             '<button class="sp-btn" data-act="see-all">See all</button></div></div>' +
             '<div class="sp-row">' + data.picks.slice(0, 15).map(function (p) { return HOME_THUMB ? cardHtml(p, false, 480, true) : cardHtml(p, false, 300); }).join('') + '</div>';
+    }
+
+    // Page by whole cards, keeping the row's left padding, like Jellyfin's own rows: the first card that isn't fully
+    // visible becomes the first one shown (next), or a page's worth back (prev). offsetLeft includes the padding.
+    function scrollRow(row, dir) {
+        var pad = parseFloat(getComputedStyle(row).paddingLeft) || 0;
+        var left = row.scrollLeft, right = left + row.clientWidth - pad, view = row.clientWidth - 2 * pad;
+        var cards = Array.prototype.slice.call(row.children), target = 0;
+        for (var i = 0; i < cards.length; i++) {
+            var c = cards[i];
+            if (dir > 0 && c.offsetLeft + c.offsetWidth > right + 1) { target = c.offsetLeft - pad; break; }
+            if (dir < 0 && c.offsetLeft - pad >= left - view - 1) { target = c.offsetLeft - pad; break; }
+        }
+        row.scrollTo({ left: Math.max(0, target), behavior: 'smooth' });
     }
 
     function updateArrows(section) {

@@ -2,6 +2,9 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.4.2 - 2026-10-27
+- The home row starts on the first pick, and the ‹ › buttons move by whole cards, stopping at the same left margin as Jellyfin's other rows instead of running off the edge.
+
 ## 1.4.1 - 2026-10-27
 - The home row has ‹ › buttons beside See all instead of a scrollbar (swipe still works on phones and tablets).
 - A little more space between the home row title and its cards.
