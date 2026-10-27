@@ -1,4 +1,4 @@
-/* Seasonal Picks: web client "For You" screen, home row and menu entry.
+/* Seasonal Picks: web client "For You" screen and home row.
  * Injected into index.html via File Transformation. TV apps don't run this;
  * they get the For You playlist and mirror library instead. */
 (function () {
@@ -18,8 +18,6 @@
     var cacheUser = null;
     var overlay = null;
     var filter = 'all';
-
-    var ICON = '<svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M12 2l2.9 6.26L21.5 9l-5 4.73L17.8 21 12 17.27 6.2 21l1.3-7.27L2.5 9l6.6-.74z"/></svg>';
 
     // ---------- helpers ----------
     function esc(s) {
@@ -177,7 +175,6 @@
     // ---------- overlay screen ----------
     function openOverlay() {
         injectStyles();
-        closeMenus();
         if (!overlay) {
             overlay = document.createElement('div');
             overlay.className = 'sp-overlay';
@@ -261,52 +258,6 @@
         }
     }
 
-    function closeMenus() {
-        // Close an open MUI user menu or the legacy drawer behind the overlay.
-        var backdrop = document.querySelector('.MuiPopover-root .MuiBackdrop-root, .MuiModal-root .MuiBackdrop-invisible');
-        if (backdrop) backdrop.click();
-        var scrim = document.querySelector('.mainDrawer-scrim');
-        if (scrim && document.body.classList.contains('bodyWithPopupOpen')) scrim.click();
-    }
-
-    // ---------- menu entry (cloned from Sign Out) ----------
-    function addMenuEntries() {
-        var logouts = document.querySelectorAll('.btnLogout, [data-testid="LogoutIcon"]');
-        logouts.forEach(function (node) {
-            var item = node.classList.contains('btnLogout') ? node : node.closest('li, a, button');
-            if (!item || !item.parentNode || item.previousElementSibling && item.previousElementSibling.hasAttribute('data-sp-menu')) return;
-            var clone = item.cloneNode(true);
-            clone.setAttribute('data-sp-menu', '1');
-            clone.classList.remove('btnLogout');
-            clone.removeAttribute('href');
-            clone.removeAttribute('id');
-            var svg = clone.querySelector('svg');
-            if (svg) {
-                var tmp = document.createElement('span');
-                tmp.innerHTML = ICON;
-                var mine = tmp.firstChild;
-                mine.setAttribute('class', svg.getAttribute('class') || '');
-                svg.replaceWith(mine);
-            } else {
-                var icon = clone.querySelector('.navMenuOptionIcon, .material-icons');
-                if (icon) { icon.textContent = ''; icon.innerHTML = ICON; }
-            }
-            var label = clone.querySelector('.navMenuOptionText, .MuiListItemText-primary, .MuiTypography-root') || clone;
-            if (label === clone) {
-                // No dedicated label element: replace text nodes only.
-                Array.prototype.forEach.call(clone.childNodes, function (n) { if (n.nodeType === 3 && n.textContent.trim()) n.textContent = TITLE; });
-            } else {
-                label.textContent = TITLE;
-            }
-            clone.addEventListener('click', function (e) {
-                e.preventDefault();
-                e.stopImmediatePropagation();
-                openOverlay();
-            }, true);
-            item.parentNode.insertBefore(clone, item);
-        });
-    }
-
     // ---------- home row ----------
     var homeBusy = false;
 
@@ -362,12 +313,10 @@
             scheduled = true;
             requestAnimationFrame(function () {
                 scheduled = false;
-                addMenuEntries();
                 addHomeRow();
             });
         });
         observer.observe(document.body, { childList: true, subtree: true });
-        addMenuEntries();
         addHomeRow();
         window.SeasonalPicks = { open: openOverlay };
     }

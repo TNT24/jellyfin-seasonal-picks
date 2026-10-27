@@ -31,7 +31,7 @@ Seasonal Picks works out a fresh list for each user every day and publishes it i
 | **Season playlists**, e.g. "Halloween Picks", while a season is on (removed when it ends) | Every app | Nothing |
 | **Mirror library folder**: symlinks to one user's picks | Every app, as its own library tile and home row | A library pointed at the folder |
 | **Seasonal covers** on the playlist and mirror library | Every app | Nothing (SkiaSharp ships with Jellyfin) |
-| **Suggested screen** (user menu) and **home row** with reroll / "not now" / "never" | Web client only | [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) |
+| **Home row** and **Suggested screen** (its See all button) with reroll / "not now" / "never" | Web client only | [File Transformation](https://github.com/IAmParadox27/jellyfin-plugin-file-transformation) |
 
 ## Features
 
