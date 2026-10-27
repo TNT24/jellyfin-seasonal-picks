@@ -379,6 +379,8 @@ public class SeasonalPicksController : ControllerBase
         using var reader = new StreamReader(stream);
         var js = reader.ReadToEnd()
             .Replace("__SP_HOME_ROW__", cfg?.EnableHomeRow == false ? "false" : "true", StringComparison.Ordinal)
+            .Replace("__SP_HOME_POS__", Math.Max(-1, cfg?.HomeRowPosition ?? 0).ToString(CultureInfo.InvariantCulture), StringComparison.Ordinal)
+            .Replace("__SP_HOME_THUMB__", string.Equals(cfg?.HomeRowCardStyle, "Thumb", StringComparison.OrdinalIgnoreCase) ? "true" : "false", StringComparison.Ordinal)
             .Replace("__SP_ENABLED__", cfg?.EnableWebScreen == false ? "false" : "true", StringComparison.Ordinal)
             .Replace("__SP_TITLE__", JsonSerializer.Serialize(string.IsNullOrWhiteSpace(cfg?.PlaylistName) ? PluginConfiguration.DefaultName : cfg.PlaylistName.Trim()), StringComparison.Ordinal);
 

@@ -278,6 +278,25 @@
                             <input is="emby-checkbox" type="checkbox" id="EnableHomeRow">
                             <span>Show a Suggested row on the home page</span>
                         </label>
+                        <div class="selectContainer">
+                            <select is="emby-select" id="HomeRowPosition" label="Place the home row">
+                                <option value="0">At the top</option>
+                                <option value="1">After the 1st row</option>
+                                <option value="2">After the 2nd row</option>
+                                <option value="3">After the 3rd row</option>
+                                <option value="4">After the 4th row</option>
+                                <option value="5">After the 5th row</option>
+                                <option value="6">After the 6th row</option>
+                                <option value="-1">At the bottom</option>
+                            </select>
+                            <div class="fieldDescription">Rows are counted in each user's own order (Settings → Home in the web client).</div>
+                        </div>
+                        <div class="selectContainer">
+                            <select is="emby-select" id="HomeRowCardStyle" label="Home row cards">
+                                <option value="Portrait">Portrait (posters)</option>
+                                <option value="Thumb">Thumb (landscape)</option>
+                            </select>
+                        </div>
                         <p class="sp-hint">After changing these, refresh the browser (web clients cache index.html).</p>
                     </div>
                 </div>
@@ -846,6 +865,8 @@
                     });
                     $('#ExcludeTags').value = (config.ExcludeTags || []).join(', ');
                     $('#DefaultCoverColor').value = config.DefaultCoverColor || '#3A6EA5';
+                    $('#HomeRowPosition').value = String(config.HomeRowPosition || 0);
+                    $('#HomeRowCardStyle').value = config.HomeRowCardStyle === 'Thumb' ? 'Thumb' : 'Portrait';
 
                     var libIds = config.LibraryIds || [];
                     $('#spLibraries').innerHTML = folders.filter(function (f) { return f.CollectionType === 'movies'; }).map(function (f) {
@@ -966,6 +987,8 @@
                 config.PlaylistName = $('#PlaylistName').value.trim() || 'Suggested';
                 config.MirrorPath = $('#MirrorPath').value.trim();
                 config.MirrorUserId = $('#MirrorUserId').value;
+                config.HomeRowPosition = parseInt($('#HomeRowPosition').value, 10) || 0;
+                config.HomeRowCardStyle = $('#HomeRowCardStyle').value;
                 config.DefaultCoverColor = $('#DefaultCoverColor').value;
                 var defaultCard = $('#spDefaultCard');
                 config.DefaultCoverTheme = defaultCard.querySelector('[data-f="Theme"]').value || 'Sparkle';

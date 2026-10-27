@@ -46,7 +46,7 @@ public class WebAssetTests
     [Fact]
     public void Web_script_parses_after_placeholders_are_filled()
     {
-        var js = Resource("Web.forYou.js").Replace("__SP_ENABLED__", "true").Replace("__SP_HOME_ROW__", "false")
+        var js = Resource("Web.forYou.js").Replace("__SP_ENABLED__", "true").Replace("__SP_HOME_ROW__", "false").Replace("__SP_HOME_POS__", "-1").Replace("__SP_HOME_THUMB__", "true")
             .Replace("__SP_TITLE__", System.Text.Json.JsonSerializer.Serialize("Suggested \"</script>\" 'quotes'"));
         Assert.DoesNotContain("__SP_", js);
         new Parser(new ParserOptions { EcmaVersion = EcmaVersion.ES2020 }).ParseScript(js);

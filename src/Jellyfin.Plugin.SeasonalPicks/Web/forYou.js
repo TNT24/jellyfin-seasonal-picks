@@ -6,6 +6,8 @@
 
     var ENABLED = __SP_ENABLED__;
     var HOME_ROW = __SP_HOME_ROW__;
+    var HOME_POS = __SP_HOME_POS__; // 0 = top, n = after the nth home row, -1 = bottom
+    var HOME_THUMB = __SP_HOME_THUMB__; // landscape (Thumb / backdrop) cards instead of posters
     var TITLE = __SP_TITLE__;
     if (!ENABLED || window.__seasonalPicksLoaded) return;
     window.__seasonalPicksLoaded = true;
@@ -51,6 +53,18 @@
         return ApiClient.getUrl('Items/' + id + '/Images/Primary', { fillHeight: h, quality: 90 });
     }
 
+    // Landscape image: the Thumb if there is one, else the first backdrop (swapped in by onImageError).
+    function thumb(id, w, type) {
+        return ApiClient.getUrl('Items/' + id + '/Images/' + (type || 'Thumb'), { fillWidth: w, quality: 90 });
+    }
+
+    function onImageError(e) {
+        var img = e.target;
+        if (img.tagName !== 'IMG' || !img.dataset.fallback) return;
+        img.src = img.dataset.fallback;
+        delete img.dataset.fallback;
+    }
+
     function detailsHref(id) {
         return '#/details?id=' + id + '&serverId=' + ApiClient.serverId();
     }
@@ -94,7 +108,7 @@
             '.sp-card{position:relative;min-width:0}',
             '.sp-poster{display:block;position:relative;aspect-ratio:2/3;border-radius:10px;overflow:hidden;background:#222 center/cover no-repeat}',
             '.sp-poster img{width:100%;height:100%;object-fit:cover;display:block}',
-            '.sp-badge{position:absolute;left:6px;right:6px;bottom:6px;padding:4px 8px;border-radius:6px;font-size:.72em;line-height:1.3;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);border-left:3px solid var(--k)}',
+            '.sp-reason{display:-webkit-box;-webkit-box-orient:vertical;-webkit-line-clamp:2;overflow:hidden;margin-top:4px;padding-left:8px;border-left:3px solid var(--k);font-size:.82em;line-height:1.35;opacity:.9}',
             '.sp-k-Seasonal{--k:var(--sp-accent)}.sp-k-Unwatched{--k:#4FA3FF}.sp-k-Rediscover{--k:#35C28A}.sp-k-NewRelease{--k:#C792EA}',
             '.sp-name{margin-top:8px;font-size:.95em;font-weight:500;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}',
             '.sp-sub{font-size:.8em;opacity:.65;margin-top:2px}',
@@ -107,7 +121,16 @@
             '.sp-foot button{background:none;border:0;color:inherit;text-decoration:underline;cursor:pointer;font:inherit;padding:0}',
             '.sp-empty{padding:48px 0;text-align:center;opacity:.7}',
             '.sp-home .sp-row{display:flex;gap:12px;overflow-x:auto;padding:4px 3.3% 12px;scroll-snap-type:x proximity}',
-            '.sp-home .sp-row .sp-card{flex:0 0 clamp(110px,12vw,170px);scroll-snap-align:start}',
+            // Roughly the widths of Jellyfin's own portrait rows, so this row lines up with the others.
+            '.sp-home .sp-row .sp-card{flex:0 0 auto;width:30vw;scroll-snap-align:start}',
+            '@media (min-width:600px){.sp-home .sp-row .sp-card{width:20vw}}',
+            '@media (min-width:1000px){.sp-home .sp-row .sp-card{width:14vw}}',
+            '@media (min-width:1600px){.sp-home .sp-row .sp-card{width:11vw}}',
+            '.sp-poster.sp-landscape{aspect-ratio:16/9}',
+            '.sp-home-thumb .sp-row .sp-card{width:60vw}',
+            '@media (min-width:600px){.sp-home-thumb .sp-row .sp-card{width:36vw}}',
+            '@media (min-width:1000px){.sp-home-thumb .sp-row .sp-card{width:24vw}}',
+            '@media (min-width:1600px){.sp-home-thumb .sp-row .sp-card{width:19vw}}',
             '.sp-home .sectionTitleContainer{display:flex;align-items:center;gap:12px}',
             '.sp-home .sp-see-all{margin-left:auto;margin-right:3.3%}'
         ].join('\n');
@@ -132,19 +155,23 @@
     }
 
     // ---------- cards ----------
-    function cardHtml(p, withActions, h) {
+    function cardHtml(p, withActions, h, landscape) {
         var sub = [p.year, runtime(p.runtimeMinutes), p.rating ? '★ ' + p.rating.toFixed(1) : ''].filter(Boolean).join(' · ');
+        var img = landscape
+            ? '<img loading="lazy" alt="" src="' + esc(thumb(p.id, h)) + '" data-fallback="' + esc(thumb(p.id, h, 'Backdrop/0')) + '">'
+            : '<img loading="lazy" alt="" src="' + esc(poster(p.id, h)) + '">';
         return '<div class="sp-card" data-id="' + esc(p.id) + '" data-kind="' + esc(p.kind) + '">' +
-            '<a class="sp-poster" href="' + detailsHref(p.id) + '" title="' + esc(p.overview || p.name) + '">' +
-            '<img loading="lazy" alt="" src="' + esc(poster(p.id, h)) + '">' +
-            '<span class="sp-badge sp-k-' + esc(p.kind) + '">' + esc(p.reason) + '</span></a>' +
+            '<a class="sp-poster' + (landscape ? ' sp-landscape' : '') + '" href="' + detailsHref(p.id) + '" title="' + esc(p.overview || p.name) + '">' +
+            img + '</a>' +
             (withActions
                 ? '<div class="sp-card-actions">' +
                   '<button class="sp-icon-btn" data-act="snooze" title="Not now (swap for 30 days)" aria-label="Not now">↻</button>' +
                   '<button class="sp-icon-btn" data-act="hide" title="Never suggest this" aria-label="Never suggest">✕</button></div>'
                 : '') +
             '<div class="sp-name">' + esc(p.name) + '</div>' +
-            '<div class="sp-sub">' + esc(sub) + '</div></div>';
+            '<div class="sp-sub">' + esc(sub) + '</div>' +
+            (p.reason ? '<div class="sp-reason sp-k-' + esc(p.kind) + '" title="' + esc(p.reason) + '">' + esc(p.reason) + '</div>' : '') +
+            '</div>';
     }
 
     // ---------- overlay screen ----------
@@ -293,15 +320,24 @@
             if (!data.picks.length || container.querySelector('[data-sp-home]') || !container.isConnected) return;
             injectStyles();
             var section = document.createElement('div');
-            section.className = 'verticalSection sp-home';
+            section.className = 'verticalSection sp-home' + (HOME_THUMB ? ' sp-home-thumb' : '');
             section.setAttribute('data-sp-home', '1');
+            section.addEventListener('error', onImageError, true); // error doesn't bubble; capture it
             applyAccent(section, data);
             fillHomeRow(section, data);
             section.addEventListener('click', function (e) {
                 if (e.target.closest('[data-act="see-all"]')) { e.preventDefault(); openOverlay(); }
             });
-            container.insertBefore(section, container.firstChild);
+            placeHomeRow(container, section);
         }, function () { homeBusy = false; });
+    }
+
+    // Home rows are .section0, .section1 … in the user's chosen order; they exist (empty) before they load.
+    function placeHomeRow(container, section) {
+        var after = HOME_POS > 0 ? container.querySelector(':scope > .section' + (HOME_POS - 1)) : null;
+        if (after) after.after(section);
+        else if (HOME_POS === 0) container.insertBefore(section, container.firstChild);
+        else container.appendChild(section); // bottom, or fewer rows than asked for
     }
 
     function fillHomeRow(section, data) {
@@ -310,7 +346,7 @@
             '<div class="sectionTitleContainer sectionTitleContainer-cards padded-left">' +
             '<h2 class="sectionTitle sectionTitle-cards">' + esc(TITLE) + (season ? ' · ' + esc(season) : '') + '</h2>' +
             '<button class="sp-btn sp-see-all" data-act="see-all">See all</button></div>' +
-            '<div class="sp-row">' + data.picks.slice(0, 15).map(function (p) { return cardHtml(p, false, 300); }).join('') + '</div>';
+            '<div class="sp-row">' + data.picks.slice(0, 15).map(function (p) { return HOME_THUMB ? cardHtml(p, false, 480, true) : cardHtml(p, false, 300); }).join('') + '</div>';
     }
 
     function refreshHomeRow() {

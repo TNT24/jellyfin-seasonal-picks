@@ -2,6 +2,12 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.4.0 - 2026-10-27
+- Each pick's reason is now a readable line under the title, instead of small text over the poster.
+- The home row's cards are the same size as Jellyfin's other home rows.
+- Choose where the home row goes: at the top, after any of the first six rows, or at the bottom.
+- Choose portrait (poster) or thumb (landscape) cards for the home row.
+
 ## 1.3.2 - 2026-10-24
 - Fixed the web Suggested screen and home row sometimes not appearing, especially alongside Theme Builder or other plugins that add to the web client. The plugin now keeps retrying at startup, and checks every few minutes that the web client still has the screen.
 

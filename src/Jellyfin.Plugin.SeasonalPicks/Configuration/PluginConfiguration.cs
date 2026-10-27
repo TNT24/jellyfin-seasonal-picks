@@ -92,6 +92,12 @@ public class PluginConfiguration : BasePluginConfiguration
 
     public bool EnableHomeRow { get; set; } = true;
 
+    /// <summary>Where the home row goes: 0 = top, n = after the user's nth home row, -1 = bottom.</summary>
+    public int HomeRowPosition { get; set; }
+
+    /// <summary>Home row cards: "Portrait" (posters) or "Thumb" (landscape, falling back to the backdrop).</summary>
+    public string HomeRowCardStyle { get; set; } = "Portrait";
+
     // ---- Covers (server-side images, so they show on TVs too) ----
     /// <summary>Set the playlist and mirror-library cover from the active season.</summary>
     public bool EnableSeasonalCovers { get; set; } = true;
