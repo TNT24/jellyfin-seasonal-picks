@@ -2,6 +2,10 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.4.1 - 2026-10-27
+- The home row has ‹ › buttons beside See all instead of a scrollbar (swipe still works on phones and tablets).
+- A little more space between the home row title and its cards.
+
 ## 1.4.0 - 2026-10-27
 - Each pick's reason is now a readable line under the title, instead of small text over the poster.
 - The home row's cards are the same size as Jellyfin's other home rows.

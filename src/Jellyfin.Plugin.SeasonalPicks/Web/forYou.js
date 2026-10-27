@@ -129,8 +129,13 @@
             '@media (min-width:600px){.sp-home-thumb .sp-row .sp-card{width:36vw}}',
             '@media (min-width:1000px){.sp-home-thumb .sp-row .sp-card{width:24vw}}',
             '@media (min-width:1600px){.sp-home-thumb .sp-row .sp-card{width:19vw}}',
-            '.sp-home .sectionTitleContainer{display:flex;align-items:center;gap:12px}',
-            '.sp-home .sp-see-all{margin-left:auto;margin-right:3.3%}'
+            '.sp-home .sectionTitleContainer{display:flex;align-items:center;gap:12px;margin-bottom:10px}',
+            // No scrollbar; the arrow buttons (or a swipe) scroll the row instead.
+            '.sp-home .sp-row{scrollbar-width:none}',
+            '.sp-home .sp-row::-webkit-scrollbar{display:none}',
+            '.sp-home .sp-tools{display:flex;gap:6px;margin-left:auto;margin-right:3.3%}',
+            '.sp-home .sp-arrow{width:36px;padding:9px 0;font-size:1.1em;line-height:1}',
+            '@media (hover:none){.sp-home .sp-arrow{display:none}}'
         ].join('\n');
         var style = document.createElement('style');
         style.id = 'sp-styles';
@@ -277,9 +282,18 @@
             applyAccent(section, data);
             fillHomeRow(section, data);
             section.addEventListener('click', function (e) {
-                if (e.target.closest('[data-act="see-all"]')) { e.preventDefault(); openOverlay(); }
+                var btn = e.target.closest('[data-act]');
+                if (!btn) return;
+                var act = btn.getAttribute('data-act');
+                if (act === 'see-all') { e.preventDefault(); openOverlay(); }
+                else if (act === 'prev' || act === 'next') {
+                    var row = section.querySelector('.sp-row');
+                    row.scrollBy({ left: (act === 'next' ? 1 : -1) * row.clientWidth * 0.9, behavior: 'smooth' });
+                }
             });
+            section.addEventListener('scroll', function () { updateArrows(section); }, true); // scroll doesn't bubble
             placeHomeRow(container, section);
+            updateArrows(section);
         }, function () { homeBusy = false; });
     }
 
@@ -296,13 +310,23 @@
         section.innerHTML =
             '<div class="sectionTitleContainer sectionTitleContainer-cards padded-left">' +
             '<h2 class="sectionTitle sectionTitle-cards">' + esc(TITLE) + (season ? ' · ' + esc(season) : '') + '</h2>' +
-            '<button class="sp-btn sp-see-all" data-act="see-all">See all</button></div>' +
+            '<div class="sp-tools">' +
+            '<button class="sp-btn sp-arrow" data-act="prev" aria-label="Scroll left">‹</button>' +
+            '<button class="sp-btn sp-arrow" data-act="next" aria-label="Scroll right">›</button>' +
+            '<button class="sp-btn" data-act="see-all">See all</button></div></div>' +
             '<div class="sp-row">' + data.picks.slice(0, 15).map(function (p) { return HOME_THUMB ? cardHtml(p, false, 480, true) : cardHtml(p, false, 300); }).join('') + '</div>';
+    }
+
+    function updateArrows(section) {
+        var row = section.querySelector('.sp-row');
+        if (!row) return;
+        section.querySelector('[data-act="prev"]').disabled = row.scrollLeft <= 1;
+        section.querySelector('[data-act="next"]').disabled = row.scrollLeft + row.clientWidth >= row.scrollWidth - 1;
     }
 
     function refreshHomeRow() {
         var section = document.querySelector('[data-sp-home]');
-        if (section && cache) fillHomeRow(section, cache);
+        if (section && cache) { fillHomeRow(section, cache); updateArrows(section); }
     }
 
     // ---------- boot ----------
@@ -317,6 +341,10 @@
             });
         });
         observer.observe(document.body, { childList: true, subtree: true });
+        window.addEventListener('resize', function () {
+            var section = document.querySelector('[data-sp-home]');
+            if (section) updateArrows(section);
+        });
         addHomeRow();
         window.SeasonalPicks = { open: openOverlay };
     }
