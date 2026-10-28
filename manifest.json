@@ -9,6 +9,22 @@
         "imageUrl":  "https://raw.githubusercontent.com/TNT24/jellyfin-seasonal-picks/main/docs/logo.png",
         "versions":  [
                          {
+                             "version":  "1.5.0.12",
+                             "changelog":  "New: post to Discord. Add a Discord webhook URL under Where picks show → Discord. Each season or special day is announced when it starts, with a few films from your library that fit and how many users got its playlist, and again when it ends. Optionally post one user\u0027s top picks every day, with posters when you add your server\u0027s address.",
+                             "targetAbi":  "12.1.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.5.0/SeasonalPicks_1.5.0.12.zip",
+                             "checksum":  "89cd83a36d632dd28f22292e2c8bfe02",
+                             "timestamp":  "2026-10-28T22:23:25.7982216Z"
+                         },
+                         {
+                             "version":  "1.5.0.11",
+                             "changelog":  "New: post to Discord. Add a Discord webhook URL under Where picks show → Discord. Each season or special day is announced when it starts, with a few films from your library that fit and how many users got its playlist, and again when it ends. Optionally post one user\u0027s top picks every day, with posters when you add your server\u0027s address.",
+                             "targetAbi":  "10.11.0.0",
+                             "sourceUrl":  "https://github.com/TNT24/jellyfin-seasonal-picks/releases/download/v1.5.0/SeasonalPicks_1.5.0.11.zip",
+                             "checksum":  "5d59d08b0f8e421263a4029c470df17c",
+                             "timestamp":  "2026-10-28T22:23:25.7982216Z"
+                         },
+                         {
                              "version":  "1.4.2.12",
                              "changelog":  "The home row starts on the first pick, and the ‹ › buttons move by whole cards, stopping at the same left margin as Jellyfin\u0027s other rows instead of running off the edge.",
                              "targetAbi":  "12.1.0.0",
