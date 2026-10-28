@@ -45,6 +45,7 @@ public class PicksService
     private readonly PickStore _store;
     private readonly MirrorWriter _mirror;
     private readonly CoverService _covers;
+    private readonly DiscordService _discord;
     private readonly ILibraryManager _library;
     private readonly IUserManager _users;
     private readonly IPlaylistManager _playlists;
@@ -54,12 +55,13 @@ public class PicksService
     /// <summary>One mirror sync at a time (the nightly run, a swap and a finished movie can overlap).</summary>
     private readonly SemaphoreSlim _mirrorGate = new(1, 1);
 
-    public PicksService(PickEngine engine, PickStore store, MirrorWriter mirror, CoverService covers, ILibraryManager library, IUserManager users, IPlaylistManager playlists, IFileSystem fileSystem, ILogger<PicksService> logger)
+    public PicksService(PickEngine engine, PickStore store, MirrorWriter mirror, CoverService covers, DiscordService discord, ILibraryManager library, IUserManager users, IPlaylistManager playlists, IFileSystem fileSystem, ILogger<PicksService> logger)
     {
         _engine = engine;
         _store = store;
         _mirror = mirror;
         _covers = covers;
+        _discord = discord;
         _library = library;
         _users = users;
         _playlists = playlists;
@@ -114,6 +116,33 @@ public class PicksService
                 : await RefreshUserAsync(mirrorUser, false, ct, syncMirror: false).ConfigureAwait(false);
             await SyncMirrorAsync(cfg, state, ct).ConfigureAwait(false);
             progress.Report(100);
+        }
+
+        if (!string.IsNullOrWhiteSpace(cfg.DiscordWebhookUrl))
+        {
+            await _discord.AfterRefreshAsync(cfg, users, await DiscordPicksUserAsync(cfg, users, ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>The user whose picks go to Discord, with their picks (made now if that user isn't in the enabled set).</summary>
+    private async Task<(User User, UserPickState State)?> DiscordPicksUserAsync(PluginConfiguration cfg, IReadOnlyList<User> refreshed, CancellationToken ct)
+    {
+        if (!Guid.TryParse(cfg.DiscordPicksUserId, out var id) || _users.GetUserById(id) is not User user)
+        {
+            return null;
+        }
+
+        try
+        {
+            var state = refreshed.Any(u => u.Id == user.Id)
+                ? _store.Load(user.Id)
+                : await RefreshUserAsync(user, false, ct, syncMirror: false).ConfigureAwait(false);
+            return (user, state);
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogError(ex, "SeasonalPicks: could not make picks for Discord");
+            return null;
         }
     }
 

@@ -87,6 +87,21 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Also delete real files/folders in the mirror folder (anything that isn't one of the plugin's links). Refused if the folder overlaps another library.</summary>
     public bool MirrorRemoveOtherFiles { get; set; }
 
+    // ---- Output: Discord ----
+    /// <summary>Discord webhook URL. Empty = no Discord messages.</summary>
+    public string DiscordWebhookUrl { get; set; } = string.Empty;
+
+    /// <summary>Post when a season or special day starts and ends.</summary>
+    public bool DiscordAnnounceSeasons { get; set; } = true;
+
+    /// <summary>Post this user's top picks once a day. Empty = off.</summary>
+    public string DiscordPicksUserId { get; set; } = string.Empty;
+
+    public int DiscordPicksCount { get; set; } = 5;
+
+    /// <summary>Address Discord can reach the server on (e.g. https://jellyfin.example.com), for links and posters. Empty = none.</summary>
+    public string PublicServerUrl { get; set; } = string.Empty;
+
     // ---- Output: web client screen ----
     public bool EnableWebScreen { get; set; } = true;
 

@@ -299,6 +299,32 @@
                         </div>
                         <p class="sp-hint">After changing these, refresh the browser (web clients cache index.html).</p>
                     </div>
+
+                    <div class="sp-section">
+                        <h2>Discord</h2>
+                        <p class="sp-hint">Posts to a Discord channel after the nightly refresh. In Discord: channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.</p>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="url" id="DiscordWebhookUrl" autocomplete="off" label="Webhook URL (blank = off)" placeholder="https://discord.com/api/webhooks/…">
+                            <div class="fieldDescription" id="spDiscordStatus"></div>
+                        </div>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="DiscordAnnounceSeasons">
+                            <span>Announce when a season or special day starts and ends, with a few films from the library that fit</span>
+                        </label>
+                        <div class="sp-grid2">
+                            <div class="selectContainer">
+                                <select is="emby-select" id="DiscordPicksUserId" label="Post today's picks for"></select>
+                            </div>
+                            <div class="inputContainer">
+                                <input is="emby-input" type="number" id="DiscordPicksCount" min="1" max="10" label="Films to post (1 to 10)">
+                            </div>
+                        </div>
+                        <div class="inputContainer">
+                            <input is="emby-input" type="url" id="PublicServerUrl" autocomplete="off" label="Server address for links and posters (optional)" placeholder="https://jellyfin.example.com">
+                            <div class="fieldDescription">An address Discord can reach. Films then link to Jellyfin and today's picks show their posters.</div>
+                        </div>
+                        <button is="emby-button" type="button" id="spTestDiscord" class="raised emby-button"><span>Save and send a test message</span></button>
+                    </div>
                 </div>
 
                 <!-- Seasons -->
@@ -455,7 +481,7 @@
             var THEMES = [['auto', 'Automatic (from the name)'], ['Christmas', 'Christmas tree, presents and snow'], ['Snow', 'Snow and snowflakes'], ['Halloween', 'Pumpkins, bats and moon'], ['Easter', 'Easter bunny, eggs and blossom'], ['Hearts', 'Hearts'], ['Summer', 'Sun and waves'], ['Fireworks', 'Fireworks over a skyline'], ['Shamrock', 'Shamrocks'], ['Space', 'Stars and a planet'], ['Lightsabers', 'Lightsabers in space'], ['Ghosts', 'Ghosts and slime'], ['Castle', 'Castle and floating candles'], ['Bonfire', 'Bonfire and fireworks'], ['Pancakes', 'Stack of pancakes'], ['LunarNewYear', 'Red lanterns and blossom'], ['Sparkle', 'A night at the pictures'], ['None', 'None (just the background)']];
             var POSITIONS = [['Top', 'Top'], ['Middle', 'Middle'], ['Bottom', 'Bottom']];
             var BACKGROUNDS = [['Posters', 'Posters of the picks'], ['Picture', 'My picture'], ['Plain', 'Plain season colour']];
-            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow'];
+            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow', 'DiscordAnnounceSeasons'];
             var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
             // Ready-made days and seasons for "Add a day or season". Day = pushes its films forward on the day, never hides them.
@@ -857,7 +883,7 @@
                     config = r[0];
                     var users = r[1], folders = r[2];
 
-                    ['PickCount', 'SeasonalPercent', 'RecentlyWatchedDays', 'RediscoverAfterDays', 'RediscoverPercent', 'MinCommunityRating', 'NewReleasePercent', 'NewReleaseDays', 'MaxPerGenrePercent', 'PlaylistName', 'SeasonPlaylistName', 'SeasonPlaylistCount', 'MirrorPath'].forEach(function (k) {
+                    ['PickCount', 'SeasonalPercent', 'RecentlyWatchedDays', 'RediscoverAfterDays', 'RediscoverPercent', 'MinCommunityRating', 'NewReleasePercent', 'NewReleaseDays', 'MaxPerGenrePercent', 'PlaylistName', 'SeasonPlaylistName', 'SeasonPlaylistCount', 'MirrorPath', 'DiscordWebhookUrl', 'DiscordPicksCount', 'PublicServerUrl'].forEach(function (k) {
                         $('#' + k).value = config[k] == null ? '' : config[k];
                     });
                     CHECKS.forEach(function (k) {
@@ -884,6 +910,12 @@
                     $('#MirrorUserId').innerHTML = '<option value="">Choose a user</option>' + users.map(function (u) {
                         return '<option value="' + esc(u.Id) + '"' + (u.Id.replace(/-/g, '').toLowerCase() === mirrorUser ? ' selected' : '') + '>' + esc(u.Name) + '</option>';
                     }).join('');
+
+                    var discordUser = (config.DiscordPicksUserId || '').replace(/-/g, '').toLowerCase();
+                    $('#DiscordPicksUserId').innerHTML = '<option value="">Nobody (off)</option>' + users.map(function (u) {
+                        return '<option value="' + esc(u.Id) + '"' + (u.Id.replace(/-/g, '').toLowerCase() === discordUser ? ' selected' : '') + '>' + esc(u.Name) + '</option>';
+                    }).join('');
+                    updateDiscordStatus();
 
                     $('#spPreviewUser').innerHTML = users.map(function (u) {
                         return '<option value="' + esc(u.Id) + '"' + (u.Id === ApiClient.getCurrentUserId() ? ' selected' : '') + '>' + esc(u.Name) + '</option>';
@@ -987,6 +1019,10 @@
                 config.PlaylistName = $('#PlaylistName').value.trim() || 'Suggested';
                 config.MirrorPath = $('#MirrorPath').value.trim();
                 config.MirrorUserId = $('#MirrorUserId').value;
+                config.DiscordWebhookUrl = $('#DiscordWebhookUrl').value.trim();
+                config.DiscordPicksUserId = $('#DiscordPicksUserId').value;
+                config.DiscordPicksCount = Math.min(10, Math.max(1, Math.round(num('DiscordPicksCount', 5))));
+                config.PublicServerUrl = $('#PublicServerUrl').value.trim();
                 config.HomeRowPosition = parseInt($('#HomeRowPosition').value, 10) || 0;
                 config.HomeRowCardStyle = $('#HomeRowCardStyle').value;
                 config.DefaultCoverColor = $('#DefaultCoverColor').value;
@@ -1049,6 +1085,31 @@
                 return false;
             });
             $('#spSaveRefresh').addEventListener('click', function () { save(true); });
+
+            // ---------- Discord ----------
+            function updateDiscordStatus(text) {
+                var url = $('#DiscordWebhookUrl').value.trim();
+                $('#spDiscordStatus').textContent = text || (!url
+                    ? 'Discord is off.'
+                    : /^https:\/\/(ptb\.|canary\.)?discord(app)?\.com\/api\/webhooks\//.test(url)
+                        ? '✓ Discord is on.'
+                        : '✗ That doesn\'t look like a Discord webhook URL. It should start with https://discord.com/api/webhooks/');
+            }
+            $('#DiscordWebhookUrl').addEventListener('input', function () { updateDiscordStatus(); });
+
+            // Saves first, so the test uses the address on the page.
+            $('#spTestDiscord').addEventListener('click', function () {
+                updateDiscordStatus('Saving and sending…');
+                moveRenamedUploads().then(function () {
+                    return ApiClient.updatePluginConfiguration(pluginId, collect());
+                }).then(function () {
+                    return ApiClient.ajax({ type: 'POST', url: ApiClient.getUrl('SeasonalPicks/TestDiscord'), dataType: 'json' });
+                }).then(function (r) {
+                    updateDiscordStatus((r.ok ? '✓ ' : '✗ ') + r.message);
+                }, function () {
+                    updateDiscordStatus('✗ Could not send the test message.');
+                });
+            });
 
             // ---------- preview (dry run with the settings as they are on the page) ----------
             function previewTable(picks) {

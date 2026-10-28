@@ -2,6 +2,11 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.5.0 - 2026-10-28
+- New: post to Discord. Add a Discord webhook URL under Where picks show → Discord.
+- Each season or special day is announced when it starts, with a few films from your library that fit and how many users got its playlist, and again when it ends.
+- Optionally post one user's top picks every day, with posters when you add your server's address.
+
 ## 1.4.2 - 2026-10-27
 - The home row starts on the first pick, and the ‹ › buttons move by whole cards, stopping at the same left margin as Jellyfin's other rows instead of running off the edge.
 

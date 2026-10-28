@@ -38,6 +38,7 @@ Seasonal Picks works out a fresh list for each user every day and publishes it i
 - **Knows what you've seen.** Recently watched and half-watched films are left out; long-forgotten favourites come back as rediscoveries.
 - **Follows the calendar.** Halloween, Christmas, Easter, Valentine's and New Year out of the box, plus special days like Pancake Day, Chinese New Year and Star Wars Day. Holiday films stay hidden the rest of the year.
 - **Keeps the list moving.** Watch a pick or mark it played and it's replaced straight away. Last refresh's picks are down-weighted so the list rotates.
+- **Posts to Discord (optional).** Announces each season or special day when it starts and ends, with a few films from your library that fit, and can post one user's top picks every day.
 - **Understands collections and copies.** The next film in a series you've started is favoured, and 4K and HD copies of the same film count as one.
 - **Draws its own covers.** Playlist and library covers are drawn on the server for each season, with a new scene each week in the longer seasons. Design them in a live-preview designer, or upload your own.
 - **Preview before you commit.** See exactly what any user would get with the settings on the page, without writing anything.

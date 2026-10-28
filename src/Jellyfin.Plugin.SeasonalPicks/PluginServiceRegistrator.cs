@@ -15,6 +15,8 @@ public class PluginServiceRegistrator : IPluginServiceRegistrator
         serviceCollection.AddSingleton<PickEngine>();
         serviceCollection.AddSingleton<MirrorWriter>();
         serviceCollection.AddSingleton<CoverService>();
+        serviceCollection.AddSingleton<DiscordNotifier>();
+        serviceCollection.AddSingleton<DiscordService>();
         serviceCollection.AddSingleton<PicksService>();
         serviceCollection.AddHostedService<WebInjectionService>();
         serviceCollection.AddHostedService<WatchedListener>();

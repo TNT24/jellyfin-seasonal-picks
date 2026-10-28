@@ -110,6 +110,28 @@ public class SeasonalPicksController : ControllerBase
         return NoContent();
     }
 
+    /// <summary>Admin: send a test message to the saved Discord webhook.</summary>
+    [HttpPost("TestDiscord")]
+    [Authorize(Policy = Policies.RequiresElevation)]
+    public async Task<ActionResult<object>> TestDiscord([FromServices] DiscordService discord, CancellationToken ct)
+    {
+        var cfg = Plugin.Instance?.Configuration ?? new PluginConfiguration();
+        if (string.IsNullOrWhiteSpace(cfg.DiscordWebhookUrl))
+        {
+            return new { ok = false, message = "Enter a Discord webhook URL first." };
+        }
+
+        try
+        {
+            await discord.TestAsync(cfg, ct).ConfigureAwait(false);
+            return new { ok = true, message = "Sent. Check your Discord channel." };
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            return new { ok = false, message = ex.Message };
+        }
+    }
+
     /// <summary>
     /// Admin: dry run for one user. The body may hold unsaved settings from the config page (same shape as the
     /// plugin configuration); empty = the saved settings. Nothing is written.
