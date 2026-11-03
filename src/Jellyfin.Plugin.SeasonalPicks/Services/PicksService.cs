@@ -108,24 +108,27 @@ public class PicksService
             progress.Report(100.0 * ++done / Math.Max(total, 1));
         }
 
+        UserPickState? mirrorState = null;
         if (mirrorUser is not null)
         {
             // The mirror follows the chosen user's picks; generate them if that user isn't in the enabled set.
             var state = users.Any(u => u.Id == mirrorUser.Id)
                 ? _store.Load(mirrorUser.Id)
                 : await RefreshUserAsync(mirrorUser, false, ct, syncMirror: false).ConfigureAwait(false);
+            mirrorState = state;
             await SyncMirrorAsync(cfg, state, ct).ConfigureAwait(false);
             progress.Report(100);
         }
 
         if (!string.IsNullOrWhiteSpace(cfg.DiscordWebhookUrl))
         {
-            await _discord.AfterRefreshAsync(cfg, users, await DiscordPicksUserAsync(cfg, users, ct).ConfigureAwait(false), ct).ConfigureAwait(false);
+            await _discord.AfterRefreshAsync(cfg, users, await DiscordPicksUserAsync(cfg, users, mirrorUser is not null && mirrorState is not null ? (mirrorUser.Id, mirrorState) : null, ct).ConfigureAwait(false), ct).ConfigureAwait(false);
         }
     }
 
     /// <summary>The user whose picks go to Discord, with their picks (made now if that user isn't in the enabled set).</summary>
-    private async Task<(User User, UserPickState State)?> DiscordPicksUserAsync(PluginConfiguration cfg, IReadOnlyList<User> refreshed, CancellationToken ct)
+    /// <param name="mirror">The mirror user's picks from this run, reused so Discord and the mirror show the same films.</param>
+    private async Task<(User User, UserPickState State)?> DiscordPicksUserAsync(PluginConfiguration cfg, IReadOnlyList<User> refreshed, (Guid UserId, UserPickState State)? mirror, CancellationToken ct)
     {
         if (!Guid.TryParse(cfg.DiscordPicksUserId, out var id) || _users.GetUserById(id) is not User user)
         {
@@ -134,9 +137,11 @@ public class PicksService
 
         try
         {
-            var state = refreshed.Any(u => u.Id == user.Id)
-                ? _store.Load(user.Id)
-                : await RefreshUserAsync(user, false, ct, syncMirror: false).ConfigureAwait(false);
+            var state = mirror is { } m && m.UserId == user.Id
+                ? m.State
+                : refreshed.Any(u => u.Id == user.Id)
+                    ? _store.Load(user.Id)
+                    : await RefreshUserAsync(user, false, ct, syncMirror: false).ConfigureAwait(false);
             return (user, state);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)

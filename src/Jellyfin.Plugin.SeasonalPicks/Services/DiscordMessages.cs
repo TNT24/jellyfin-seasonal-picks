@@ -13,9 +13,14 @@ public sealed record DiscordFilm(Guid ItemId, string Name, int? Year, string Rea
 /// <summary>Builds Discord webhook payloads. No network access, so it can be unit tested.</summary>
 public static class DiscordMessages
 {
-    // Discord: up to 10 embeds and 6000 characters per message.
+    // Discord's limits: 2000 characters of content, 10 embeds, 256 per embed title, 4096 per description,
+    // and 6000 across all embeds' text in one message.
+    internal const int MaxContent = 2000;
+    internal const int MaxEmbedText = 6000;
     private const int MaxEmbeds = 10;
+    private const int MaxTitle = 256;
     private const int MaxReason = 300;
+    private const int MaxName = 200;
     private const int ListSeasonFilmsUpTo = 10;
     private const int DefaultColor = 0x00A4DC;
 
@@ -24,12 +29,13 @@ public static class DiscordMessages
     {
         var baseUrl = publicServerUrl.Trim().TrimEnd('/');
         var oneDay = lastDay.Date <= today.Date;
+        var name = EscapeAndTruncate(season, MaxName);
         var content = oneDay
-            ? $"🎉 **It's {Escape(season)}!**"
-            : $"🎉 **{Escape(season)} is here!** Until {lastDay.ToString("d MMMM", CultureInfo.InvariantCulture)}.";
+            ? $"🎉 **It's {name}!**"
+            : $"🎉 **{name} is here!** Until {lastDay.ToString("d MMMM", CultureInfo.InvariantCulture)}.";
         if (playlistName is not null && playlistUsers > 0)
         {
-            content += $" {Plural(playlistUsers, "user has", "users have")} a new **{Escape(playlistName)}** playlist.";
+            content += $" {Plural(playlistUsers, "user has", "users have")} a new **{EscapeAndTruncate(playlistName, MaxName)}** playlist.";
         }
 
         var embeds = new List<JsonObject>();
@@ -47,23 +53,23 @@ public static class DiscordMessages
         return Message(content, embeds);
     }
 
-    /// <summary>A season has ended and its playlists were removed.</summary>
+    /// <summary>A season has ended. <paramref name="hadPlaylists"/>: it had playlists, which have now been removed.</summary>
     public static JsonObject SeasonEnded(string season, bool hadPlaylists)
         => Message(
-            $"👋 **{Escape(season)} is over.**" + (hadPlaylists ? " Its playlists have been removed until next time." : " See you next time."),
+            $"👋 **{EscapeAndTruncate(season, MaxName)} is over.**" + (hadPlaylists ? " Its playlists have been removed until next time." : " See you next time."),
             []);
 
     /// <summary>One user's top picks for the day: one card per film, with its poster when the server address is set.</summary>
     public static JsonObject DailyPicks(string userName, IReadOnlyList<string> seasons, IReadOnlyList<DiscordFilm> films, string color, string publicServerUrl)
     {
         var baseUrl = publicServerUrl.Trim().TrimEnd('/');
-        var content = $"🍿 **Today's picks for {Escape(userName)}**" + (seasons.Count > 0 ? $" · {Escape(string.Join(" & ", seasons))}" : string.Empty);
+        var content = $"🍿 **Today's picks for {EscapeAndTruncate(userName, MaxName)}**" + (seasons.Count > 0 ? $" · {EscapeAndTruncate(string.Join(" & ", seasons), MaxName * 2)}" : string.Empty);
         var embeds = films.Take(MaxEmbeds).Select(f =>
         {
             var embed = new JsonObject
             {
-                ["title"] = Truncate(f.Year is int y ? $"{f.Name} ({y.ToString(CultureInfo.InvariantCulture)})" : f.Name, 250),
-                ["description"] = Escape(Truncate(f.Reason, MaxReason)),
+                ["title"] = EscapeAndTruncate(f.Year is int y ? $"{f.Name} ({y.ToString(CultureInfo.InvariantCulture)})" : f.Name, MaxTitle - 1),
+                ["description"] = EscapeAndTruncate(f.Reason, MaxReason),
                 ["color"] = Color(color),
             };
             if (baseUrl.Length > 0 && f.ItemId != Guid.Empty)
@@ -75,6 +81,14 @@ public static class DiscordMessages
 
             return embed;
         }).ToList();
+
+        // Long titles and reasons on ten cards can pass Discord's 6000-character total, and then it refuses the whole
+        // message (every day). Drop cards from the end until it fits.
+        while (embeds.Count > 1 && embeds.Sum(EmbedTextLength) > MaxEmbedText)
+        {
+            embeds.RemoveAt(embeds.Count - 1);
+        }
+
         return Message(content, embeds);
     }
 
@@ -88,9 +102,35 @@ public static class DiscordMessages
         return s.Length == 6 && int.TryParse(s, NumberStyles.HexNumber, CultureInfo.InvariantCulture, out var value) ? value : DefaultColor;
     }
 
+    /// <summary>The characters Discord counts towards an embed's share of the 6000 limit (here: title and description).</summary>
+    internal static int EmbedTextLength(JsonObject embed)
+        => (embed["title"]?.GetValue<string>().Length ?? 0) + (embed["description"]?.GetValue<string>().Length ?? 0);
+
+    /// <summary>
+    /// Escapes markdown, then cuts to <paramref name="length"/> characters (plus "…"). Escaping first means the result
+    /// really is within the limit, and a cut never leaves a lone backslash that would escape the "…".
+    /// </summary>
+    internal static string EscapeAndTruncate(string text, int length)
+    {
+        var escaped = Escape(text);
+        if (escaped.Length <= length)
+        {
+            return escaped;
+        }
+
+        var cut = escaped[..length];
+        var trailing = cut.Length - cut.TrimEnd('\\').Length;
+        if (trailing % 2 == 1)
+        {
+            cut = cut[..^1];
+        }
+
+        return cut + "…";
+    }
+
     private static string Link(DiscordFilm f, string baseUrl)
     {
-        var text = "**" + Escape(f.Name) + "**" + (f.Year is int y ? $" ({y.ToString(CultureInfo.InvariantCulture)})" : string.Empty);
+        var text = "**" + EscapeAndTruncate(f.Name, MaxName) + "**" + (f.Year is int y ? $" ({y.ToString(CultureInfo.InvariantCulture)})" : string.Empty);
         return baseUrl.Length > 0 && f.ItemId != Guid.Empty
             ? $"[{text}]({baseUrl}/web/#/details?id={f.ItemId.ToString("N", CultureInfo.InvariantCulture)})"
             : text;
@@ -101,7 +141,7 @@ public static class DiscordMessages
         var message = new JsonObject
         {
             ["username"] = "Jellyfin Seasonal Picks",
-            ["content"] = content,
+            ["content"] = content.Length <= MaxContent ? content : content[..(MaxContent - 1)] + "…",
 
             // Titles and user names could contain "@everyone"; never let a message ping anyone.
             ["allowed_mentions"] = new JsonObject { ["parse"] = new JsonArray() },
@@ -116,8 +156,6 @@ public static class DiscordMessages
 
     private static string Plural(int count, string one, string many)
         => count.ToString(CultureInfo.InvariantCulture) + " " + (count == 1 ? one : many);
-
-    private static string Truncate(string text, int length) => text.Length <= length ? text : text[..length] + "…";
 
     private static string Escape(string text)
     {

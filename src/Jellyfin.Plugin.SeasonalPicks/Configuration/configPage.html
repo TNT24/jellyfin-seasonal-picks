@@ -302,7 +302,7 @@
 
                     <div class="sp-section">
                         <h2>Discord</h2>
-                        <p class="sp-hint">Posts to a Discord channel after the nightly refresh. In Discord: channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.</p>
+                        <p class="sp-hint">Posts to a Discord channel after the nightly refresh, or when you refresh everyone now. Each season is announced once and the picks once a day, so refreshing again doesn't post twice. In Discord: channel settings → Integrations → Webhooks → New Webhook → Copy Webhook URL.</p>
                         <div class="inputContainer">
                             <input is="emby-input" type="url" id="DiscordWebhookUrl" autocomplete="off" label="Webhook URL (blank = off)" placeholder="https://discord.com/api/webhooks/…">
                             <div class="fieldDescription" id="spDiscordStatus"></div>
@@ -1091,7 +1091,7 @@
                 var url = $('#DiscordWebhookUrl').value.trim();
                 $('#spDiscordStatus').textContent = text || (!url
                     ? 'Discord is off.'
-                    : /^https:\/\/(ptb\.|canary\.)?discord(app)?\.com\/api\/webhooks\//.test(url)
+                    : /^https:\/\/((ptb\.|canary\.)?discord\.com|discordapp\.com)\/api\/webhooks\//.test(url)
                         ? '✓ Discord is on.'
                         : '✗ That doesn\'t look like a Discord webhook URL. It should start with https://discord.com/api/webhooks/');
             }

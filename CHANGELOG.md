@@ -2,6 +2,14 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.5.1 - 2026-11-03
+- Discord: if one message fails to post, the ones before it are no longer posted again on the next refresh.
+- Discord: today's picks are always the same films the mirror library shows, when they're for the same user.
+- Discord: long film titles or reasons no longer make Discord refuse today's picks, and titles with * or _ show as written.
+- Discord: a renamed or deleted season, or one that ended while announcements were off, is no longer announced as over, and "its playlists have been removed" only appears when the season had playlists.
+- Discord: never waits more than a minute when Discord asks it to slow down.
+- Discord settings: the webhook check matches what the server accepts, and the page says that "Save and refresh everyone now" posts too (still only once).
+
 ## 1.5.0 - 2026-10-28
 - New: post to Discord. Add a Discord webhook URL under Where picks show → Discord.
 - Each season or special day is announced when it starts, with a few films from your library that fit and how many users got its playlist, and again when it ends.
