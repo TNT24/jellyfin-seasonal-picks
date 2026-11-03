@@ -99,6 +99,9 @@ public class PluginConfiguration : BasePluginConfiguration
 
     public int DiscordPicksCount { get; set; } = 5;
 
+    /// <summary>Upload images with the messages: the season's cover on its announcement and each pick's poster. Needs no server address.</summary>
+    public bool DiscordImages { get; set; } = true;
+
     /// <summary>Address Discord can reach the server on (e.g. https://jellyfin.example.com), for links and posters. Empty = none.</summary>
     public string PublicServerUrl { get; set; } = string.Empty;
 

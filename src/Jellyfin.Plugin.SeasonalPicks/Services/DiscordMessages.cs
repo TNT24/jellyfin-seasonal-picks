@@ -7,8 +7,8 @@ using System.Text.Json.Nodes;
 
 namespace Jellyfin.Plugin.SeasonalPicks.Services;
 
-/// <summary>One film in a Discord message.</summary>
-public sealed record DiscordFilm(Guid ItemId, string Name, int? Year, string Reason);
+/// <summary>One film in a Discord message. <paramref name="Poster"/>: its uploaded poster (<c>attachment://…</c>), if any.</summary>
+public sealed record DiscordFilm(Guid ItemId, string Name, int? Year, string Reason, string? Poster = null);
 
 /// <summary>Builds Discord webhook payloads. No network access, so it can be unit tested.</summary>
 public static class DiscordMessages
@@ -25,7 +25,8 @@ public static class DiscordMessages
     private const int DefaultColor = 0x00A4DC;
 
     /// <summary>A season (or special day) has started. <paramref name="lastDay"/> equal to <paramref name="today"/> = a one-day event.</summary>
-    public static JsonObject SeasonStarted(string season, string color, DateTime today, DateTime lastDay, string? playlistName, int playlistUsers, IReadOnlyList<DiscordFilm> films, string publicServerUrl)
+    /// <param name="banner">The season's cover, shown full width under the films (<c>attachment://…</c>); null = none.</param>
+    public static JsonObject SeasonStarted(string season, string color, DateTime today, DateTime lastDay, string? playlistName, int playlistUsers, IReadOnlyList<DiscordFilm> films, string publicServerUrl, string? banner = null)
     {
         var baseUrl = publicServerUrl.Trim().TrimEnd('/');
         var oneDay = lastDay.Date <= today.Date;
@@ -39,15 +40,21 @@ public static class DiscordMessages
         }
 
         var embeds = new List<JsonObject>();
-        if (films.Count > 0)
+        if (films.Count > 0 || banner is not null)
         {
-            var lines = films.Take(ListSeasonFilmsUpTo).Select(f => "• " + Link(f, baseUrl)).ToList();
-            embeds.Add(new JsonObject
+            var embed = new JsonObject { ["color"] = Color(color) };
+            if (films.Count > 0)
             {
-                ["title"] = oneDay ? "Something to watch today" : "In the mood? From your library",
-                ["description"] = string.Join('\n', lines),
-                ["color"] = Color(color),
-            });
+                embed["title"] = oneDay ? "Something to watch today" : "In the mood? From your library";
+                embed["description"] = string.Join('\n', films.Take(ListSeasonFilmsUpTo).Select(f => "• " + Link(f, baseUrl)));
+            }
+
+            if (banner is not null)
+            {
+                embed["image"] = new JsonObject { ["url"] = banner };
+            }
+
+            embeds.Add(embed);
         }
 
         return Message(content, embeds);
@@ -59,7 +66,10 @@ public static class DiscordMessages
             $"👋 **{EscapeAndTruncate(season, MaxName)} is over.**" + (hadPlaylists ? " Its playlists have been removed until next time." : " See you next time."),
             []);
 
-    /// <summary>One user's top picks for the day: one card per film, with its poster when the server address is set.</summary>
+    /// <summary>
+    /// One user's top picks for the day: one card per film, with its uploaded poster, or else the poster from the server
+    /// address when that's set. The server address also links each title to Jellyfin.
+    /// </summary>
     public static JsonObject DailyPicks(string userName, IReadOnlyList<string> seasons, IReadOnlyList<DiscordFilm> films, string color, string publicServerUrl)
     {
         var baseUrl = publicServerUrl.Trim().TrimEnd('/');
@@ -77,6 +87,11 @@ public static class DiscordMessages
                 var id = f.ItemId.ToString("N", CultureInfo.InvariantCulture);
                 embed["url"] = $"{baseUrl}/web/#/details?id={id}";
                 embed["thumbnail"] = new JsonObject { ["url"] = $"{baseUrl}/Items/{id}/Images/Primary?maxHeight=300" };
+            }
+
+            if (f.Poster is not null)
+            {
+                embed["thumbnail"] = new JsonObject { ["url"] = f.Poster };
             }
 
             return embed;

@@ -9,6 +9,7 @@ using System.Threading.Tasks;
 using Jellyfin.Database.Implementations.Entities;
 using Jellyfin.Plugin.SeasonalPicks.Configuration;
 using MediaBrowser.Controller.Library;
+using MediaBrowser.Model.Entities;
 using Microsoft.Extensions.Logging;
 
 namespace Jellyfin.Plugin.SeasonalPicks.Services;
@@ -25,8 +26,8 @@ public class DiscordState
     public string? PicksPostedOn { get; set; }
 }
 
-/// <summary>A message to post, and what to remember once it has been posted.</summary>
-internal sealed record DiscordOutgoing(JsonObject Message, Action<DiscordState> Record);
+/// <summary>A message to post, the images uploaded with it, and what to remember once it has been posted.</summary>
+internal sealed record DiscordOutgoing(JsonObject Message, Action<DiscordState> Record, IReadOnlyList<DiscordAttachment>? Attachments = null);
 
 /// <summary>
 /// Posts to Discord after a refresh of everyone: seasons starting and ending, and one user's picks.
@@ -38,14 +39,16 @@ public class DiscordService
 
     private readonly DiscordNotifier _discord;
     private readonly PickStore _store;
+    private readonly CoverService _covers;
     private readonly ILibraryManager _library;
     private readonly ILogger<DiscordService> _logger;
     private readonly SemaphoreSlim _gate = new(1, 1);
 
-    public DiscordService(DiscordNotifier discord, PickStore store, ILibraryManager library, ILogger<DiscordService> logger)
+    public DiscordService(DiscordNotifier discord, PickStore store, CoverService covers, ILibraryManager library, ILogger<DiscordService> logger)
     {
         _discord = discord;
         _store = store;
+        _covers = covers;
         _library = library;
         _logger = logger;
     }
@@ -82,16 +85,19 @@ public class DiscordService
                     var sample = (picksUser?.State is { } ps && ps.SeasonPicks.TryGetValue(name, out var own) && own.Count > 0 ? own : null)
                         ?? states.Select(s => s.SeasonPicks.TryGetValue(name, out var p) ? p : null).FirstOrDefault(p => p is { Count: > 0 })
                         ?? new List<PickEntry>();
+                    var playlistName = playlistsOn ? PicksService.SeasonPlaylistName(cfg, name) : null;
+                    var cover = cfg.DiscordImages ? Cover(cfg, season, playlistName ?? name, sample) : null;
                     outbox.Add(new DiscordOutgoing(
                         DiscordMessages.SeasonStarted(
                             name,
                             season.Color,
                             today,
                             LastDay(season, today),
-                            playlistsOn ? PicksService.SeasonPlaylistName(cfg, name) : null,
+                            playlistName,
                             withPlaylist,
                             Films(sample),
-                            cfg.PublicServerUrl),
+                            cfg.PublicServerUrl,
+                            cover?.Reference),
                         s =>
                         {
                             AddOnce(s.AnnouncedSeasons, name);
@@ -99,7 +105,8 @@ public class DiscordService
                             {
                                 AddOnce(s.SeasonsWithPlaylists, name);
                             }
-                        }));
+                        },
+                        cover is null ? null : new[] { cover }));
                 }
 
                 // Playlists can also appear later in a season (turned on mid-season); remember that for its "is over" message.
@@ -141,9 +148,26 @@ public class DiscordService
                 var films = Films(pu.State.Picks.Take(Math.Clamp(cfg.DiscordPicksCount, 1, 10)));
                 if (films.Count > 0)
                 {
+                    var posters = new List<DiscordAttachment>();
+                    if (cfg.DiscordImages)
+                    {
+                        films = films.Select((f, i) =>
+                        {
+                            var poster = Poster(f.ItemId, $"poster-{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}.jpg");
+                            if (poster is null)
+                            {
+                                return f;
+                            }
+
+                            posters.Add(poster);
+                            return f with { Poster = poster.Reference };
+                        }).ToList();
+                    }
+
                     outbox.Add(new DiscordOutgoing(
                         DiscordMessages.DailyPicks(pu.User.Username, pu.State.ActiveSeasons, films, active.FirstOrDefault()?.Color ?? cfg.DefaultCoverColor, cfg.PublicServerUrl),
-                        s => s.PicksPostedOn = Day(today)));
+                        s => s.PicksPostedOn = Day(today),
+                        posters));
                 }
             }
 
@@ -153,7 +177,7 @@ public class DiscordService
                 return;
             }
 
-            var sent = await SendEachAsync((m, c) => _discord.SendAsync(cfg.DiscordWebhookUrl, m, c), outbox, state, SaveState, ct).ConfigureAwait(false);
+            var sent = await SendEachAsync((o, c) => _discord.SendAsync(cfg.DiscordWebhookUrl, o.Message, o.Attachments ?? Array.Empty<DiscordAttachment>(), c), outbox, state, SaveState, ct).ConfigureAwait(false);
             _logger.LogInformation("SeasonalPicks: posted {Count} Discord message(s)", sent);
         }
         catch (Exception ex) when (ex is not OperationCanceledException)
@@ -187,12 +211,12 @@ public class DiscordService
     /// before it aren't posted again next time. Throws the failure after recording what got through.
     /// </summary>
     /// <returns>How many were posted.</returns>
-    internal static async Task<int> SendEachAsync(Func<JsonObject, CancellationToken, Task> send, IReadOnlyList<DiscordOutgoing> outbox, DiscordState state, Action<DiscordState> save, CancellationToken ct)
+    internal static async Task<int> SendEachAsync(Func<DiscordOutgoing, CancellationToken, Task> send, IReadOnlyList<DiscordOutgoing> outbox, DiscordState state, Action<DiscordState> save, CancellationToken ct)
     {
         var sent = 0;
         foreach (var item in outbox)
         {
-            await send(item.Message, ct).ConfigureAwait(false);
+            await send(item, ct).ConfigureAwait(false);
             item.Record(state);
             save(state);
             sent++;
@@ -227,6 +251,43 @@ public class DiscordService
     {
         state.AnnouncedSeasons.Remove(name);
         state.SeasonsWithPlaylists.Remove(name);
+    }
+
+    /// <summary>The season's cover (uploaded or generated, as on its playlist), wide and shrunk for Discord; null if there's none.</summary>
+    private DiscordAttachment? Cover(PluginConfiguration cfg, SeasonRule season, string title, IReadOnlyList<PickEntry> picks)
+    {
+        try
+        {
+            var cover = _covers.Resolve(cfg, season, title, picks.Select(p => p.ItemId).ToList(), wide: true);
+            var data = cover is null ? null : DiscordImages.Shrink(cover.Value.Data, DiscordImages.CoverWidth, DiscordImages.CoverWidth);
+            return data is null ? null : new DiscordAttachment("cover.jpg", data, "image/jpeg");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogWarning(ex, "SeasonalPicks: could not make the {Season} cover for Discord; posting without it", season.Name);
+            return null;
+        }
+    }
+
+    /// <summary>A film's poster from the library, shrunk for Discord; null if it has none on disk.</summary>
+    private DiscordAttachment? Poster(Guid itemId, string fileName)
+    {
+        try
+        {
+            var image = _library.GetItemById(itemId)?.GetImageInfo(ImageType.Primary, 0);
+            if (image is null || !image.IsLocalFile || !File.Exists(image.Path))
+            {
+                return null;
+            }
+
+            var data = DiscordImages.Shrink(File.ReadAllBytes(image.Path), DiscordImages.PosterHeight, DiscordImages.PosterHeight);
+            return data is null ? null : new DiscordAttachment(fileName, data, "image/jpeg");
+        }
+        catch (Exception ex) when (ex is not OperationCanceledException)
+        {
+            _logger.LogDebug(ex, "SeasonalPicks: could not read the poster of {Item} for Discord", itemId);
+            return null;
+        }
     }
 
     private List<DiscordFilm> Films(IEnumerable<PickEntry> picks)

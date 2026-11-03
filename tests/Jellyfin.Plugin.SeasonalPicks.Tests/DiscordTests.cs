@@ -117,7 +117,7 @@ public class DiscordTests
         };
         var saves = 0;
         var calls = 0;
-        Task Send(JsonObject m, CancellationToken c) => ++calls == 2 ? throw new HttpRequestException("down") : Task.CompletedTask;
+        Task Send(DiscordOutgoing m, CancellationToken c) => ++calls == 2 ? throw new HttpRequestException("down") : Task.CompletedTask;
 
         await Assert.ThrowsAsync<HttpRequestException>(() => DiscordService.SendEachAsync(Send, outbox, state, _ => saves++, CancellationToken.None));
         Assert.Equal(new[] { "Halloween" }, state.AnnouncedSeasons);
@@ -209,5 +209,119 @@ public class DiscordTests
     public void Only_discord_webhooks_are_accepted(string url, bool ok)
     {
         Assert.Equal(ok, DiscordNotifier.IsWebhookUrl(url));
+    }
+
+    [Fact]
+    public async Task A_message_without_images_is_plain_json()
+    {
+        using var content = DiscordNotifier.BuildContent(DiscordMessages.Test(), Array.Empty<DiscordAttachment>());
+        Assert.Equal("application/json", content.Headers.ContentType!.MediaType);
+        Assert.Contains("can post to this channel", await content.ReadAsStringAsync());
+    }
+
+    [Fact]
+    public async Task Images_are_uploaded_with_the_message_and_named_in_it()
+    {
+        var images = new[]
+        {
+            new DiscordAttachment("poster-0.jpg", new byte[] { 1, 2, 3 }, "image/jpeg"),
+            new DiscordAttachment("poster-1.jpg", new byte[] { 4, 5 }, "image/jpeg"),
+        };
+        var message = DiscordMessages.Test();
+        using var content = DiscordNotifier.BuildContent(message, images);
+
+        var form = Assert.IsType<MultipartFormDataContent>(content);
+        var parts = form.ToList();
+        Assert.Equal(3, parts.Count);
+
+        Assert.Equal("payload_json", parts[0].Headers.ContentDisposition!.Name!.Trim('"'));
+        var payload = JsonNode.Parse(await parts[0].ReadAsStringAsync())!;
+        Assert.Equal("poster-1.jpg", payload["attachments"]![1]!["filename"]!.GetValue<string>());
+        Assert.Equal(1, payload["attachments"]![1]!["id"]!.GetValue<int>());
+
+        Assert.Equal("files[0]", parts[1].Headers.ContentDisposition!.Name!.Trim('"'));
+        Assert.Equal("poster-0.jpg", parts[1].Headers.ContentDisposition!.FileName!.Trim('"'));
+        Assert.Equal("image/jpeg", parts[1].Headers.ContentType!.MediaType);
+        Assert.Equal(new byte[] { 1, 2, 3 }, await parts[1].ReadAsByteArrayAsync());
+
+        // The message itself isn't changed, so a retry builds the same request.
+        Assert.Null(message["attachments"]);
+    }
+
+    [Fact]
+    public void Season_start_shows_its_cover_under_the_films()
+    {
+        var day = new DateTime(2026, 10, 1);
+        var msg = DiscordMessages.SeasonStarted("Halloween", "#FF7518", day, new DateTime(2026, 10, 31), null, 0, new[] { Film }, string.Empty, "attachment://cover.jpg");
+        var embed = msg["embeds"]![0]!;
+        Assert.Equal("attachment://cover.jpg", embed["image"]!["url"]!.GetValue<string>());
+        Assert.Contains("Hocus Pocus", embed["description"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void Season_start_with_a_cover_but_no_films_still_shows_the_cover()
+    {
+        var day = new DateTime(2026, 5, 4);
+        var msg = DiscordMessages.SeasonStarted("Star Wars Day", "#FFE81F", day, day, null, 0, Array.Empty<DiscordFilm>(), string.Empty, "attachment://cover.jpg");
+        var embed = msg["embeds"]![0]!;
+        Assert.Equal("attachment://cover.jpg", embed["image"]!["url"]!.GetValue<string>());
+        Assert.Null(embed["title"]);
+        Assert.Null(embed["description"]);
+    }
+
+    [Fact]
+    public void An_uploaded_poster_is_used_and_the_title_still_links_to_jellyfin()
+    {
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Poster = "attachment://poster-0.jpg" } }, "#000000", "https://jf.example.com");
+        var embed = msg["embeds"]![0]!;
+        Assert.Equal("attachment://poster-0.jpg", embed["thumbnail"]!["url"]!.GetValue<string>());
+        Assert.StartsWith("https://jf.example.com/web/#/details", embed["url"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void An_uploaded_poster_needs_no_server_address()
+    {
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Poster = "attachment://poster-0.jpg" } }, "#000000", string.Empty);
+        Assert.Equal("attachment://poster-0.jpg", msg["embeds"]![0]!["thumbnail"]!["url"]!.GetValue<string>());
+        Assert.Null(msg["embeds"]![0]!["url"]);
+    }
+
+    [Fact]
+    public void Posters_are_shrunk_to_a_small_jpeg()
+    {
+        using var bitmap = new SkiaSharp.SKBitmap(1000, 1500);
+        bitmap.Erase(SkiaSharp.SKColors.OrangeRed);
+        using var png = bitmap.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+
+        var shrunk = DiscordImages.Shrink(png.ToArray(), DiscordImages.PosterHeight, DiscordImages.PosterHeight);
+        Assert.NotNull(shrunk);
+        using var back = SkiaSharp.SKBitmap.Decode(shrunk);
+        Assert.Equal(DiscordImages.PosterHeight, back.Height);
+        Assert.Equal(300, back.Width);
+        Assert.Equal(0xFF, shrunk![0]);
+        Assert.Equal(0xD8, shrunk[1]); // JPEG
+    }
+
+    [Fact]
+    public void A_small_image_is_not_made_bigger()
+    {
+        using var bitmap = new SkiaSharp.SKBitmap(200, 300);
+        bitmap.Erase(SkiaSharp.SKColors.Teal);
+        using var png = bitmap.Encode(SkiaSharp.SKEncodedImageFormat.Png, 100);
+        using var back = SkiaSharp.SKBitmap.Decode(DiscordImages.Shrink(png.ToArray(), DiscordImages.CoverWidth, DiscordImages.CoverWidth));
+        Assert.Equal(200, back.Width);
+        Assert.Equal(300, back.Height);
+    }
+
+    [Fact]
+    public void Something_that_isnt_an_image_gives_nothing()
+    {
+        Assert.Null(DiscordImages.Shrink(new byte[] { 1, 2, 3, 4 }, 100, 100));
+    }
+
+    [Fact]
+    public void Pictures_are_on_by_default()
+    {
+        Assert.True(new PluginConfiguration().DiscordImages);
     }
 }

@@ -2,6 +2,11 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.6.0 - 2026-11-03
+- New: Discord messages include pictures. A season or special day is announced with its cover (the same one as its playlist), and each of today's picks shows its poster.
+- Pictures are sent with the message, so they show even when Discord can't reach your server. Turn them off under Discord → Include pictures.
+- The server address is now only needed for links to Jellyfin.
+
 ## 1.5.1 - 2026-11-03
 - Discord: if one message fails to post, the ones before it are no longer posted again on the next refresh.
 - Discord: today's picks are always the same films the mirror library shows, when they're for the same user.

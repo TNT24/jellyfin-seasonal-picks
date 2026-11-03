@@ -311,6 +311,10 @@
                             <input is="emby-checkbox" type="checkbox" id="DiscordAnnounceSeasons">
                             <span>Announce when a season or special day starts and ends, with a few films from the library that fit</span>
                         </label>
+                        <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="DiscordImages">
+                            <span>Include pictures: the season's cover when it starts, and a poster for each of today's picks (sent with the message, so Discord doesn't need to reach your server)</span>
+                        </label>
                         <div class="sp-grid2">
                             <div class="selectContainer">
                                 <select is="emby-select" id="DiscordPicksUserId" label="Post today's picks for"></select>
@@ -320,8 +324,8 @@
                             </div>
                         </div>
                         <div class="inputContainer">
-                            <input is="emby-input" type="url" id="PublicServerUrl" autocomplete="off" label="Server address for links and posters (optional)" placeholder="https://jellyfin.example.com">
-                            <div class="fieldDescription">An address Discord can reach. Films then link to Jellyfin and today's picks show their posters.</div>
+                            <input is="emby-input" type="url" id="PublicServerUrl" autocomplete="off" label="Server address for links (optional)" placeholder="https://jellyfin.example.com">
+                            <div class="fieldDescription">An address Discord can reach. Films then link to Jellyfin, and posters still show with pictures turned off.</div>
                         </div>
                         <button is="emby-button" type="button" id="spTestDiscord" class="raised emby-button"><span>Save and send a test message</span></button>
                     </div>
@@ -481,7 +485,7 @@
             var THEMES = [['auto', 'Automatic (from the name)'], ['Christmas', 'Christmas tree, presents and snow'], ['Snow', 'Snow and snowflakes'], ['Halloween', 'Pumpkins, bats and moon'], ['Easter', 'Easter bunny, eggs and blossom'], ['Hearts', 'Hearts'], ['Summer', 'Sun and waves'], ['Fireworks', 'Fireworks over a skyline'], ['Shamrock', 'Shamrocks'], ['Space', 'Stars and a planet'], ['Lightsabers', 'Lightsabers in space'], ['Ghosts', 'Ghosts and slime'], ['Castle', 'Castle and floating candles'], ['Bonfire', 'Bonfire and fireworks'], ['Pancakes', 'Stack of pancakes'], ['LunarNewYear', 'Red lanterns and blossom'], ['Sparkle', 'A night at the pictures'], ['None', 'None (just the background)']];
             var POSITIONS = [['Top', 'Top'], ['Middle', 'Middle'], ['Bottom', 'Bottom']];
             var BACKGROUNDS = [['Posters', 'Posters of the picks'], ['Picture', 'My picture'], ['Plain', 'Plain season colour']];
-            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow', 'DiscordAnnounceSeasons'];
+            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow', 'DiscordAnnounceSeasons', 'DiscordImages'];
             var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
             // Ready-made days and seasons for "Add a day or season". Day = pushes its films forward on the day, never hides them.
