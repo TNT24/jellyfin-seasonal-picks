@@ -145,27 +145,29 @@ public class DiscordService
 
             if (picksUser is { } pu && state.PicksPostedOn != Day(today))
             {
-                var films = Films(pu.State.Picks.Take(Math.Clamp(cfg.DiscordPicksCount, 1, 10)));
+                var (picks, season) = ChoosePicks(pu.State, active);
+                var films = Films(picks.Take(Math.Clamp(cfg.DiscordPicksCount, 1, 10)));
                 if (films.Count > 0)
                 {
+                    // Only the top pick's poster shows (beside the list), so only that one is uploaded.
                     var posters = new List<DiscordAttachment>();
-                    if (cfg.DiscordImages)
+                    if (cfg.DiscordImages && Poster(films[0].ItemId, "poster.jpg") is { } poster)
                     {
-                        films = films.Select((f, i) =>
-                        {
-                            var poster = Poster(f.ItemId, $"poster-{i.ToString(System.Globalization.CultureInfo.InvariantCulture)}.jpg");
-                            if (poster is null)
-                            {
-                                return f;
-                            }
-
-                            posters.Add(poster);
-                            return f with { Poster = poster.Reference };
-                        }).ToList();
+                        posters.Add(poster);
+                        films[0] = films[0] with { Poster = poster.Reference };
                     }
 
+                    var seasons = season is not null ? new[] { season.Name } : (IReadOnlyList<string>)pu.State.ActiveSeasons;
+                    var footerSeason = season ?? (active.Count == 1 ? active[0] : null);
                     outbox.Add(new DiscordOutgoing(
-                        DiscordMessages.DailyPicks(pu.User.Username, pu.State.ActiveSeasons, films, active.FirstOrDefault()?.Color ?? cfg.DefaultCoverColor, cfg.PublicServerUrl),
+                        DiscordMessages.DailyPicks(
+                            pu.User.Username,
+                            seasons,
+                            films,
+                            (season ?? active.FirstOrDefault())?.Color ?? cfg.DefaultCoverColor,
+                            cfg.PublicServerUrl,
+                            today,
+                            footerSeason is null ? null : LastDay(footerSeason, today)),
                         s => s.PicksPostedOn = Day(today),
                         posters));
                 }
@@ -223,6 +225,32 @@ public class DiscordService
         }
 
         return sent;
+    }
+
+    /// <summary>
+    /// What today's picks list. While a season is on: that season's own picks (the ones in its playlist), from the first
+    /// active season that has any; with season playlists off there are none, so the main picks with the seasonal ones
+    /// first. Outside a season: the main picks. <c>Season</c> is the season whose own picks were used, else null.
+    /// </summary>
+    internal static (IReadOnlyList<PickEntry> Picks, SeasonRule? Season) ChoosePicks(UserPickState state, IReadOnlyList<SeasonRule> active)
+    {
+        foreach (var season in active.Where(s => state.ActiveSeasons.Contains(s.Name)))
+        {
+            if (state.SeasonPicks.TryGetValue(season.Name, out var own) && own.Count > 0)
+            {
+                // Every reason would say "Christmas pick" under a Christmas heading; keep only what adds something.
+                return (own.Select(p => new PickEntry
+                {
+                    ItemId = p.ItemId,
+                    Kind = p.Kind,
+                    Reason = p.Reason.EndsWith(" rewatch", StringComparison.Ordinal) ? "A rewatch" : string.Empty,
+                }).ToList(), season);
+            }
+        }
+
+        return state.ActiveSeasons.Count > 0
+            ? (state.Picks.OrderBy(p => p.Kind == PickKind.Seasonal ? 0 : 1).ToList(), null)
+            : (state.Picks, null);
     }
 
     /// <summary>The season's last day on or after <paramref name="today"/> (today itself for a one-day event).</summary>
@@ -294,7 +322,13 @@ public class DiscordService
         => picks
             .Select(p => (Pick: p, Item: _library.GetItemById(p.ItemId)))
             .Where(x => x.Item is not null)
-            .Select(x => new DiscordFilm(x.Item!.Id, x.Item.Name, x.Item.ProductionYear, x.Pick.Reason))
+            .Select(x => new DiscordFilm(
+                x.Item!.Id,
+                x.Item.Name,
+                x.Item.ProductionYear,
+                x.Pick.Reason,
+                Runtime: x.Item.RunTimeTicks is long ticks and > 0 ? TimeSpan.FromTicks(ticks) : null,
+                Rating: x.Item.OfficialRating))
             .ToList();
 
     private DiscordState LoadState()

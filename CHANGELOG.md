@@ -2,6 +2,10 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.7.0 - 2026-11-18
+- Discord: today's picks are one short card instead of a card per film. It's a numbered list with each film's year, runtime and age rating, the top pick's poster beside it, and the season and its end date at the bottom.
+- Discord: during a season such as Christmas, today's picks are that season's picks, the same films as its playlist. With season playlists turned off, the main picks that fit the season come first.
+
 ## 1.6.0 - 2026-11-03
 - New: Discord messages include pictures. A season or special day is announced with its cover (the same one as its playlist), and each of today's picks shows its poster.
 - Pictures are sent with the message, so they show even when Discord can't reach your server. Turn them off under Discord → Include pictures.

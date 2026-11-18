@@ -70,25 +70,106 @@ public class DiscordTests
         Assert.Null(msg["embeds"]);
     }
 
+    private static readonly DateTime Oct18 = new(2026, 10, 18);
+
     [Fact]
-    public void Daily_picks_get_a_card_each_with_a_poster()
+    public void Daily_picks_are_one_numbered_list_card()
     {
         var films = Enumerable.Range(0, 12).Select(i => Film with { Name = "Film " + i }).ToList();
-        var msg = DiscordMessages.DailyPicks("mark", new[] { "Halloween" }, films, "#FF7518", "https://jf.example.com");
+        films[0] = films[0] with { Runtime = TimeSpan.FromMinutes(96), Rating = "PG" };
+        var msg = DiscordMessages.DailyPicks("mark", new[] { "Halloween" }, films, "#FF7518", "https://jf.example.com", Oct18, new DateTime(2026, 10, 31));
         var embeds = msg["embeds"]!.AsArray();
-        Assert.Equal(10, embeds.Count);
-        Assert.Equal("Film 0 (1993)", embeds[0]!["title"]!.GetValue<string>());
+        Assert.Single(embeds);
+        var lines = embeds[0]!["description"]!.GetValue<string>().Split('\n');
+        Assert.Equal(20, lines.Length); // ten films (at most), each with its reason underneath
+        Assert.Equal("**1.** [Film 0](https://jf.example.com/web/#/details?id=11111111222233334444555555555555) · 1993 · 1h 36m · PG", lines[0]);
+        Assert.Equal("*Halloween favourite*", lines[1]);
+        Assert.StartsWith("**10.** [Film 9]", lines[18]);
         Assert.EndsWith("/Images/Primary?maxHeight=300", embeds[0]!["thumbnail"]!["url"]!.GetValue<string>());
+        Assert.Equal("Halloween · until 31 October · new picks every morning", embeds[0]!["footer"]!["text"]!.GetValue<string>());
+        Assert.Equal(0xFF7518, embeds[0]!["color"]!.GetValue<int>());
         Assert.Equal("🍿 **Today's picks for mark** · Halloween", msg["content"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void Footer_outside_a_season_and_on_a_one_day_event()
+    {
+        var plain = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film }, "#000000", string.Empty, Oct18);
+        Assert.Equal("new picks every morning", plain["embeds"]![0]!["footer"]!["text"]!.GetValue<string>());
+
+        var day = new DateTime(2026, 5, 4);
+        var oneDay = DiscordMessages.DailyPicks("mark", new[] { "Star Wars Day" }, new[] { Film }, "#000000", string.Empty, day, day);
+        Assert.Equal("Star Wars Day · today only · new picks every morning", oneDay["embeds"]![0]!["footer"]!["text"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void A_film_without_a_reason_is_one_line()
+    {
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Reason = string.Empty, Year = null } }, "#000000", string.Empty, Oct18);
+        Assert.Equal("**1.** **Hocus Pocus**", msg["embeds"]![0]!["description"]!.GetValue<string>());
+        Assert.Null(msg["embeds"]![0]!["thumbnail"]);
+    }
+
+    [Theory]
+    [InlineData(96, "1h 36m")]
+    [InlineData(120, "2h 0m")]
+    [InlineData(45, "45m")]
+    public void Runtime_is_hours_and_minutes(int minutes, string expected)
+    {
+        Assert.Equal(expected, DiscordMessages.Runtime(TimeSpan.FromMinutes(minutes)));
     }
 
     [Fact]
     public void Never_pings_anyone_and_escapes_markdown()
     {
-        var msg = DiscordMessages.DailyPicks("@everyone", Array.Empty<string>(), new[] { Film with { Reason = "*bold*" } }, "#000000", string.Empty);
+        var msg = DiscordMessages.DailyPicks("@everyone", Array.Empty<string>(), new[] { Film with { Reason = "*bold*" } }, "#000000", string.Empty, Oct18);
         Assert.Empty(msg["allowed_mentions"]!["parse"]!.AsArray());
-        Assert.Equal("\\*bold\\*", msg["embeds"]![0]!["description"]!.GetValue<string>());
-        Assert.Null(msg["embeds"]![0]!["url"]);
+        Assert.EndsWith("\n*\\*bold\\**", msg["embeds"]![0]!["description"]!.GetValue<string>());
+        Assert.DoesNotContain("](", msg["embeds"]![0]!["description"]!.GetValue<string>());
+    }
+
+    [Fact]
+    public void A_season_lists_its_own_picks()
+    {
+        var christmas = new SeasonRule { Name = "Christmas", StartMonth = 12, StartDay = 1, EndMonth = 12, EndDay = 26 };
+        var winter = new SeasonRule { Name = "Winter", StartMonth = 12, StartDay = 1, EndMonth = 2, EndDay = 28 };
+        var elf = Guid.NewGuid();
+        var state = new UserPickState
+        {
+            ActiveSeasons = new() { "Christmas", "Winter" },
+            Picks = new() { new PickEntry { ItemId = Guid.NewGuid(), Kind = PickKind.Unwatched, Reason = "Unwatched" } },
+            SeasonPicks = new()
+            {
+                ["Christmas"] = new() { new PickEntry { ItemId = elf, Kind = PickKind.Seasonal, Reason = "Christmas pick" }, new PickEntry { ItemId = Guid.NewGuid(), Kind = PickKind.Seasonal, Reason = "Christmas rewatch" } },
+                ["Winter"] = new() { new PickEntry { ItemId = Guid.NewGuid(), Kind = PickKind.Seasonal, Reason = "Winter pick" } },
+            },
+        };
+
+        var (picks, season) = DiscordService.ChoosePicks(state, new[] { christmas, winter });
+        Assert.Same(christmas, season);
+        Assert.Equal(elf, picks[0].ItemId);
+        Assert.Equal(string.Empty, picks[0].Reason); // "Christmas pick" under a Christmas heading says nothing
+        Assert.Equal("A rewatch", picks[1].Reason);
+        Assert.Equal("Christmas pick", state.SeasonPicks["Christmas"][0].Reason); // the stored picks are left alone
+    }
+
+    [Fact]
+    public void Without_season_playlists_the_seasonal_main_picks_go_first()
+    {
+        var christmas = new SeasonRule { Name = "Christmas", StartMonth = 12, StartDay = 1, EndMonth = 12, EndDay = 26 };
+        var seasonal = new PickEntry { ItemId = Guid.NewGuid(), Kind = PickKind.Seasonal, Reason = "Christmas pick" };
+        var state = new UserPickState
+        {
+            ActiveSeasons = new() { "Christmas" },
+            Picks = new() { new PickEntry { ItemId = Guid.NewGuid(), Kind = PickKind.Unwatched }, seasonal },
+        };
+
+        var (picks, season) = DiscordService.ChoosePicks(state, new[] { christmas });
+        Assert.Null(season);
+        Assert.Same(seasonal, picks[0]);
+
+        var outside = new UserPickState { Picks = state.Picks };
+        Assert.Same(outside.Picks, DiscordService.ChoosePicks(outside, Array.Empty<SeasonRule>()).Picks);
     }
 
     [Fact]
@@ -145,22 +226,18 @@ public class DiscordTests
     }
 
     [Fact]
-    public void Ten_long_cards_stay_under_discords_total_limit()
+    public void Ten_long_picks_stay_under_discords_description_limit()
     {
         var films = Enumerable.Range(0, 10)
             .Select(i => Film with { Name = new string('*', 400) + i, Reason = new string('_', 400) })
             .ToList();
-        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), films, "#FF7518", string.Empty);
-        var embeds = msg["embeds"]!.AsArray().Select(e => e!.AsObject()).ToList();
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), films, "#FF7518", "https://jf.example.com", Oct18);
+        var description = msg["embeds"]![0]!["description"]!.GetValue<string>();
 
-        // Before 1.5.1 these came to about 8500 characters and Discord refused the message. Now they all fit.
-        Assert.Equal(10, embeds.Count);
-        Assert.True(embeds.Sum(DiscordMessages.EmbedTextLength) <= DiscordMessages.MaxEmbedText);
-        Assert.All(embeds, e =>
-        {
-            Assert.True(e["title"]!.GetValue<string>().Length <= 256);
-            Assert.True(e["description"]!.GetValue<string>().Length <= 301);
-        });
+        // Discord refuses the whole message over 4096, so the last films are left off instead.
+        Assert.True(description.Length <= DiscordMessages.MaxDescription);
+        Assert.StartsWith("**1.** ", description);
+        Assert.DoesNotContain("**10.** ", description);
     }
 
     [Theory]
@@ -177,8 +254,8 @@ public class DiscordTests
     [Fact]
     public void Film_titles_are_escaped()
     {
-        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Name = "*batteries not included", Year = null } }, "#000000", string.Empty);
-        Assert.Equal(@"\*batteries not included", msg["embeds"]![0]!["title"]!.GetValue<string>());
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Name = "*batteries not included", Year = null, Reason = string.Empty } }, "#000000", string.Empty, Oct18);
+        Assert.Equal(@"**1.** **\*batteries not included**", msg["embeds"]![0]!["description"]!.GetValue<string>());
     }
 
     [Theory]
@@ -272,17 +349,17 @@ public class DiscordTests
     [Fact]
     public void An_uploaded_poster_is_used_and_the_title_still_links_to_jellyfin()
     {
-        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Poster = "attachment://poster-0.jpg" } }, "#000000", "https://jf.example.com");
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Poster = "attachment://poster.jpg" }, Film }, "#000000", "https://jf.example.com", Oct18);
         var embed = msg["embeds"]![0]!;
-        Assert.Equal("attachment://poster-0.jpg", embed["thumbnail"]!["url"]!.GetValue<string>());
-        Assert.StartsWith("https://jf.example.com/web/#/details", embed["url"]!.GetValue<string>());
+        Assert.Equal("attachment://poster.jpg", embed["thumbnail"]!["url"]!.GetValue<string>());
+        Assert.Contains("[Hocus Pocus](https://jf.example.com/web/#/details", embed["description"]!.GetValue<string>());
     }
 
     [Fact]
     public void An_uploaded_poster_needs_no_server_address()
     {
-        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Poster = "attachment://poster-0.jpg" } }, "#000000", string.Empty);
-        Assert.Equal("attachment://poster-0.jpg", msg["embeds"]![0]!["thumbnail"]!["url"]!.GetValue<string>());
+        var msg = DiscordMessages.DailyPicks("mark", Array.Empty<string>(), new[] { Film with { Poster = "attachment://poster.jpg" } }, "#000000", string.Empty, Oct18);
+        Assert.Equal("attachment://poster.jpg", msg["embeds"]![0]!["thumbnail"]!["url"]!.GetValue<string>());
         Assert.Null(msg["embeds"]![0]!["url"]);
     }
 
