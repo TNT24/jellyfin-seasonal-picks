@@ -235,50 +235,11 @@ internal static partial class CoverArt
 
     // ---------- themes ----------
 
-    private static void Snow(SKCanvas c, int w, int h, Random rng, bool treeCorner = false)
-    {
-        float s = Math.Min(w, h);
-
-        // Falling snow.
-        using var dot = new SKPaint { IsAntialias = true };
-        for (var i = 0; i < 170; i++)
-        {
-            dot.Color = SKColors.White.WithAlpha((byte)rng.Next(120, 235));
-            c.DrawCircle(R(rng, 0, w), R(rng, 0, h * 0.9f), R(rng, s * 0.002f, s * 0.008f), dot);
-        }
-
-        // Snowflakes, kept off the title and apart from each other.
-        using var flake = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, Color = SKColors.White.WithAlpha(215) };
-        var placed = new List<(float X, float Y, float R)>();
-        for (var i = 0; i < 11; i++)
-        {
-            var r = R(rng, s * 0.022f, s * 0.05f);
-            for (var attempt = 0; attempt < 20; attempt++)
-            {
-                if (FindClear(rng, placed, r, 0, w, 0, h * 0.8f, 1.3f) is not { } at)
-                {
-                    break;
-                }
-
-                var onTree = treeCorner && at.X > w - (s * 0.42f) - r && at.Y > h - (s * 0.5f) - r;
-                if (onTree || (Math.Abs(at.X - (w / 2f)) < (w * 0.45f) + r && Math.Abs(at.Y - (h / 2f)) < (h * 0.19f) + r))
-                {
-                    continue;
-                }
-
-                flake.StrokeWidth = r * 0.12f;
-                Snowflake(c, at.X, at.Y, r, R(rng, 0, 60), flake);
-                placed.Add((at.X, at.Y, r));
-                break;
-            }
-        }
-
-        // Snowdrifts along the bottom.
-        using var drift = new SKPaint { IsAntialias = true, Color = new SKColor(0xF4, 0xF8, 0xFF, 235) };
-        using var driftShade = new SKPaint { IsAntialias = true, Color = new SKColor(0xC9, 0xD8, 0xEE, 220) };
-        c.DrawPath(Hills(w, h, h * 0.9f, h * 0.035f, 3, rng), driftShade);
-        c.DrawPath(Hills(w, h, h * 0.93f, h * 0.03f, 2, rng), drift);
-    }
+    /// <summary>
+    /// Snowfall: a moonlit valley with a lit cottage (see WinterSnowScene). With <paramref name="treeCorner"/>, only the
+    /// sky and far hills, for the Christmas tree scene to stand in.
+    /// </summary>
+    private static void Snow(SKCanvas c, int w, int h, Random rng, bool treeCorner = false) => WinterSnowScene(c, w, h, rng, backdropOnly: treeCorner);
 
     private static void Snowflake(SKCanvas c, float x, float y, float r, float rotation, SKPaint p)
     {
@@ -887,52 +848,8 @@ internal static partial class CoverArt
         }
     }
 
-    private static void Fireworks(SKCanvas c, int w, int h, SKColor tint, Random rng)
-    {
-        float s = Math.Min(w, h);
-        var colours = new[]
-        {
-            new SKColor(0xFF, 0xD7, 0x40), new SKColor(0xFF, 0x52, 0x7A), new SKColor(0x64, 0xD8, 0xFF),
-            new SKColor(0xB3, 0x88, 0xFF), new SKColor(0x69, 0xF0, 0xAE), SKColors.White
-        };
-
-        // Bursts in the sky above the title, alternating high and low, each with a short fading trail beneath.
-        var count = w > h ? 5 : 4;
-        for (var i = 0; i < count; i++)
-        {
-            var cx = (w / (float)count * (i + 0.5f)) + R(rng, -w * 0.03f, w * 0.03f);
-            var cy = h * (i % 2 == 0 ? 0.12f : 0.18f);
-            var radius = s * R(rng, 0.08f, 0.1f);
-            var colour = colours[(i * 2 + rng.Next(2)) % colours.Length];
-            Burst(c, cx, cy, radius, colour, rng);
-
-            using var trail = new SKPaint
-            {
-                IsAntialias = true,
-                StrokeWidth = s * 0.004f,
-                StrokeCap = SKStrokeCap.Round,
-                Shader = SKShader.CreateLinearGradient(new SKPoint(cx, cy + (radius * 1.4f)), new SKPoint(cx, cy + (radius * 0.35f)), new[] { SKColors.Transparent, colour.WithAlpha(150) }, SKShaderTileMode.Clamp)
-            };
-            c.DrawLine(cx, cy + (radius * 1.4f), cx, cy + (radius * 0.35f), trail);
-        }
-
-        // Sparks drifting down, off the title.
-        using var spark = new SKPaint { IsAntialias = true };
-        for (var i = 0; i < 70; i++)
-        {
-            float px = R(rng, 0, w), py = R(rng, 0, h * 0.8f);
-            if (Math.Abs(px - (w / 2f)) < w * 0.46f && Math.Abs(py - (h / 2f)) < h * 0.2f)
-            {
-                continue;
-            }
-
-            spark.Color = colours[rng.Next(colours.Length)].WithAlpha((byte)rng.Next(120, 230));
-            c.DrawCircle(px, py, R(rng, s * 0.002f, s * 0.005f), spark);
-        }
-
-        Skyline(c, w, h, s, rng, h * 0.08f, h * 0.18f, new SKColor(0xFF, 0xD5, 0x80, 170));
-        ClockTower(c, w * 0.5f, h, s * 0.3f);
-    }
+    /// <summary>New Year: fireworks over a city skyline and river (see WinterFireworksScene).</summary>
+    private static void Fireworks(SKCanvas c, int w, int h, SKColor tint, Random rng) => WinterFireworksScene(c, w, h, rng);
 
     /// <summary>A clock tower standing on the bottom edge, its lit face showing midnight. height is to the spire tip.</summary>
     private static void ClockTower(SKCanvas c, float x, float bottom, float height)
