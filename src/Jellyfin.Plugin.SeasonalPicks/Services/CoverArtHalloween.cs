@@ -11,49 +11,7 @@ internal static partial class CoverArt
 
     // ---------- Graveyard: a bare tree, leaning headstones and mist under a full moon ----------
 
-    private static void Graveyard(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-        NightSky(c, w, h, new SKColor(0x0B, 0x05, 0x1A, 170), new SKColor(0x2A, 0x10, 0x30, 90));
-        Stars(c, w, h * 0.5f, 90, s, rng);
-        Moon(c, w * 0.2f, h * 0.19f, s * 0.12f, rng);
-
-        using (var bat = new SKPaint { IsAntialias = true, Color = new SKColor(0x12, 0x08, 0x10, 235) })
-        {
-            foreach (var (bx, by) in new[] { (0.4f, 0.1f), (0.52f, 0.22f), (0.64f, 0.11f) })
-            {
-                Bat(c, w * (bx + R(rng, -0.03f, 0.03f)), h * (by + R(rng, -0.02f, 0.02f)), s * R(rng, 0.035f, 0.055f), R(rng, -20, 20), bat);
-            }
-        }
-
-        using (var tree = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, Color = Silhouette })
-        {
-            BareTree(c, w * 0.88f, h * 0.9f, s * 0.3f, tree, rng);
-        }
-
-        using (var hill = new SKPaint { IsAntialias = true, Color = new SKColor(0x12, 0x0A, 0x18, 245) })
-        {
-            c.DrawPath(Hills(w, h, h * 0.86f, h * 0.035f, 3, rng), hill);
-        }
-
-        // Headstones in a row, with one slot left for a skeleton climbing out of its grave.
-        var count = w > h ? 6 : 4;
-        var skeletonSlot = w > h ? 2 : 1;
-        for (var i = 0; i < count; i++)
-        {
-            var x = (w * 0.82f / count * (i + 0.5f)) + R(rng, -w * 0.02f, w * 0.02f);
-            var stoneH = s * R(rng, 0.11f, 0.16f);
-            if (i == skeletonSlot)
-            {
-                Skeleton(c, x, h * 0.93f, s * 0.19f);
-                continue;
-            }
-
-            Gravestone(c, x, h * (0.92f + R(rng, 0, 0.02f)), stoneH * R(rng, 0.55f, 0.7f), stoneH, R(rng, -9, 9), i % 3, rng);
-        }
-
-        Mist(c, w, h, h * 0.8f, s, rng, 75);
-    }
+    private static void Graveyard(SKCanvas c, int w, int h, Random rng) => SpookyGraveyard(c, w, h, rng);
 
     /// <summary>A bare, twisting tree: each branch splits into thinner ones.</summary>
     private static void BareTree(SKCanvas c, float x, float ground, float height, SKPaint paint, Random rng)
@@ -265,47 +223,7 @@ internal static partial class CoverArt
 
     // ---------- Haunted house: a crooked house on the hill, a witch across the moon ----------
 
-    private static void HauntedHouse(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-        NightSky(c, w, h, new SKColor(0x10, 0x06, 0x22, 175), new SKColor(0x30, 0x12, 0x28, 90));
-        Stars(c, w, h * 0.55f, 100, s, rng);
-
-        var moon = new SKPoint(w * 0.74f, h * 0.2f);
-        var mr = s * 0.15f;
-        Moon(c, moon.X, moon.Y, mr, rng);
-        Witch(c, moon.X - (mr * 0.1f), moon.Y + (mr * 0.1f), mr * 0.85f);
-
-        using (var bat = new SKPaint { IsAntialias = true, Color = new SKColor(0x12, 0x08, 0x10, 235) })
-        {
-            var placed = new List<(float X, float Y, float R)> { (moon.X, moon.Y, mr * 1.1f) };
-            for (var i = 0; i < 4; i++)
-            {
-                var br = s * R(rng, 0.03f, 0.05f);
-                if (FindClear(rng, placed, br, w * 0.05f, w * 0.6f, h * 0.06f, h * 0.28f, 1.4f) is { } at)
-                {
-                    Bat(c, at.X, at.Y, br, R(rng, -20, 20), bat);
-                    placed.Add((at.X, at.Y, br));
-                }
-            }
-        }
-
-        using (var hill = new SKPaint { IsAntialias = true, Color = new SKColor(0x14, 0x0A, 0x1A, 245) })
-        {
-            c.DrawOval(new SKRect(-w * 0.3f, h * 0.86f, w * 0.75f, h * 1.3f), hill);
-            c.DrawPath(Hills(w, h, h * 0.92f, h * 0.02f, 2, rng), hill);
-        }
-
-        House(c, w * (w > h ? 0.16f : 0.2f), h * 0.9f, s * 0.21f, rng);
-
-        using (var tree = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, Color = Silhouette })
-        {
-            BareTree(c, w * 0.9f, h * 0.95f, s * 0.3f, tree, rng);
-        }
-
-        Fence(c, w, h, s, rng);
-        Mist(c, w, h, h * 0.85f, s, rng, 60);
-    }
+    private static void HauntedHouse(SKCanvas c, int w, int h, Random rng) => SpookyHauntedHouse(c, w, h, rng);
 
     /// <summary>A crooked old house with a tower, lit and broken windows. (x, ground) is its centre at ground level; u its height unit.</summary>
     private static void House(SKCanvas c, float x, float ground, float u, Random rng)
@@ -489,43 +407,7 @@ internal static partial class CoverArt
 
     // ---------- Witch's cauldron: cobwebs, hanging spiders, candles and a bubbling brew ----------
 
-    private static void Cauldron(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-        NightSky(c, w, h, new SKColor(0x0C, 0x06, 0x18, 160), new SKColor(0x0E, 0x16, 0x0C, 120));
-
-        // Cobwebs in the top corners; spiders hang in the gap between them so no thread crosses a web.
-        var leftWeb = s * 0.34f;
-        var rightWeb = s * 0.3f;
-        Cobweb(c, 0, 0, leftWeb, false, s);
-        Cobweb(c, w, 0, rightWeb, true, s);
-        var gapLeft = leftWeb + (s * 0.06f);
-        var gapRight = w - rightWeb - (s * 0.06f);
-        var spiders = w > h ? 3 : 2;
-        for (var i = 0; i < spiders; i++)
-        {
-            var sx = gapLeft + ((gapRight - gapLeft) * (i + 0.5f) / spiders);
-            Spider(c, sx, h * (i % 2 == 0 ? 0.2f : 0.11f), s * R(rng, 0.025f, 0.033f), s);
-        }
-
-        // Stone floor.
-        using (var floor = new SKPaint { Shader = SKShader.CreateLinearGradient(new SKPoint(0, h * 0.88f), new SKPoint(0, h), new[] { new SKColor(0x1A, 0x16, 0x20, 0), new SKColor(0x1A, 0x16, 0x20, 240) }, SKShaderTileMode.Clamp) })
-        {
-            c.DrawRect(0, h * 0.88f, w, h * 0.12f, floor);
-        }
-
-        var cx = w / 2f;
-        var ground = h * 0.97f;
-        var r = s * 0.16f;
-        CauldronPot(c, cx, ground, r, rng, s);
-
-        var side = w > h ? 0.08f : 0.0f;
-        TallCandle(c, w * (0.07f + side), ground, s * 0.2f, rng);
-        TallCandle(c, w * (0.15f + side), ground, s * 0.13f, rng);
-        TallCandle(c, w * (0.88f - side), ground, s * 0.17f, rng);
-        Pumpkin(c, w * (0.28f + (side / 2)), ground, s * 0.075f);
-        Pumpkin(c, w * (0.73f - (side / 2)), ground, s * 0.06f);
-    }
+    private static void Cauldron(SKCanvas c, int w, int h, Random rng) => SpookyCauldronScene(c, w, h, rng);
 
     private static void Cobweb(SKCanvas c, float cornerX, float cornerY, float size, bool mirror, float s)
     {

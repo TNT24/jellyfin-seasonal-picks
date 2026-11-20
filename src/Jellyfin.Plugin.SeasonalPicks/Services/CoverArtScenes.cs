@@ -144,68 +144,9 @@ internal static partial class CoverArt
         c.Restore();
     }
 
-    // ---------- Ghostbusters Day: friendly sheet ghosts and green slime ----------
+    // ---------- Ghostbusters Day: a haunted city under a spectral storm (drawn in CoverArtSpooky.cs) ----------
 
-    private static void Ghosts(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-
-        using (var night = new SKPaint { Color = new SKColor(0x06, 0x14, 0x10, 110) })
-        {
-            c.DrawRect(0, 0, w, h, night);
-        }
-
-        // Slime oozing from the top edge.
-        var slime = new SKColor(0x7C, 0xE0, 0x3A);
-        using (var ooze = new SKPaint { IsAntialias = true, Color = slime.WithAlpha(235), ImageFilter = SKImageFilter.CreateDropShadow(0, s * 0.004f, s * 0.006f, s * 0.006f, new SKColor(0x2E, 0x7D, 0x32, 200)) })
-        using (var gloop = new SKPath())
-        {
-            gloop.MoveTo(0, 0);
-            gloop.LineTo(w, 0);
-            gloop.LineTo(w, h * 0.03f);
-            for (var x = (float)w; x > 0;)
-            {
-                var step = s * R(rng, 0.04f, 0.09f);
-                var drip = rng.NextDouble() < 0.45 ? h * R(rng, 0.05f, 0.14f) : h * R(rng, 0.01f, 0.03f);
-                var mid = x - (step / 2);
-                gloop.QuadTo(x - (step * 0.1f), h * 0.03f, mid + (step * 0.18f), (h * 0.03f) + drip);
-                gloop.ArcTo(new SKRect(mid - (step * 0.18f), (h * 0.03f) + drip - (step * 0.18f), mid + (step * 0.18f), (h * 0.03f) + drip + (step * 0.18f)), 0, 180, false);
-                gloop.QuadTo(x - (step * 0.9f), h * 0.03f, x - step, h * 0.03f);
-                x -= step;
-            }
-
-            gloop.LineTo(0, 0);
-            gloop.Close();
-            c.DrawPath(gloop, ooze);
-        }
-
-        // A dark city along the bottom, its windows lit green.
-        Skyline(c, w, h, s, rng, h * 0.06f, h * 0.11f, new SKColor(0xB9, 0xF6, 0xCA, 170));
-
-        // Ghosts float above the city, kept clear of the title, the slime and each other.
-        var placed = new List<(float X, float Y, float R)>();
-        for (var i = 0; i < 6; i++)
-        {
-            var size = s * (i < 3 ? R(rng, 0.06f, 0.075f) : R(rng, 0.042f, 0.052f));
-            for (var attempt = 0; attempt < 60; attempt++)
-            {
-                if (FindClear(rng, placed, size, size, w - size, (h * 0.18f) + size, (h * 0.88f) - size, 1.15f) is not { } at)
-                {
-                    break;
-                }
-
-                // The title runs from its label (about a third of the way down) to the line under it.
-                if (Math.Abs(at.X - (w / 2f)) < (w * 0.46f) + size && at.Y > (h * 0.33f) - size && at.Y < (h * 0.64f) + size)
-                {
-                    continue;
-                }
-
-                Ghost(c, at.X, at.Y, size, R(rng, -14, 14), (byte)(i < 3 ? 240 : rng.Next(190, 230)));
-                placed.Add((at.X, at.Y, size));
-                break;
-            }
-        }
-    }
+    private static void Ghosts(SKCanvas c, int w, int h, Random rng) => SpookyHauntedCity(c, w, h, rng);
 
     /// <summary>City blocks along the bottom edge, between the given heights, with some windows lit.</summary>
     private static void Skyline(SKCanvas c, int w, int h, float s, Random rng, float minHeight, float maxHeight, SKColor window)
@@ -278,103 +219,9 @@ internal static partial class CoverArt
         c.Restore();
     }
 
-    // ---------- Back to Hogwarts: a castle on a hill at night, with floating candles ----------
+    // ---------- Back to Hogwarts: a castle on a cliff over a moonlit lake (drawn in CoverArtSpooky.cs) ----------
 
-    private static void Castle(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-
-        using (var night = new SKPaint
-        {
-            Shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(0, h), new[] { new SKColor(0x05, 0x08, 0x1C, 170), new SKColor(0x10, 0x16, 0x38, 120) }, SKShaderTileMode.Clamp)
-        })
-        {
-            c.DrawRect(0, 0, w, h, night);
-        }
-
-        using (var star = new SKPaint { IsAntialias = true })
-        {
-            for (var i = 0; i < 120; i++)
-            {
-                star.Color = SKColors.White.WithAlpha((byte)rng.Next(80, 220));
-                c.DrawCircle(R(rng, 0, w), R(rng, 0, h * 0.7f), R(rng, s * 0.001f, s * 0.0035f), star);
-            }
-        }
-
-        // Crescent moon.
-        using (var moon = new SKPath())
-        using (var bite = new SKPath())
-        using (var crescent = new SKPath())
-        using (var moonPaint = new SKPaint { IsAntialias = true, Color = new SKColor(0xFF, 0xF4, 0xC7), ImageFilter = SKImageFilter.CreateDropShadow(0, 0, s * 0.03f, s * 0.03f, new SKColor(0xFF, 0xF4, 0xC7, 150)) })
-        {
-            var mc = new SKPoint(w * 0.14f, h * 0.16f);
-            moon.AddCircle(mc.X, mc.Y, s * 0.07f);
-            bite.AddCircle(mc.X + (s * 0.035f), mc.Y - (s * 0.02f), s * 0.062f);
-            moon.Op(bite, SKPathOp.Difference, crescent);
-            c.DrawPath(crescent, moonPaint);
-        }
-
-        // Floating candles in the sky above the title, clear of the moon and of each other.
-        var placed = new List<(float X, float Y, float R)> { (w * 0.14f, h * 0.16f, s * 0.09f) };
-        var candles = w > h ? 14 : 10;
-        for (var i = 0; i < candles; i++)
-        {
-            var height = s * R(rng, 0.045f, 0.065f);
-            if (FindClear(rng, placed, height * 0.6f, w * 0.04f, w * 0.96f, h * 0.07f, h * 0.27f, 1.1f) is { } at)
-            {
-                Candle(c, at.X, at.Y - (height * 0.4f), height);
-                placed.Add((at.X, at.Y, height * 0.6f));
-            }
-        }
-
-        // The castle on the far shore of a lake, mirrored in the water. Drawn twice from the same seed so the
-        // reflection matches, the second time flipped about the shoreline and faded.
-        var shore = h * 0.88f;
-        var unit = s * 0.036f;
-        var seed = rng.Next();
-        using (var hill = new SKPaint { IsAntialias = true, Color = new SKColor(0x14, 0x18, 0x30) })
-        {
-            using var land = new SKPath();
-            land.MoveTo(0, shore);
-            land.QuadTo(w * 0.25f, shore - (h * 0.05f), w * 0.5f, shore - (h * 0.04f));
-            land.QuadTo(w * 0.75f, shore - (h * 0.03f), w, shore - (h * 0.06f));
-            land.LineTo(w, shore);
-            land.Close();
-            c.DrawPath(land, hill);
-        }
-
-        CastleSilhouette(c, w / 2f, shore, unit, new Random(seed), reflection: false);
-
-        using (var water = new SKPaint { Shader = SKShader.CreateLinearGradient(new SKPoint(0, shore), new SKPoint(0, h), new[] { new SKColor(0x0C, 0x14, 0x34, 235), new SKColor(0x05, 0x08, 0x1C, 245) }, SKShaderTileMode.Clamp) })
-        {
-            c.DrawRect(0, shore, w, h - shore, water);
-        }
-
-        c.Save();
-        c.ClipRect(new SKRect(0, shore, w, h));
-        using (var fade = new SKPaint { Color = SKColors.White.WithAlpha(80) })
-        {
-            c.SaveLayer(fade);
-            c.Scale(1, -1, 0, shore);
-            CastleSilhouette(c, w / 2f, shore, unit, new Random(seed), reflection: true);
-            c.Restore();
-        }
-
-        // Ripples: short level strokes of moonlight on the water.
-        using (var ripple = new SKPaint { IsAntialias = true, StrokeCap = SKStrokeCap.Round, StrokeWidth = s * 0.003f, Color = new SKColor(0xC8, 0xD4, 0xFF, 110) })
-        {
-            for (var y = shore + (s * 0.015f); y < h; y += s * 0.018f)
-            {
-                for (var k = 0; k < 3; k++)
-                {
-                    var x = R(rng, 0, w);
-                    c.DrawLine(x, y, x + (s * R(rng, 0.02f, 0.06f)), y, ripple);
-                }
-            }
-        }
-
-        c.Restore();
-    }
+    private static void Castle(SKCanvas c, int w, int h, Random rng) => SpookyCastleLake(c, w, h, rng);
 
     /// <summary>A many-towered castle in silhouette with lit windows; its base sits on <paramref name="ground"/> at <paramref name="cx"/>.</summary>
     private static void CastleSilhouette(SKCanvas c, float cx, float ground, float unit, Random rng, bool reflection)
