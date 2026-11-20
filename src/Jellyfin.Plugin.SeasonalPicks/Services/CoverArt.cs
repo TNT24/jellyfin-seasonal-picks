@@ -296,43 +296,8 @@ internal static partial class CoverArt
         c.Restore();
     }
 
-    private static void Halloween(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-
-        // Stars and a cratered moon.
-        Stars(c, w, h * 0.35f, 60, s, rng);
-        var moon = new SKPoint(w * 0.82f, h * 0.2f);
-        var mr = s * 0.11f;
-        Moon(c, moon.X, moon.Y, mr, rng);
-
-        // Bats, spread out: each keeps clear of the others and of the moon.
-        using var bat = new SKPaint { IsAntialias = true, Color = new SKColor(0x12, 0x08, 0x10, 235) };
-        var placed = new List<(float X, float Y, float R)> { (moon.X, moon.Y, mr * 1.1f) };
-        for (var i = 0; i < 6; i++)
-        {
-            var br = R(rng, s * 0.045f, s * 0.085f);
-            if (FindClear(rng, placed, br, w * 0.06f, w * 0.94f, h * 0.06f, h * 0.3f, 1.15f) is { } at)
-            {
-                Bat(c, at.X, at.Y, br, R(rng, -20, 20), bat);
-                placed.Add((at.X, at.Y, br));
-            }
-        }
-
-        // Dark hill, then jack-o'-lanterns on it.
-        using (var hill = new SKPaint { IsAntialias = true, Color = new SKColor(0x10, 0x0A, 0x14, 240) })
-        {
-            c.DrawPath(Hills(w, h, h * 0.86f, h * 0.04f, 2, rng), hill);
-        }
-
-        var count = w > h ? 4 : 3;
-        for (var i = 0; i < count; i++)
-        {
-            var size = s * (i % 2 == 0 ? 0.13f : 0.1f);
-            var x = (w / (float)count * (i + 0.5f)) + R(rng, -w * 0.04f, w * 0.04f);
-            Pumpkin(c, x, h * 0.9f, size);
-        }
-    }
+    /// <summary>A pumpkin patch at dusk (drawn in CoverArtSpooky.cs).</summary>
+    private static void Halloween(SKCanvas c, int w, int h, Random rng) => SpookyPumpkinPatch(c, w, h, rng);
 
     private static void Bat(SKCanvas c, float x, float y, float r, float rotation, SKPaint p)
     {
