@@ -1456,8 +1456,8 @@ internal static partial class CoverArt
         SpookyBands(c, new SKRect(0, shore, w, h), new[] { new SKColor(0x14, 0x16, 0x40, 250), new SKColor(0x05, 0x06, 0x16, 252) }, new[] { 0f, 1f });
 
         // Castle on its cliff, then its reflection in the water below.
-        var castleX = w * (wide ? 0.72f : 0.7f);
-        var unit = s * (wide ? 0.0066f : 0.0063f);
+        var castleX = w * (wide ? 0.79f : 0.7f);
+        var unit = s * (wide ? 0.0052f : 0.0063f);
         var seed = rng.Next();
         SpookyCastle(c, castleX, shore, unit, new Random(seed), false);
         c.Save();
