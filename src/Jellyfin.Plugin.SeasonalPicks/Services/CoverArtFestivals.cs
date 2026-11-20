@@ -198,59 +198,7 @@ internal static partial class CoverArt
 
     private static void RedLanterns(SKCanvas c, int w, int h, Random rng)
     {
-        float s = Math.Min(w, h);
-        NightSky(c, w, h, new SKColor(0x3A, 0x05, 0x08, 150), new SKColor(0x20, 0x04, 0x06, 90));
-
-        // Two cords draped across the top with lanterns hung along them, alternating long and short strings.
-        for (var k = 0; k < 2; k++)
-        {
-            var y0 = h * (0.02f + (k * 0.05f));
-            var sag = h * 0.05f;
-            SKPoint At(float t) => new((-w * 0.05f) + (t * w * 1.1f), y0 + (4 * sag * t * (1 - t)));
-
-            using (var cord = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.004f, Color = new SKColor(0xB7, 0x1C, 0x1C) })
-            using (var line = new SKPath())
-            {
-                line.MoveTo(At(0));
-                for (var t = 0.02f; t <= 1.001f; t += 0.02f)
-                {
-                    line.LineTo(At(t));
-                }
-
-                c.DrawPath(line, cord);
-            }
-
-            var count = w > h ? 5 : 3;
-            for (var i = 0; i < count; i++)
-            {
-                var hook = At((i + 0.5f + (k * 0.5f)) / (count + 0.5f));
-                var size = s * (k == 0 ? 0.062f : 0.05f);
-                var drop = s * (k == 0 ? 0.05f : 0.035f);
-                Lantern(c, hook.X, hook.Y, drop, size, s);
-            }
-        }
-
-        // Plum blossom from the bottom-left corner, red envelopes and gold coins at the bottom right.
-        PlumBranch(c, 0, h, s, rng);
-        RedEnvelope(c, w - (s * 0.2f), h * 0.97f, s * 0.13f, -12);
-        RedEnvelope(c, w - (s * 0.09f), h * 0.985f, s * 0.12f, 10);
-        foreach (var (gx, gy) in new[] { (0.3f, 0.965f), (0.36f, 0.975f) })
-        {
-            Coin(c, w - (s * gx), h * gy, s * 0.022f);
-        }
-
-        using var gold = new SKPaint { IsAntialias = true };
-        for (var i = 0; i < 40; i++)
-        {
-            float gx = R(rng, 0, w), gy = R(rng, 0, h);
-            if (Math.Abs(gx - (w / 2f)) < w * 0.46f && gy > h * 0.3f && gy < h * 0.66f)
-            {
-                continue;
-            }
-
-            gold.Color = Gold.WithAlpha((byte)rng.Next(100, 210));
-            c.DrawCircle(gx, gy, R(rng, s * 0.002f, s * 0.005f), gold);
-        }
+        FestRedLanterns(c, w, h, rng);
     }
 
     /// <summary>A round red paper lantern hanging on a string from (x, hookY), with gold caps and a tassel.</summary>
@@ -357,61 +305,7 @@ internal static partial class CoverArt
 
     private static void LanternFestival(SKCanvas c, int w, int h, Random rng)
     {
-        float s = Math.Min(w, h);
-        NightSky(c, w, h, new SKColor(0x0A, 0x0E, 0x2E, 180), new SKColor(0x3A, 0x14, 0x30, 100));
-        Stars(c, w, h * 0.5f, 80, s, rng);
-        Moon(c, w * 0.15f, h * 0.17f, s * 0.08f, rng);
-
-        // Sky lanterns, big near ones and small far ones, all in the sky above the title.
-        var placed = new List<(float X, float Y, float R)> { (w * 0.15f, h * 0.17f, s * 0.1f) };
-        for (var i = 0; i < (w > h ? 18 : 13); i++)
-        {
-            var size = i < 5 ? s * R(rng, 0.035f, 0.05f) : s * R(rng, 0.012f, 0.025f);
-            if (FindClear(rng, placed, size * 1.4f, size, w - size, size * 2, (h * 0.3f) - (size * 1.5f), 1.1f) is { } at)
-            {
-                SkyLantern(c, at.X, at.Y, size);
-                placed.Add((at.X, at.Y, size * 1.4f));
-            }
-        }
-
-        // Far shore, the pagoda on the right and the moon bridge on the left, then the water and reflections.
-        var shore = h * 0.88f;
-        using (var land = new SKPaint { IsAntialias = true, Color = new SKColor(0x10, 0x0C, 0x20) })
-        {
-            c.DrawPath(Hills(w, h, shore - (h * 0.02f), h * 0.025f, 3, rng), land);
-        }
-
-        Pagoda(c, w - (s * 0.2f), shore, s * 0.25f);
-        MoonBridge(c, s * 0.26f, shore, s * 0.34f);
-
-        using (var water = new SKPaint { Shader = SKShader.CreateLinearGradient(new SKPoint(0, shore), new SKPoint(0, h), new[] { new SKColor(0x14, 0x12, 0x34, 240), new SKColor(0x08, 0x08, 0x1C, 250) }, SKShaderTileMode.Clamp) })
-        {
-            c.DrawRect(0, shore, w, h - shore, water);
-        }
-
-        // The bridge's reflection completes its circle; lantern glows shimmer in the water.
-        c.Save();
-        c.ClipRect(new SKRect(0, shore, w, h));
-        using (var fade = new SKPaint { Color = SKColors.White.WithAlpha(70) })
-        {
-            c.SaveLayer(fade);
-            c.Scale(1, -1, 0, shore);
-            MoonBridge(c, s * 0.26f, shore, s * 0.34f);
-            Pagoda(c, w - (s * 0.2f), shore, s * 0.25f);
-            c.Restore();
-        }
-
-        using (var shimmer = new SKPaint { IsAntialias = true, StrokeCap = SKStrokeCap.Round, StrokeWidth = s * 0.004f, Color = new SKColor(0xFF, 0xB0, 0x60, 120) })
-        {
-            for (var i = 0; i < 26; i++)
-            {
-                var x = R(rng, 0, w);
-                var y = R(rng, shore + (s * 0.01f), h);
-                c.DrawLine(x, y, x + (s * R(rng, 0.015f, 0.04f)), y, shimmer);
-            }
-        }
-
-        c.Restore();
+        FestLanternFestival(c, w, h, rng);
     }
 
     /// <summary>A glowing paper sky lantern, wider at the top, rising; (x, y) is its middle.</summary>

@@ -165,9 +165,9 @@ internal static partial class CoverArt
             case CoverTheme.Fireworks: Fireworks(canvas, w, h, tint, rng); break;
             case CoverTheme.Shamrock: Shamrocks(canvas, w, h, rng); break;
             case CoverTheme.Space: Space(canvas, w, h, tint, rng); break;
-            case CoverTheme.Sparkle: Sparkle(canvas, w, h, rng); break;
+            case CoverTheme.Sparkle: Sparkle(canvas, w, h, tint, rng); break;
             case CoverTheme.Christmas: Snow(canvas, w, h, rng, treeCorner: true); ChristmasTree(canvas, w, h, rng); break;
-            case CoverTheme.Lightsabers: StarBackdrop(canvas, w, h, rng); Lightsabers(canvas, w, h, rng); break;
+            case CoverTheme.Lightsabers: FestSaberDuel(canvas, w, h, rng); break;
             case CoverTheme.Ghosts: Ghosts(canvas, w, h, rng); break;
             case CoverTheme.Castle: Castle(canvas, w, h, rng); break;
             case CoverTheme.Bonfire: BonfireScene(canvas, w, h, tint, rng); break;
@@ -1015,8 +1015,7 @@ internal static partial class CoverArt
 
     private static void Space(SKCanvas c, int w, int h, SKColor tint, Random rng)
     {
-        StarBackdrop(c, w, h, rng);
-        Planet(c, w, h);
+        FestSpace(c, w, h, tint, rng);
     }
 
     /// <summary>Darkened sky, two soft nebula clouds, a starfield and a few glinting stars.</summary>
@@ -1324,51 +1323,9 @@ internal static partial class CoverArt
 
     // ---------- Out of season: a night at the pictures (film strip, popcorn, clapperboard) ----------
 
-    private static void Sparkle(SKCanvas c, int w, int h, Random rng)
+    private static void Sparkle(SKCanvas c, int w, int h, SKColor tint, Random rng)
     {
-        float s = Math.Min(w, h);
-
-        // Soft bokeh and twinkles in the top band only, none touching.
-        var placed = new List<(float X, float Y, float R)>();
-        using (var bokeh = new SKPaint { IsAntialias = true })
-        {
-            for (var i = 0; i < 12; i++)
-            {
-                var r = s * R(rng, 0.02f, 0.05f);
-                if (FindClear(rng, placed, r, 0, w, r, (h * 0.3f) - r, 1.1f) is { } at)
-                {
-                    bokeh.Color = SKColors.White.WithAlpha((byte)rng.Next(18, 40));
-                    c.DrawCircle(at, r, bokeh);
-                    placed.Add((at.X, at.Y, r));
-                }
-            }
-        }
-
-        using (var star = new SKPaint { IsAntialias = true, Color = SKColors.White.WithAlpha(210) })
-        {
-            for (var i = 0; i < 9; i++)
-            {
-                var r = R(rng, s * 0.01f, s * 0.022f);
-                if (FindClear(rng, placed, r, 0, w, r, (h * 0.3f) - r, 1.2f) is not { } at)
-                {
-                    continue;
-                }
-
-                using var p = new SKPath();
-                p.MoveTo(at.X, at.Y - r);
-                p.QuadTo(at.X, at.Y, at.X + r, at.Y);
-                p.QuadTo(at.X, at.Y, at.X, at.Y + r);
-                p.QuadTo(at.X, at.Y, at.X - r, at.Y);
-                p.QuadTo(at.X, at.Y, at.X, at.Y - r);
-                p.Close();
-                c.DrawPath(p, star);
-                placed.Add((at.X, at.Y, r));
-            }
-        }
-
-        FilmStrip(c, w, h, s, rng);
-        Popcorn(c, s * 0.15f, h * 0.995f, s * 0.2f, rng);
-        Clapperboard(c, w - (s * 0.16f), h * 0.99f, s * 0.22f);
+        FestCinema(c, w, h, tint, rng);
     }
 
     /// <summary>A strip of film running across the bottom, tilted a little, with sprocket holes and coloured frames.</summary>
