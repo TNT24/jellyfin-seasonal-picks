@@ -126,7 +126,6 @@ public class CoverArtTests
         => SeasonRule.Defaults()
             .Select(s => (Name: s.Name, Color: s.Color, Theme: CoverArt.ThemeFor(s.Theme, s.Name)))
             .Append((Name: "Winter Warmers", Color: "#4A7BB0", Theme: CoverTheme.Snow))
-            .Append((Name: "Summer", Color: "#F2B705", Theme: CoverTheme.Summer))
             .SelectMany(t => Enumerable.Range(1, CoverArt.Scenes(t.Theme).Length).Select(n => new object[] { t.Name, t.Color, t.Theme, n }));
 
     [Theory]

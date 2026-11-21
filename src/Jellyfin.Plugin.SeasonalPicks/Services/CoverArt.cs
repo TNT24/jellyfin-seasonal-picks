@@ -128,7 +128,6 @@ internal static partial class CoverArt
         CoverTheme.Easter => new[] { "Bunny and eggs", "Basket of chicks" },
         CoverTheme.Hearts => new[] { "Floating hearts", "Hearts and roses", "Heart balloons" },
         CoverTheme.LunarNewYear => new[] { "Red lanterns", "Lantern festival" },
-        CoverTheme.Summer => new[] { "Sunset beach", "Retro poster" },
         _ => new[] { "Standard" }
     };
 
@@ -156,7 +155,6 @@ internal static partial class CoverArt
             case CoverTheme.Hearts when scene == 1: HeartsAndRoses(canvas, w, h, tint, rng); break;
             case CoverTheme.Hearts when scene == 2: HeartBalloons(canvas, w, h, tint, rng); break;
             case CoverTheme.LunarNewYear when scene == 1: LanternFestival(canvas, w, h, rng); break;
-            case CoverTheme.Summer when scene == 1: RetroSummer(canvas, w, h, rng); break;
             case CoverTheme.LunarNewYear: RedLanterns(canvas, w, h, rng); break;
             case CoverTheme.Pancakes: PancakeStack(canvas, w, h, rng); break;
             case CoverTheme.Snow: Snow(canvas, w, h, rng); break;
