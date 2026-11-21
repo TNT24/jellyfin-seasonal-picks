@@ -1387,8 +1387,17 @@ internal static partial class CoverArt
         var gold = new SKColor(0xFF, 0xC8, 0x50);
 
         // Rich red, darkest at the edges.
-        FestBand(c, w, 0, h * 0.5f, new SKColor(0x4A, 0x02, 0x08), 200, 120);
-        FestBand(c, w, h * 0.5f, h, new SKColor(0x2A, 0x01, 0x05), 120, 220);
+        // One smooth gradient: two bands met in a visible seam across the title.
+        using (var sky = SKShader.CreateLinearGradient(
+            new SKPoint(0, 0),
+            new SKPoint(0, h),
+            new[] { new SKColor(0x4A, 0x02, 0x08, 200), new SKColor(0x3A, 0x02, 0x06, 120), new SKColor(0x2A, 0x01, 0x05, 220) },
+            new[] { 0f, 0.5f, 1f },
+            SKShaderTileMode.Clamp))
+        using (var skyPaint = new SKPaint { Shader = sky })
+        {
+            c.DrawRect(0, 0, w, h, skyPaint);
+        }
         FestGlow(c, w * 0.5f, h * 0.15f, s * 0.8f, new SKColor(0xFF, 0x50, 0x20), 60);
 
         // Far lights out of focus.
@@ -1693,8 +1702,17 @@ internal static partial class CoverArt
         float s = Math.Min(w, h);
         var warm = new SKColor(0xFF, 0xA0, 0x40);
 
-        FestBand(c, w, 0, h * 0.55f, new SKColor(0x08, 0x08, 0x28), 215, 150);
-        FestBand(c, w, h * 0.55f, h, new SKColor(0x3A, 0x0C, 0x24), 150, 210);
+        // One smooth sky, night blue warming to plum behind the town (two bands left a hard seam across the title).
+        using (var sky = SKShader.CreateLinearGradient(
+            new SKPoint(0, 0),
+            new SKPoint(0, h),
+            new[] { new SKColor(0x08, 0x08, 0x28, 215), new SKColor(0x10, 0x0A, 0x2C, 165), new SKColor(0x2C, 0x0C, 0x26, 160), new SKColor(0x3A, 0x0C, 0x24, 210) },
+            new[] { 0f, 0.4f, 0.7f, 1f },
+            SKShaderTileMode.Clamp))
+        using (var skyPaint = new SKPaint { Shader = sky })
+        {
+            c.DrawRect(0, 0, w, h, skyPaint);
+        }
         FestGlow(c, w * 0.5f, h * 0.95f, s * 0.9f, new SKColor(0xFF, 0x70, 0x30), 90);
         Stars(c, w, h * 0.4f, 70, s, rng);
 

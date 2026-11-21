@@ -270,18 +270,18 @@ internal static partial class CoverArt
     {
         // A soft halo first, then fine wisps of uneven length so the edge reads as fur, not a saw blade.
         using (var haloBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, len * 0.35f))
-        using (var halo = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = len * 0.6f, Color = colour.WithAlpha((byte)(colour.Alpha * 0.55f)), MaskFilter = haloBlur })
+        using (var halo = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = len * 0.5f, Color = colour.WithAlpha((byte)(colour.Alpha * 0.3f)), MaskFilter = haloBlur })
         {
             c.DrawPath(outline, halo);
         }
 
         using var measure = new SKPathMeasure(outline, true);
         using var wispBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, len * 0.06f);
-        using var tuft = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeWidth = len * 0.22f, Color = colour.WithAlpha((byte)(colour.Alpha * 0.7f)), MaskFilter = wispBlur };
+        using var tuft = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeWidth = len * 0.2f, Color = colour.WithAlpha((byte)(colour.Alpha * 0.4f)), MaskFilter = wispBlur };
         var k = 0;
         do
         {
-            for (var d = 0f; d < measure.Length; d += len * 0.38f, k++)
+            for (var d = 0f; d < measure.Length; d += len * 0.7f, k++)
             {
                 if (!measure.GetPositionAndTangent(d, out var p, out var t))
                 {
@@ -296,7 +296,7 @@ internal static partial class CoverArt
                     ny = -ny;
                 }
 
-                var reach = len * (0.25f + (0.3f * (((k * 7) % 5) / 4f)));
+                var reach = len * (0.1f + (0.12f * (((k * 7) % 5) / 4f)));
                 var sweep = ((k % 3) - 1) * 0.35f;
                 c.DrawLine(p.X - (nx * len * 0.3f), p.Y - (ny * len * 0.3f), p.X + (nx * reach) + (t.X * reach * sweep), p.Y + (ny * reach) + (t.Y * reach * sweep), tuft);
             }

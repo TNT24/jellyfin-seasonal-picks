@@ -1113,15 +1113,11 @@ internal static partial class CoverArt
         SpringGlow(c, sun.X, sun.Y, s * 0.32f, new SKColor(0xFF, 0xB0, 0x40, 230));
         c.Save();
         c.ClipRect(new SKRect(0, 0, w, horizon));
-        using (var disc = new SKPaint { IsAntialias = true, Shader = SKShader.CreateLinearGradient(new SKPoint(0, sun.Y - sr), new SKPoint(0, sun.Y), new[] { new SKColor(0xFF, 0xF0, 0x90), new SKColor(0xFF, 0x98, 0x20) }, null, SKShaderTileMode.Clamp) })
+        // A soft-edged disc: a hard ring round it read as a cut-out.
+        using (var discBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.003f))
+        using (var disc = new SKPaint { IsAntialias = true, MaskFilter = discBlur, Shader = SKShader.CreateLinearGradient(new SKPoint(0, sun.Y - sr), new SKPoint(0, sun.Y), new[] { new SKColor(0xFF, 0xF0, 0x90), new SKColor(0xFF, 0x98, 0x20) }, null, SKShaderTileMode.Clamp) })
         {
             c.DrawCircle(sun, sr, disc);
-        }
-
-        using (var coronaBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.004f))
-        using (var corona = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.006f, Color = new SKColor(0xFF, 0xF4, 0xC0, 200), MaskFilter = coronaBlur })
-        {
-            c.DrawCircle(sun, sr, corona);
         }
 
         c.Restore();
@@ -1170,17 +1166,31 @@ internal static partial class CoverArt
             c.DrawRect(0, horizon, w, h - horizon, sea);
         }
 
-        using (var glitter = new SKPaint { IsAntialias = true })
+        // The sun's reflection: a soft glow on the water, broken into short tapered glints that fan out towards the
+        // shore (solid bars read as a stack of planks).
+        c.Save();
+        c.ClipRect(new SKRect(0, horizon, w, shore));
+        c.Scale(1, 4.5f, sun.X, horizon);
+        SpringGlow(c, sun.X, horizon, s * 0.09f, new SKColor(0xFF, 0xC0, 0x60, 120));
+        c.Restore();
+        using (var glintBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.0015f))
+        using (var glitter = new SKPaint { IsAntialias = true, StrokeCap = SKStrokeCap.Round, MaskFilter = glintBlur })
         {
-            var rows = 26;
+            var rows = 30;
             for (var k = 0; k < rows; k++)
             {
                 var t = k / (float)rows;
-                var y = horizon + ((shore - horizon) * t * t) + (s * 0.003f);
-                var half = s * (0.03f + (0.16f * t)) * R(rng, 0.4f, 1f);
-                var off = R(rng, -s * 0.02f, s * 0.02f) * (0.3f + t);
-                glitter.Color = new SKColor(0xFF, 0xD0, 0x70, (byte)(255 * (1 - (t * 0.6f))));
-                c.DrawRoundRect(new SKRect(sun.X + off - half, y, sun.X + off + half, y + (s * 0.0035f * (1 + (t * 1.5f)))), s * 0.002f, s * 0.002f, glitter);
+                var y = horizon + ((shore - horizon) * t * t) + (s * 0.004f);
+                var spread = s * (0.03f + (0.14f * t));
+                glitter.StrokeWidth = s * 0.0025f * (1 + t);
+                for (var g = 0; g < 2 + (int)(t * 4); g++)
+                {
+                    var gx = sun.X + (R(rng, -1, 1) * spread);
+                    var len = s * R(rng, 0.006f, 0.02f) * (0.6f + t);
+                    var fade = 1 - (Math.Abs(gx - sun.X) / (spread * 1.2f));
+                    glitter.Color = new SKColor(0xFF, 0xE0, 0x90, (byte)(230 * fade * (1 - (t * 0.5f))));
+                    c.DrawLine(gx - len, y, gx + len, y, glitter);
+                }
             }
 
             for (var i = 0; i < 60; i++)
