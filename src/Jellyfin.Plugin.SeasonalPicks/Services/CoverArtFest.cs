@@ -853,51 +853,9 @@ internal static partial class CoverArt
         var blueTip = new SKPoint(w * (w > h ? 0.68f : 0.7f), tipY);
         var redTip = new SKPoint(w - blueTip.X, tipY);
 
-        // Desert dunes in the foreground, dusky violet and lit by the blades (a jagged near-black ridge read as a
-        // random black block). A far, paler dune first, then the near one.
-        using (var far = new SKPath())
-        {
-            far.MoveTo(0, h);
-            far.LineTo(0, h * 0.84f);
-            far.CubicTo(w * 0.25f, h * 0.8f, w * 0.45f, h * 0.88f, w * 0.7f, h * 0.83f);
-            far.QuadTo(w * 0.88f, h * 0.8f, w, h * 0.82f);
-            far.LineTo(w, h);
-            far.Close();
-            using var farShader = SKShader.CreateLinearGradient(new SKPoint(0, h * 0.8f), new SKPoint(0, h), new[] { new SKColor(0x4A, 0x36, 0x5A, 235), new SKColor(0x22, 0x18, 0x2C, 245) }, null, SKShaderTileMode.Clamp);
-            using var farSand = new SKPaint { IsAntialias = true, Shader = farShader };
-            c.DrawPath(far, farSand);
-        }
-
-        using var ridge = new SKPath();
-        ridge.MoveTo(0, h);
-        ridge.LineTo(0, h * 0.9f);
-        ridge.CubicTo(w * 0.2f, h * 0.86f, w * 0.35f, h * 0.93f, w * 0.55f, h * 0.9f);
-        ridge.CubicTo(w * 0.72f, h * 0.87f, w * 0.85f, h * 0.92f, w, h * 0.88f);
-        ridge.LineTo(w, h);
-        ridge.Close();
-        using (var sandShader = SKShader.CreateLinearGradient(new SKPoint(0, h * 0.86f), new SKPoint(0, h), new[] { new SKColor(0x38, 0x26, 0x40), new SKColor(0x16, 0x0E, 0x1C) }, null, SKShaderTileMode.Clamp))
-        using (var rock = new SKPaint { IsAntialias = true, Shader = sandShader })
-        {
-            c.DrawPath(ridge, rock);
-        }
-
-        c.Save();
-        c.ClipPath(ridge, antialias: true);
-        FestGlow(c, w * 0.22f, h * 0.88f, s * 0.35f, blue, 120);
-        FestGlow(c, w * 0.78f, h * 0.88f, s * 0.35f, red, 120);
-        FestGlow(c, w * 0.5f, h * 0.8f, s * 0.25f, new SKColor(0xFF, 0xF0, 0xE0), 90);
-        c.Restore();
-
-        // Rim light along the ridge's edge.
-        using (var blur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.003f))
-        using (var shader = SKShader.CreateLinearGradient(new SKPoint(0, 0), new SKPoint(w, 0), new[] { blue.WithAlpha(200), new SKColor(0xFF, 0xF0, 0xF0, 160), red.WithAlpha(200) }, SKShaderTileMode.Clamp))
-        using (var rim = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.004f, Shader = shader, MaskFilter = blur, BlendMode = SKBlendMode.Screen })
-        {
-            c.Save();
-            c.ClipRect(new SKRect(0, 0, w, h * 0.995f));
-            c.DrawPath(ridge, rim);
-            c.Restore();
-        }
+        // No ground: the duel hangs in open space, so the bottom is just more stars in the blades' light (a ridge or
+        // dunes along the bottom read as a stray dark block).
+        FestStarfield(c, w, h, h * 0.85f, h, s, rng, w > h ? 50 : 40, 5);
 
         FestSaber(c, bluePommel, blueTip, blue, s);
         FestSaber(c, redPommel, redTip, red, s);

@@ -59,7 +59,7 @@ public class CoverArtTests
             [CoverTheme.Hearts] = ("Valentine's", "#E0457B"),
             [CoverTheme.Summer] = ("Summer", "#F2B705"),
             [CoverTheme.Fireworks] = ("New Year", "#D4AF37"),
-            [CoverTheme.Space] = ("Star Wars Day", "#FFE81F"),
+            [CoverTheme.Space] = ("Alien Day", "#6FBF3F"),
             [CoverTheme.Shamrock] = ("St Patrick's Day", "#169B62"),
             [CoverTheme.Christmas] = ("Christmas", "#C8102E"),
             [CoverTheme.Lightsabers] = ("Star Wars Day", "#FFE81F"),
@@ -126,6 +126,7 @@ public class CoverArtTests
         => SeasonRule.Defaults()
             .Select(s => (Name: s.Name, Color: s.Color, Theme: CoverArt.ThemeFor(s.Theme, s.Name)))
             .Append((Name: "Winter Warmers", Color: "#4A7BB0", Theme: CoverTheme.Snow))
+            .Append((Name: "Summer", Color: "#F2B705", Theme: CoverTheme.Summer))
             .SelectMany(t => Enumerable.Range(1, CoverArt.Scenes(t.Theme).Length).Select(n => new object[] { t.Name, t.Color, t.Theme, n }));
 
     [Theory]

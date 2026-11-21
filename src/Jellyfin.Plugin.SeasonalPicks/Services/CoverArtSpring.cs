@@ -1261,14 +1261,21 @@ internal static partial class CoverArt
         SpringGlow(c, w * 0.5f, h * 0.84f, s * 0.7f, new SKColor(0xFF, 0xD0, 0xA8, 130));
 
         // Far-off balloons drifting up through the middle of the sky.
-        using (var str = new SKPaint { IsAntialias = true, StrokeWidth = s * 0.0015f, Color = SKColors.White.WithAlpha(90) })
+        // Each trails a short, gently waving string from its knot (straight sticks looked like lollipops).
+        using (var str = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.0015f, Color = SKColors.White.WithAlpha(80) })
         {
             for (var i = 0; i < (w > h ? 9 : 5); i++)
             {
                 var size = s * R(rng, 0.018f, 0.032f);
                 float x = R(rng, w * 0.3f, w * 0.7f), y = R(rng, h * 0.05f, h * 0.27f);
-                c.DrawLine(x, y + (size * 0.8f), x + R(rng, -size, size), y + (size * 2.6f), str);
-                SpringHeartBalloon(c, x, y, size, SpringLoveColours[rng.Next(SpringLoveColours.Length)], R(rng, -12, 12), (byte)rng.Next(110, 170), size * 0.08f);
+                var tilt = R(rng, -12, 12);
+                var from = SpringBalloonKnot(new SKPoint(x, y), size, tilt);
+                var sway = size * R(rng, 0.3f, 0.6f) * (rng.Next(2) == 0 ? -1 : 1);
+                using var tail = new SKPath();
+                tail.MoveTo(from);
+                tail.CubicTo(from.X + sway, from.Y + (size * 0.6f), from.X - sway, from.Y + (size * 1.2f), from.X + (sway * 0.5f), from.Y + (size * 1.9f));
+                c.DrawPath(tail, str);
+                SpringHeartBalloon(c, x, y, size, SpringLoveColours[rng.Next(SpringLoveColours.Length)], tilt, (byte)rng.Next(110, 170), size * 0.08f);
             }
         }
 
@@ -1281,18 +1288,26 @@ internal static partial class CoverArt
         foreach (var right in new[] { false, true })
         {
             SKPoint Place(float fx, float fy) => new(right ? w - (s * fx) : s * fx, s * fy);
-            var knot = Place(0.19f, 0.31f);
-            var spec = new[] { (0.09f, 0.08f, 0.07f), (0.23f, 0.065f, 0.065f), (0.32f, 0.17f, 0.055f), (0.15f, 0.18f, 0.068f), (0.04f, 0.21f, 0.055f) };
-            var spots = spec.Select((b, i) => (At: Place(b.Item1, b.Item2), Size: s * b.Item3, Tilt: R(rng, -12, 12), Colour: colours[(i + (right ? 3 : 0)) % colours.Length])).ToArray();
+            // A tight bunch well above the bow, each balloon leaning out from it, so the strings fall steeply and
+            // gather at the bow instead of fanning out sideways.
+            var knot = Place(0.19f, 0.33f);
+            var spec = new[] { (0.11f, 0.07f, 0.062f), (0.25f, 0.055f, 0.058f), (0.28f, 0.16f, 0.048f), (0.185f, 0.14f, 0.064f), (0.09f, 0.18f, 0.048f) };
+            var spots = spec.Select((b, i) =>
+            {
+                var at = Place(b.Item1, b.Item2);
+                var lean = Math.Clamp((at.X - knot.X) / (s * 0.1f), -1f, 1f) * 14f;
+                return (At: at, Size: s * b.Item3, Tilt: lean + R(rng, -4, 4), Colour: colours[(i + (right ? 3 : 0)) % colours.Length]);
+            }).ToArray();
 
-            using (var str = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.0022f, Color = SKColors.White.WithAlpha(200) })
+            using (var str = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.0018f, Color = SKColors.White.WithAlpha(170) })
             {
                 foreach (var spot in spots)
                 {
+                    // Hangs down from the balloon first, then curves in to the bow.
                     var from = SpringBalloonKnot(spot.At, spot.Size, spot.Tilt);
                     using var line = new SKPath();
                     line.MoveTo(from);
-                    line.QuadTo((from.X + knot.X) / 2 + (s * 0.01f), (from.Y + knot.Y) / 2, knot.X, knot.Y);
+                    line.CubicTo(from.X, from.Y + ((knot.Y - from.Y) * 0.45f), knot.X + ((from.X - knot.X) * 0.25f), knot.Y - ((knot.Y - from.Y) * 0.3f), knot.X, knot.Y);
                     c.DrawPath(line, str);
                 }
             }
