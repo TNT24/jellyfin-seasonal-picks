@@ -2,6 +2,11 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.9.0 - 2026-11-21
+- Every cover has been redrawn with more detailed scenes: snowy cottages, a fireplace, Santa's sleigh and baubles for Christmas; a pumpkin patch, graveyard, haunted house and witch's cauldron for Halloween; and new pictures for every other season and special day.
+- Your picks' posters are softened behind the scenes, so the artwork and title stand out.
+- The cover designer shows a small picture of each scene under the Scene list. Click one to always use it, or click it again to go back to a new scene each week.
+
 ## 1.8.0 - 2026-11-21
 - New: "During a season, pick only films that fit it". While a season such as Christmas is on, the picks are only films that fit it, even if that makes the list shorter. If none fit, you get the usual mix. It's under the shares on the settings page.
 - Every built-in season and special day knows many more words and famous titles, so more of your films are found for it. Words you added yourself are kept.

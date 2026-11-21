@@ -136,7 +136,7 @@ There are also **special days** that push their films to the front on the day bu
 For the active season, in this order:
 
 1. A finished cover you uploaded for that season, used as it is (settings page, per season, plus one "out of season" cover).
-2. Otherwise a generated cover: the current picks' posters in the season colour, decorated for the season, with the name large in the centre. Square for playlists, 16:9 for the library tile. Decorations are kept clear of the title.
+2. Otherwise a generated cover: the current picks' posters in the season colour, decorated for the season, with the name large in the centre. Square for playlists, 16:9 for the library tile. Decorations are kept clear of the title. Behind a scene the posters are softened, so they read as colour and light rather than competing with the artwork.
 
 Longer seasons change scene every week, then start again:
 
@@ -149,9 +149,9 @@ Longer seasons change scene every week, then start again:
 | Valentine's | Floating hearts, hearts and roses, heart balloons |
 | Chinese New Year | Red lanterns, lantern festival |
 
-Special days have one scene each: fireworks over a clock tower (New Year), a stack of pancakes (Pancake Day), a rainbow and a pot of gold (St Patrick's Day), clashing lightsabers, ghosts over the city, a castle on a lake with floating candles, and a bonfire. Out of season it's a night at the pictures.
+Special days have one scene each: fireworks over a riverside city with a clock tower and Ferris wheel (New Year), a stack of pancakes with syrup (Pancake Day), Irish hills under a rainbow (St Patrick's Day), two lightsabers clashing in space, ghosts round a tower under a green storm, a castle on a moonlit lake, and a bonfire with fireworks. Out of season it's a night at the pictures: curtains, a film strip, popcorn and a clapperboard.
 
-**Design cover** (per season, and for out of season) opens a designer with a live preview. It sets the decoration and **scene** (change each week, or always one), the title text, size, position (top, middle or bottom) and colour, the small label above the title, and the line under it. The background can be the picks' posters, **your own picture** (upload one and the decorations and title are drawn over it), or plain season colour. Sliders set the colour wash, darkness and how strong the decorations are. The preview is drawn by the server, so it's exactly what TVs will show.
+**Design cover** (per season, and for out of season) opens a designer with a live preview. It sets the decoration and **scene** (change each week, or always one; a small picture of each scene shows under the list, and clicking one pins it), the title text, size, position (top, middle or bottom) and colour, the small label above the title, and the line under it. The background can be the picks' posters, **your own picture** (upload one and the decorations and title are drawn over it), or plain season colour. Sliders set the colour wash, darkness and how strong the decorations are. The preview is drawn by the server, so it's exactly what TVs will show.
 
 Covers update on every refresh. Uploads follow a season when you rename it (moved on Save).
 
