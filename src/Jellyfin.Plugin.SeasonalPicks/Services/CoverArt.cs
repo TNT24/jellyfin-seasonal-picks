@@ -122,54 +122,21 @@ internal static partial class CoverArt
     /// </summary>
     public static string[] Scenes(CoverTheme theme) => theme switch
     {
-        CoverTheme.Halloween => new[] { "Pumpkin patch", "Graveyard", "Haunted house", "Witch's cauldron", "Horror" },
-        CoverTheme.Christmas => new[] { "Christmas tree", "Fireplace", "Santa's sleigh", "Baubles and holly", "Paper cut-out" },
+        CoverTheme.Halloween => new[] { "Pumpkin patch", "Graveyard", "Haunted house", "Witch's cauldron" },
+        CoverTheme.Christmas => new[] { "Christmas tree", "Fireplace", "Santa's sleigh", "Baubles and holly" },
         CoverTheme.Snow => new[] { "Snowfall", "Snowy forest" },
         CoverTheme.Easter => new[] { "Bunny and eggs", "Basket of chicks" },
-        CoverTheme.Hearts => new[] { "Floating hearts", "Hearts and roses", "Heart balloons", "Neon sign" },
+        CoverTheme.Hearts => new[] { "Floating hearts", "Hearts and roses", "Heart balloons" },
         CoverTheme.LunarNewYear => new[] { "Red lanterns", "Lantern festival" },
         CoverTheme.Summer => new[] { "Sunset beach", "Retro poster" },
-        CoverTheme.Fireworks => new[] { "Fireworks", "Retro poster", "Neon sign" },
-        CoverTheme.Bonfire => new[] { "Bonfire", "Retro poster" },
-        CoverTheme.Shamrock => new[] { "Irish hills", "Retro poster" },
-        CoverTheme.Lightsabers => new[] { "Crossed blades", "Retro poster" },
-        CoverTheme.Ghosts => new[] { "Haunted city", "Retro poster" },
-        CoverTheme.Castle => new[] { "Castle on the lake", "Retro poster" },
-        CoverTheme.Pancakes => new[] { "Pancake stack", "Retro poster" },
         _ => new[] { "Standard" }
     };
 
-    /// <summary>
-    /// The scene to draw: the one the design pins (1-based), else the step (week of the season plus the year) picks it
-    /// from a shuffled order. Every scene comes round once per cycle, a scene never shows two steps running, and the
-    /// order shifts each cycle so the styles mix rather than always following each other the same way.
-    /// </summary>
+    /// <summary>The scene to draw: the one the design pins (1-based), else the week of the season picks it.</summary>
     public static int SceneFor(CoverTheme theme, int pinned, int week)
     {
         var count = Scenes(theme).Length;
-        if (pinned > 0)
-        {
-            return (pinned - 1) % count;
-        }
-
-        var step = Math.Max(0, week);
-        if (count < 3)
-        {
-            return step % count;
-        }
-
-        // A fixed shuffle for the decoration, rotated by one each cycle: with three or more scenes the last of one
-        // cycle is never the first of the next.
-        var order = Enumerable.Range(0, count).ToArray();
-        var shuffle = new Random(((int)theme * 7919) + count);
-        for (var i = count - 1; i > 0; i--)
-        {
-            var j = shuffle.Next(i + 1);
-            (order[i], order[j]) = (order[j], order[i]);
-        }
-
-        var cycle = step / count;
-        return order[((step % count) + cycle) % count];
+        return pinned > 0 ? (pinned - 1) % count : Math.Max(0, week) % count;
     }
 
     public static void DrawTheme(SKCanvas canvas, CoverTheme theme, int w, int h, SKColor tint, string seed, int scene = 0)
@@ -181,10 +148,6 @@ internal static partial class CoverArt
             case CoverTheme.Halloween when scene == 1: Graveyard(canvas, w, h, rng); break;
             case CoverTheme.Halloween when scene == 2: HauntedHouse(canvas, w, h, rng); break;
             case CoverTheme.Halloween when scene == 3: Cauldron(canvas, w, h, rng); break;
-            case CoverTheme.Halloween when scene == 4: HorrorHalloween(canvas, w, h, rng); break;
-            case CoverTheme.Christmas when scene == 4: PaperChristmas(canvas, w, h, rng); break;
-            case CoverTheme.Hearts when scene == 3: NeonValentine(canvas, w, h, rng); break;
-            case CoverTheme.Fireworks when scene == 2: NeonNewYear(canvas, w, h, rng); break;
             case CoverTheme.Christmas when scene == 1: Fireplace(canvas, w, h, rng); break;
             case CoverTheme.Christmas when scene == 2: SantaSleigh(canvas, w, h, rng); break;
             case CoverTheme.Christmas when scene == 3: BaublesAndHolly(canvas, w, h, rng); break;
@@ -194,13 +157,6 @@ internal static partial class CoverArt
             case CoverTheme.Hearts when scene == 2: HeartBalloons(canvas, w, h, tint, rng); break;
             case CoverTheme.LunarNewYear when scene == 1: LanternFestival(canvas, w, h, rng); break;
             case CoverTheme.Summer when scene == 1: RetroSummer(canvas, w, h, rng); break;
-            case CoverTheme.Fireworks when scene == 1: RetroNewYear(canvas, w, h, rng); break;
-            case CoverTheme.Bonfire when scene == 1: RetroBonfire(canvas, w, h, rng); break;
-            case CoverTheme.Shamrock when scene == 1: RetroShamrockHills(canvas, w, h, rng); break;
-            case CoverTheme.Lightsabers when scene == 1: RetroSabers(canvas, w, h, rng); break;
-            case CoverTheme.Ghosts when scene == 1: RetroGhostCity(canvas, w, h, rng); break;
-            case CoverTheme.Castle when scene == 1: RetroCastle(canvas, w, h, rng); break;
-            case CoverTheme.Pancakes when scene == 1: RetroPancakes(canvas, w, h, rng); break;
             case CoverTheme.LunarNewYear: RedLanterns(canvas, w, h, rng); break;
             case CoverTheme.Pancakes: PancakeStack(canvas, w, h, rng); break;
             case CoverTheme.Snow: Snow(canvas, w, h, rng); break;

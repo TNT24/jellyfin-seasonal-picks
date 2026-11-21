@@ -293,7 +293,7 @@ public class SeasonalPicksController : ControllerBase
             var name = string.IsNullOrWhiteSpace(req.Name) ? null : req.Name.Trim();
 
             // The scene this week, going by the saved season's dates (a season that isn't saved yet shows its first).
-            var week = name is null ? 0 : cfg.Seasons.FirstOrDefault(s => s.CoverKey == req.Key)?.SceneStep(DateTime.Now) ?? 0;
+            var week = name is null ? 0 : cfg.Seasons.FirstOrDefault(s => s.CoverKey == req.Key)?.WeekOfSeason(DateTime.Now) ?? 0;
             var bytes = _covers.Design(ids, req.Key!, name, req.Color ?? cfg.DefaultCoverColor, req.Theme, req.Cover, label, wide, week);
             if (bytes is null)
             {

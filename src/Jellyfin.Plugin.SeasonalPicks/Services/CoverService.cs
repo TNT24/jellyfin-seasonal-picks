@@ -230,7 +230,7 @@ public class CoverService
         {
             var bytes = season is null
                 ? Design(pickIds, key, null, cfg.DefaultCoverColor, cfg.DefaultCoverTheme, cfg.DefaultCover, title, wide)
-                : Design(pickIds, key, season.Name, season.Color, season.Theme, season.Cover, title, wide, season.SceneStep(DateTime.Now));
+                : Design(pickIds, key, season.Name, season.Color, season.Theme, season.Cover, title, wide, season.WeekOfSeason(DateTime.Now));
             return bytes is null ? null : (bytes, "image/jpeg");
         }
         catch (Exception ex)
