@@ -59,7 +59,7 @@ public class CoverArtTests
             [CoverTheme.Hearts] = ("Valentine's", "#E0457B"),
             [CoverTheme.Summer] = ("Summer", "#F2B705"),
             [CoverTheme.Fireworks] = ("New Year", "#D4AF37"),
-            [CoverTheme.Space] = ("Star Wars Day", "#FFE81F"),
+            [CoverTheme.Space] = ("Alien Day", "#6FBF3F"),
             [CoverTheme.Shamrock] = ("St Patrick's Day", "#169B62"),
             [CoverTheme.Christmas] = ("Christmas", "#C8102E"),
             [CoverTheme.Lightsabers] = ("Star Wars Day", "#FFE81F"),

@@ -165,9 +165,9 @@ internal static partial class CoverArt
             case CoverTheme.Fireworks: Fireworks(canvas, w, h, tint, rng); break;
             case CoverTheme.Shamrock: Shamrocks(canvas, w, h, rng); break;
             case CoverTheme.Space: Space(canvas, w, h, tint, rng); break;
-            case CoverTheme.Sparkle: Sparkle(canvas, w, h, rng); break;
+            case CoverTheme.Sparkle: Sparkle(canvas, w, h, tint, rng); break;
             case CoverTheme.Christmas: Snow(canvas, w, h, rng, treeCorner: true); ChristmasTree(canvas, w, h, rng); break;
-            case CoverTheme.Lightsabers: StarBackdrop(canvas, w, h, rng); Lightsabers(canvas, w, h, rng); break;
+            case CoverTheme.Lightsabers: FestSaberDuel(canvas, w, h, rng); break;
             case CoverTheme.Ghosts: Ghosts(canvas, w, h, rng); break;
             case CoverTheme.Castle: Castle(canvas, w, h, rng); break;
             case CoverTheme.Bonfire: BonfireScene(canvas, w, h, tint, rng); break;
@@ -235,50 +235,11 @@ internal static partial class CoverArt
 
     // ---------- themes ----------
 
-    private static void Snow(SKCanvas c, int w, int h, Random rng, bool treeCorner = false)
-    {
-        float s = Math.Min(w, h);
-
-        // Falling snow.
-        using var dot = new SKPaint { IsAntialias = true };
-        for (var i = 0; i < 170; i++)
-        {
-            dot.Color = SKColors.White.WithAlpha((byte)rng.Next(120, 235));
-            c.DrawCircle(R(rng, 0, w), R(rng, 0, h * 0.9f), R(rng, s * 0.002f, s * 0.008f), dot);
-        }
-
-        // Snowflakes, kept off the title and apart from each other.
-        using var flake = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, Color = SKColors.White.WithAlpha(215) };
-        var placed = new List<(float X, float Y, float R)>();
-        for (var i = 0; i < 11; i++)
-        {
-            var r = R(rng, s * 0.022f, s * 0.05f);
-            for (var attempt = 0; attempt < 20; attempt++)
-            {
-                if (FindClear(rng, placed, r, 0, w, 0, h * 0.8f, 1.3f) is not { } at)
-                {
-                    break;
-                }
-
-                var onTree = treeCorner && at.X > w - (s * 0.42f) - r && at.Y > h - (s * 0.5f) - r;
-                if (onTree || (Math.Abs(at.X - (w / 2f)) < (w * 0.45f) + r && Math.Abs(at.Y - (h / 2f)) < (h * 0.19f) + r))
-                {
-                    continue;
-                }
-
-                flake.StrokeWidth = r * 0.12f;
-                Snowflake(c, at.X, at.Y, r, R(rng, 0, 60), flake);
-                placed.Add((at.X, at.Y, r));
-                break;
-            }
-        }
-
-        // Snowdrifts along the bottom.
-        using var drift = new SKPaint { IsAntialias = true, Color = new SKColor(0xF4, 0xF8, 0xFF, 235) };
-        using var driftShade = new SKPaint { IsAntialias = true, Color = new SKColor(0xC9, 0xD8, 0xEE, 220) };
-        c.DrawPath(Hills(w, h, h * 0.9f, h * 0.035f, 3, rng), driftShade);
-        c.DrawPath(Hills(w, h, h * 0.93f, h * 0.03f, 2, rng), drift);
-    }
+    /// <summary>
+    /// Snowfall: a moonlit valley with a lit cottage (see WinterSnowScene). With <paramref name="treeCorner"/>, only the
+    /// sky and far hills, for the Christmas tree scene to stand in.
+    /// </summary>
+    private static void Snow(SKCanvas c, int w, int h, Random rng, bool treeCorner = false) => WinterSnowScene(c, w, h, rng, backdropOnly: treeCorner);
 
     private static void Snowflake(SKCanvas c, float x, float y, float r, float rotation, SKPaint p)
     {
@@ -296,43 +257,8 @@ internal static partial class CoverArt
         c.Restore();
     }
 
-    private static void Halloween(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-
-        // Stars and a cratered moon.
-        Stars(c, w, h * 0.35f, 60, s, rng);
-        var moon = new SKPoint(w * 0.82f, h * 0.2f);
-        var mr = s * 0.11f;
-        Moon(c, moon.X, moon.Y, mr, rng);
-
-        // Bats, spread out: each keeps clear of the others and of the moon.
-        using var bat = new SKPaint { IsAntialias = true, Color = new SKColor(0x12, 0x08, 0x10, 235) };
-        var placed = new List<(float X, float Y, float R)> { (moon.X, moon.Y, mr * 1.1f) };
-        for (var i = 0; i < 6; i++)
-        {
-            var br = R(rng, s * 0.045f, s * 0.085f);
-            if (FindClear(rng, placed, br, w * 0.06f, w * 0.94f, h * 0.06f, h * 0.3f, 1.15f) is { } at)
-            {
-                Bat(c, at.X, at.Y, br, R(rng, -20, 20), bat);
-                placed.Add((at.X, at.Y, br));
-            }
-        }
-
-        // Dark hill, then jack-o'-lanterns on it.
-        using (var hill = new SKPaint { IsAntialias = true, Color = new SKColor(0x10, 0x0A, 0x14, 240) })
-        {
-            c.DrawPath(Hills(w, h, h * 0.86f, h * 0.04f, 2, rng), hill);
-        }
-
-        var count = w > h ? 4 : 3;
-        for (var i = 0; i < count; i++)
-        {
-            var size = s * (i % 2 == 0 ? 0.13f : 0.1f);
-            var x = (w / (float)count * (i + 0.5f)) + R(rng, -w * 0.04f, w * 0.04f);
-            Pumpkin(c, x, h * 0.9f, size);
-        }
-    }
+    /// <summary>A pumpkin patch at dusk (drawn in CoverArtSpooky.cs).</summary>
+    private static void Halloween(SKCanvas c, int w, int h, Random rng) => SpookyPumpkinPatch(c, w, h, rng);
 
     private static void Bat(SKCanvas c, float x, float y, float r, float rotation, SKPaint p)
     {
@@ -463,270 +389,6 @@ internal static partial class CoverArt
         c.DrawPath(mouth, face);
     }
 
-    private static void Easter(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-        var pastels = new[]
-        {
-            new SKColor(0xF8, 0xB1, 0xC8), new SKColor(0xB5, 0xE3, 0xF5), new SKColor(0xFF, 0xE5, 0x8F),
-            new SKColor(0xC9, 0xB6, 0xF2), new SKColor(0xB8, 0xEB, 0xB0), new SKColor(0xFF, 0xC8, 0x9E)
-        };
-
-        // A few blossoms floating above.
-        for (var i = 0; i < 9; i++)
-        {
-            Blossom(c, R(rng, 0, w), R(rng, 0, h * 0.4f), R(rng, s * 0.015f, s * 0.03f), pastels[rng.Next(pastels.Length)]);
-        }
-
-        // Grass.
-        using var back = new SKPaint { IsAntialias = true, Color = new SKColor(0x4C, 0x9A, 0x3C) };
-        using var front = new SKPaint { IsAntialias = true, Color = new SKColor(0x6C, 0xC0, 0x4A) };
-        Grass(c, w, h, h * 0.86f, s * 0.07f, back, rng);
-
-        // A bunny sitting in the grass on the right; eggs spread across the rest.
-        var bunnyUnit = s * 0.34f;
-        var bunnyX = w - (bunnyUnit * 0.45f) - (w * 0.03f);
-        Bunny(c, bunnyX, h * 0.955f, bunnyUnit);
-
-        // Eggs nestled in the grass in pairs and singles, each with its own pattern, daisies between them.
-        var eggsRight = bunnyX - (bunnyUnit * 0.5f);
-        var count = w > h ? 7 : 4;
-        var eggColours = new[]
-        {
-            new SKColor(0xF4, 0x8F, 0xB1), new SKColor(0x81, 0xD4, 0xFA), new SKColor(0xFF, 0xD5, 0x4F),
-            new SKColor(0xB3, 0x9D, 0xDB), new SKColor(0xA5, 0xD6, 0xA7), new SKColor(0xFF, 0xAB, 0x91)
-        };
-        for (var i = 0; i < count; i++)
-        {
-            var ew = s * (i % 2 == 0 ? R(rng, 0.1f, 0.12f) : R(rng, 0.075f, 0.09f));
-            var x = (eggsRight / count * (i + 0.5f)) + R(rng, -eggsRight * 0.015f, eggsRight * 0.015f);
-            var foot = h * (i % 2 == 0 ? 0.925f : 0.945f);
-            Egg(c, x, foot, ew, R(rng, -15, 15), eggColours[i % eggColours.Length], eggColours[(i + 3) % eggColours.Length], i);
-        }
-
-        Grass(c, w, h, h * 0.955f, s * 0.03f, front, rng);
-
-        // Daisies in the gaps between neighbouring eggs.
-        for (var k = 1; k < count; k += 2)
-        {
-            Daisy(c, eggsRight / count * k, h * 0.975f, s * 0.018f);
-        }
-    }
-
-    /// <summary>A sitting rabbit seen from the side, facing left. (x, ground) is under its haunch; u is its height.</summary>
-    private static void Bunny(SKCanvas c, float x, float ground, float u)
-    {
-        var fur = new SKColor(0xF7, 0xF3, 0xEE);
-        var shade = new SKColor(0xD8, 0xCC, 0xC2);
-        var pink = new SKColor(0xF4, 0xA6, 0xB8);
-
-        using var shadowFilter = SKImageFilter.CreateDropShadow(0, u * 0.01f, u * 0.02f, u * 0.02f, SKColors.Black.WithAlpha(90));
-        using var furPaint = new SKPaint
-        {
-            IsAntialias = true,
-            ImageFilter = shadowFilter,
-            Shader = SKShader.CreateLinearGradient(new SKPoint(x - (u * 0.4f), ground - u), new SKPoint(x + (u * 0.3f), ground), new[] { fur, fur, shade }, new[] { 0f, 0.55f, 1f }, SKShaderTileMode.Clamp)
-        };
-        using var pinkPaint = new SKPaint { IsAntialias = true, Color = pink };
-
-        // Ears (drawn first so the head overlaps their base).
-        foreach (var (ex, ey, rot, scale) in new[] { (-0.2f, -0.8f, -8f, 1f), (-0.3f, -0.77f, -26f, 0.92f) })
-        {
-            c.Save();
-            c.Translate(x + (u * ex), ground + (u * ey));
-            c.RotateDegrees(rot);
-            c.DrawOval(new SKRect(-u * 0.055f * scale, -u * 0.2f * scale, u * 0.055f * scale, u * 0.2f * scale), furPaint);
-            c.DrawOval(new SKRect(-u * 0.028f * scale, -u * 0.15f * scale, u * 0.028f * scale, u * 0.15f * scale), pinkPaint);
-            c.Restore();
-        }
-
-        // Body, head and hind foot as one smooth silhouette: chest rising from the front paw to the throat, the back
-        // curving over to a round rump, the long hind foot flat on the ground.
-        using (var shape = new SKPath())
-        {
-            shape.MoveTo(x - (u * 0.27f), ground);
-            shape.CubicTo(x - (u * 0.36f), ground - (u * 0.02f), x - (u * 0.35f), ground - (u * 0.1f), x - (u * 0.3f), ground - (u * 0.16f));
-            shape.CubicTo(x - (u * 0.37f), ground - (u * 0.28f), x - (u * 0.35f), ground - (u * 0.4f), x - (u * 0.24f), ground - (u * 0.46f));
-            shape.LineTo(x - (u * 0.1f), ground - (u * 0.48f));
-            shape.CubicTo(x + (u * 0.04f), ground - (u * 0.49f), x + (u * 0.2f), ground - (u * 0.42f), x + (u * 0.25f), ground - (u * 0.26f));
-            shape.CubicTo(x + (u * 0.29f), ground - (u * 0.14f), x + (u * 0.27f), ground - (u * 0.03f), x + (u * 0.2f), ground);
-            shape.Close();
-            shape.AddOval(new SKRect(x - (u * 0.44f), ground - (u * 0.67f), x - (u * 0.14f), ground - (u * 0.41f)));
-            shape.AddOval(new SKRect(x - (u * 0.14f), ground - (u * 0.06f), x + (u * 0.22f), ground + (u * 0.01f)));
-            using var merged = new SKPath();
-            shape.Simplify(merged);
-            c.DrawPath(merged, furPaint);
-        }
-
-        // Soft shading for the thigh and the front leg, inside the outline.
-        using (var crease = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeWidth = u * 0.012f, Color = shade.WithAlpha(200) })
-        using (var thigh = new SKPath())
-        {
-            thigh.MoveTo(x - (u * 0.02f), ground - (u * 0.05f));
-            thigh.CubicTo(x - (u * 0.06f), ground - (u * 0.24f), x + (u * 0.14f), ground - (u * 0.32f), x + (u * 0.21f), ground - (u * 0.16f));
-            c.DrawPath(thigh, crease);
-            c.DrawLine(x - (u * 0.21f), ground - (u * 0.03f), x - (u * 0.22f), ground - (u * 0.18f), crease);
-        }
-
-        // Tail.
-        using (var tail = new SKPaint { IsAntialias = true, Color = SKColors.White })
-        {
-            c.DrawCircle(x + (u * 0.26f), ground - (u * 0.17f), u * 0.06f, tail);
-        }
-
-        // Cheek blush, eye with a highlight, nose and whiskers.
-        using (var blush = new SKPaint { IsAntialias = true, Color = pink.WithAlpha(110) })
-        {
-            c.DrawCircle(x - (u * 0.31f), ground - (u * 0.47f), u * 0.035f, blush);
-        }
-
-        using (var eye = new SKPaint { IsAntialias = true, Color = new SKColor(0x2B, 0x1D, 0x16) })
-        using (var shine = new SKPaint { IsAntialias = true, Color = SKColors.White })
-        {
-            c.DrawCircle(x - (u * 0.3f), ground - (u * 0.56f), u * 0.024f, eye);
-            c.DrawCircle(x - (u * 0.307f), ground - (u * 0.567f), u * 0.008f, shine);
-        }
-
-        c.DrawCircle(x - (u * 0.415f), ground - (u * 0.52f), u * 0.018f, pinkPaint);
-        using (var whisker = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = u * 0.005f, Color = new SKColor(0x9E, 0x8E, 0x84, 200) })
-        {
-            foreach (var dy in new[] { -0.03f, 0f, 0.03f })
-            {
-                c.DrawLine(x - (u * 0.4f), ground - (u * 0.51f), x - (u * 0.55f), ground - (u * (0.51f - dy)), whisker);
-            }
-        }
-    }
-
-    /// <summary>
-    /// A painted egg standing on (cx, bottom): egg-shaped (narrower at the top), shaded so it looks round, with a
-    /// pattern (0 zigzag bands, 1 polka dots, 2 stripes, 3 little flowers) and a shine.
-    /// </summary>
-    private static void Egg(SKCanvas c, float cx, float bottom, float width, float rotation, SKColor color, SKColor band, int pattern = 0)
-    {
-        var height = width * 1.35f;
-        float hw = width / 2, hh = height / 2;
-        c.Save();
-        c.Translate(cx, bottom - hh);
-        c.RotateDegrees(rotation);
-        using var egg = new SKPath();
-        egg.MoveTo(0, -hh);
-        egg.CubicTo(hw * 0.92f, -hh, hw, -hh * 0.05f, hw, hh * 0.2f);
-        egg.CubicTo(hw, hh * 0.75f, hw * 0.55f, hh, 0, hh);
-        egg.CubicTo(-hw * 0.55f, hh, -hw, hh * 0.75f, -hw, hh * 0.2f);
-        egg.CubicTo(-hw, -hh * 0.05f, -hw * 0.92f, -hh, 0, -hh);
-        egg.Close();
-
-        using (var fill = new SKPaint { IsAntialias = true, Color = color, ImageFilter = SKImageFilter.CreateDropShadow(width * 0.04f, width * 0.06f, width * 0.06f, width * 0.06f, SKColors.Black.WithAlpha(110)) })
-        {
-            c.DrawPath(egg, fill);
-        }
-
-        c.Save();
-        c.ClipPath(egg, antialias: true);
-        var deep = Darken(band, 0.82f);
-        switch (pattern % 4)
-        {
-            case 1:
-                using (var dot = new SKPaint { IsAntialias = true })
-                {
-                    var row = 0;
-                    for (var y = -hh * 0.8f; y < hh; y += height * 0.16f, row++)
-                    {
-                        for (var x = -hw + (row % 2 == 0 ? 0 : width * 0.11f); x < hw; x += width * 0.22f)
-                        {
-                            dot.Color = row % 2 == 0 ? deep : SKColors.White.WithAlpha(230);
-                            c.DrawCircle(x, y, width * 0.055f, dot);
-                        }
-                    }
-                }
-
-                break;
-            case 2:
-                using (var stripe = new SKPaint { IsAntialias = true, Color = deep })
-                using (var line = new SKPaint { IsAntialias = true, Color = SKColors.White.WithAlpha(220) })
-                {
-                    foreach (var y in new[] { -hh * 0.5f, -hh * 0.05f, hh * 0.4f })
-                    {
-                        c.DrawRect(-hw, y, width, height * 0.09f, stripe);
-                        c.DrawRect(-hw, y - (height * 0.035f), width, height * 0.018f, line);
-                    }
-                }
-
-                break;
-            case 3:
-                using (var belt = new SKPaint { IsAntialias = true, Color = deep })
-                {
-                    c.DrawRect(-hw, hh * 0.15f, width, height * 0.07f, belt);
-                }
-
-                foreach (var (fx, fy) in new[] { (-0.18f, -0.45f), (0.2f, -0.2f), (-0.22f, 0.0f), (0.12f, 0.55f), (-0.15f, 0.62f) })
-                {
-                    Blossom(c, width * fx, hh * fy, width * 0.13f, Lighten(deep, 0.25f));
-                }
-
-                break;
-            default:
-                using (var zig = new SKPaint { IsAntialias = true, Color = deep, Style = SKPaintStyle.Stroke, StrokeWidth = width * 0.09f, StrokeJoin = SKStrokeJoin.Round })
-                {
-                    foreach (var y in new[] { -height * 0.15f, height * 0.18f })
-                    {
-                        using var z = new SKPath();
-                        z.MoveTo(-width, y);
-                        for (var x = -width; x < width; x += width * 0.18f)
-                        {
-                            z.LineTo(x + (width * 0.09f), y - (width * 0.08f));
-                            z.LineTo(x + (width * 0.18f), y);
-                        }
-
-                        c.DrawPath(z, zig);
-                    }
-                }
-
-                using (var dots = new SKPaint { IsAntialias = true, Color = SKColors.White.WithAlpha(220) })
-                {
-                    c.DrawCircle(-width * 0.18f, -hh * 0.62f, width * 0.05f, dots);
-                    c.DrawCircle(width * 0.15f, -hh * 0.66f, width * 0.04f, dots);
-                    c.DrawCircle(0, height * 0.02f, width * 0.05f, dots);
-                    c.DrawCircle(width * 0.2f, hh * 0.7f, width * 0.04f, dots);
-                }
-
-                break;
-        }
-
-        // Shading over the pattern so the egg looks round, then a shine on the upper left.
-        using (var shade = new SKPaint { IsAntialias = true, Shader = SKShader.CreateRadialGradient(new SKPoint(-hw * 0.35f, -hh * 0.4f), height * 0.95f, new[] { SKColors.White.WithAlpha(70), SKColors.Transparent, SKColors.Black.WithAlpha(90) }, new[] { 0f, 0.45f, 1f }, SKShaderTileMode.Clamp) })
-        {
-            c.DrawPath(egg, shade);
-        }
-
-        c.Restore();
-        using (var shine = new SKPaint { IsAntialias = true, Color = SKColors.White.WithAlpha(170) })
-        {
-            c.Save();
-            c.RotateDegrees(-25, -hw * 0.4f, -hh * 0.5f);
-            c.DrawOval(new SKRect(-hw * 0.55f, -hh * 0.62f, -hw * 0.25f, -hh * 0.36f), shine);
-            c.Restore();
-        }
-
-        c.Restore();
-    }
-
-    /// <summary>A small white daisy with a yellow middle.</summary>
-    private static void Daisy(SKCanvas c, float x, float y, float r)
-    {
-        using var petal = new SKPaint { IsAntialias = true, Color = SKColors.White };
-        for (var i = 0; i < 8; i++)
-        {
-            c.Save();
-            c.RotateDegrees(i * 45, x, y);
-            c.DrawOval(new SKRect(x - (r * 0.22f), y - r, x + (r * 0.22f), y), petal);
-            c.Restore();
-        }
-
-        using var middle = new SKPaint { IsAntialias = true, Color = new SKColor(0xFF, 0xC1, 0x07) };
-        c.DrawCircle(x, y, r * 0.3f, middle);
-    }
-
     private static void Blossom(SKCanvas c, float x, float y, float r, SKColor color)
     {
         using var petal = new SKPaint { IsAntialias = true, Color = color.WithAlpha(230) };
@@ -757,50 +419,6 @@ internal static partial class CoverArt
         c.DrawPath(path, p);
     }
 
-    private static void Hearts(SKCanvas c, int w, int h, SKColor tint, Random rng)
-    {
-        float s = Math.Min(w, h);
-        var colours = new[] { new SKColor(0xFF, 0x4D, 0x7A), new SKColor(0xFF, 0x9E, 0xB8), SKColors.White, Lighten(tint, 0.3f) };
-        using var p = new SKPaint { IsAntialias = true };
-        // Every heart keeps off the title, and the big ones keep clear of each other.
-        var placed = new List<(float X, float Y, float R)>();
-        for (var i = 0; i < 34; i++)
-        {
-            var big = i < 5;
-            var size = big ? R(rng, s * 0.09f, s * 0.13f) : R(rng, s * 0.02f, s * 0.05f);
-            SKPoint? spot = null;
-            for (var attempt = 0; attempt < 30 && spot is null; attempt++)
-            {
-                var at = FindClear(rng, placed, size * 0.6f, 0, w, 0, h, big ? 1.2f : 0.9f);
-                if (at is { } p0 && !(Math.Abs(p0.X - (w / 2f)) < (w * 0.44f) + size && Math.Abs(p0.Y - (h / 2f)) < (h * 0.19f) + (size * 0.6f)))
-                {
-                    spot = p0;
-                }
-            }
-
-            if (spot is not { } pos)
-            {
-                continue;
-            }
-
-            placed.Add((pos.X, pos.Y, size * 0.6f));
-            var colour = colours[rng.Next(colours.Length)];
-            if (big)
-            {
-                GlossyHeart(c, pos.X, pos.Y, size, colour, R(rng, -20, 20));
-                continue;
-            }
-
-            p.Color = colour.WithAlpha((byte)rng.Next(130, 220));
-            c.Save();
-            c.Translate(pos.X, pos.Y);
-            c.RotateDegrees(R(rng, -25, 25));
-            using var heart = Heart(size);
-            c.DrawPath(heart, p);
-            c.Restore();
-        }
-    }
-
     private static SKPath Heart(float size)
     {
         var p = new SKPath();
@@ -812,127 +430,8 @@ internal static partial class CoverArt
         return p;
     }
 
-    private static void Summer(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-        var sun = new SKPoint(w * 0.18f, h * 0.2f);
-        var sr = s * 0.1f;
-
-        using (var glow = new SKPaint
-        {
-            IsAntialias = true,
-            Shader = SKShader.CreateRadialGradient(sun, sr * 3f, new[] { new SKColor(0xFF, 0xE0, 0x66, 150), SKColors.Transparent }, SKShaderTileMode.Clamp)
-        })
-        {
-            c.DrawCircle(sun, sr * 3f, glow);
-        }
-
-        using (var ray = new SKPaint { IsAntialias = true, Color = new SKColor(0xFF, 0xD5, 0x4F, 220), StrokeWidth = sr * 0.14f, StrokeCap = SKStrokeCap.Round })
-        {
-            for (var i = 0; i < 12; i++)
-            {
-                var a = i * Math.PI / 6;
-                c.DrawLine(
-                    sun.X + (float)(Math.Cos(a) * sr * 1.3), sun.Y + (float)(Math.Sin(a) * sr * 1.3),
-                    sun.X + (float)(Math.Cos(a) * sr * 1.75), sun.Y + (float)(Math.Sin(a) * sr * 1.75),
-                    ray);
-            }
-        }
-
-        using (var disc = new SKPaint { IsAntialias = true, Color = new SKColor(0xFF, 0xD2, 0x3F) })
-        {
-            c.DrawCircle(sun, sr, disc);
-        }
-
-        // Layered waves with white crests.
-        var waves = new[]
-        {
-            (Top: h * 0.83f, Colour: new SKColor(0x1E, 0x88, 0xC9, 225)),
-            (Top: h * 0.88f, Colour: new SKColor(0x29, 0xB6, 0xD8, 235)),
-            (Top: h * 0.93f, Colour: new SKColor(0x5F, 0xD3, 0xE8, 245))
-        };
-        foreach (var (top, colour) in waves)
-        {
-            var amp = s * 0.018f;
-            var len = s * R(rng, 0.2f, 0.28f);
-            var phase = R(rng, 0, len);
-            using var wave = new SKPath();
-            wave.MoveTo(0, h);
-            for (float x = 0; x <= w; x += 4)
-            {
-                wave.LineTo(x, top + (float)(Math.Sin((x + phase) / len * Math.PI * 2) * amp));
-            }
-
-            wave.LineTo(w, h);
-            wave.Close();
-            using var fill = new SKPaint { IsAntialias = true, Color = colour };
-            c.DrawPath(wave, fill);
-
-            using var crest = new SKPath();
-            for (float x = 0; x <= w; x += 4)
-            {
-                var y = top + (float)(Math.Sin((x + phase) / len * Math.PI * 2) * amp);
-                if (x == 0)
-                {
-                    crest.MoveTo(x, y);
-                }
-                else
-                {
-                    crest.LineTo(x, y);
-                }
-            }
-
-            using var foam = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.006f, Color = SKColors.White.WithAlpha(190) };
-            c.DrawPath(crest, foam);
-        }
-    }
-
-    private static void Fireworks(SKCanvas c, int w, int h, SKColor tint, Random rng)
-    {
-        float s = Math.Min(w, h);
-        var colours = new[]
-        {
-            new SKColor(0xFF, 0xD7, 0x40), new SKColor(0xFF, 0x52, 0x7A), new SKColor(0x64, 0xD8, 0xFF),
-            new SKColor(0xB3, 0x88, 0xFF), new SKColor(0x69, 0xF0, 0xAE), SKColors.White
-        };
-
-        // Bursts in the sky above the title, alternating high and low, each with a short fading trail beneath.
-        var count = w > h ? 5 : 4;
-        for (var i = 0; i < count; i++)
-        {
-            var cx = (w / (float)count * (i + 0.5f)) + R(rng, -w * 0.03f, w * 0.03f);
-            var cy = h * (i % 2 == 0 ? 0.12f : 0.18f);
-            var radius = s * R(rng, 0.08f, 0.1f);
-            var colour = colours[(i * 2 + rng.Next(2)) % colours.Length];
-            Burst(c, cx, cy, radius, colour, rng);
-
-            using var trail = new SKPaint
-            {
-                IsAntialias = true,
-                StrokeWidth = s * 0.004f,
-                StrokeCap = SKStrokeCap.Round,
-                Shader = SKShader.CreateLinearGradient(new SKPoint(cx, cy + (radius * 1.4f)), new SKPoint(cx, cy + (radius * 0.35f)), new[] { SKColors.Transparent, colour.WithAlpha(150) }, SKShaderTileMode.Clamp)
-            };
-            c.DrawLine(cx, cy + (radius * 1.4f), cx, cy + (radius * 0.35f), trail);
-        }
-
-        // Sparks drifting down, off the title.
-        using var spark = new SKPaint { IsAntialias = true };
-        for (var i = 0; i < 70; i++)
-        {
-            float px = R(rng, 0, w), py = R(rng, 0, h * 0.8f);
-            if (Math.Abs(px - (w / 2f)) < w * 0.46f && Math.Abs(py - (h / 2f)) < h * 0.2f)
-            {
-                continue;
-            }
-
-            spark.Color = colours[rng.Next(colours.Length)].WithAlpha((byte)rng.Next(120, 230));
-            c.DrawCircle(px, py, R(rng, s * 0.002f, s * 0.005f), spark);
-        }
-
-        Skyline(c, w, h, s, rng, h * 0.08f, h * 0.18f, new SKColor(0xFF, 0xD5, 0x80, 170));
-        ClockTower(c, w * 0.5f, h, s * 0.3f);
-    }
+    /// <summary>New Year: fireworks over a city skyline and river (see WinterFireworksScene).</summary>
+    private static void Fireworks(SKCanvas c, int w, int h, SKColor tint, Random rng) => WinterFireworksScene(c, w, h, rng);
 
     /// <summary>A clock tower standing on the bottom edge, its lit face showing midnight. height is to the spire tip.</summary>
     private static void ClockTower(SKCanvas c, float x, float bottom, float height)
@@ -1015,8 +514,7 @@ internal static partial class CoverArt
 
     private static void Space(SKCanvas c, int w, int h, SKColor tint, Random rng)
     {
-        StarBackdrop(c, w, h, rng);
-        Planet(c, w, h);
+        FestSpace(c, w, h, tint, rng);
     }
 
     /// <summary>Darkened sky, two soft nebula clouds, a starfield and a few glinting stars.</summary>
@@ -1096,127 +594,6 @@ internal static partial class CoverArt
         c.Restore();
     }
 
-    // ---------- St Patrick's Day: a rainbow over the title, a pot of gold and shamrocks ----------
-
-    private static void Shamrocks(SKCanvas c, int w, int h, Random rng)
-    {
-        float s = Math.Min(w, h);
-        var greens = new[] { new SKColor(0x2E, 0x9E, 0x4F), new SKColor(0x4C, 0xC2, 0x6A), new SKColor(0x1B, 0x7A, 0x3C), new SKColor(0x8B, 0xD8, 0x7F) };
-
-        Rainbow(c, w, h, s);
-        Cloud(c, w * 0.03f, h * 0.34f, s * 0.08f);
-        Cloud(c, w * 0.97f, h * 0.34f, s * 0.08f);
-
-        // Gold glints, off the title.
-        using (var gold = new SKPaint { IsAntialias = true })
-        {
-            for (var i = 0; i < 40; i++)
-            {
-                float gx = R(rng, 0, w), gy = R(rng, 0, h);
-                if (Math.Abs(gx - (w / 2f)) < w * 0.46f && Math.Abs(gy - (h / 2f)) < h * 0.2f)
-                {
-                    continue;
-                }
-
-                gold.Color = new SKColor(0xFF, 0xD5, 0x4F, (byte)rng.Next(110, 220));
-                c.DrawCircle(gx, gy, R(rng, s * 0.002f, s * 0.006f), gold);
-            }
-        }
-
-        // Shamrocks around the bottom and sides, clear of the title, the pot and each other.
-        var pot = new SKPoint(w / 2f, h * 0.985f);
-        var sign = PubSign(c, w, h, s);
-        var placed = new List<(float X, float Y, float R)> { (pot.X, pot.Y - (s * 0.12f), s * 0.17f), (sign.MidX, sign.MidY, (sign.Width * 0.62f) + (s * 0.02f)) };
-        for (var i = 0; i < 16; i++)
-        {
-            var size = i < 5 ? s * R(rng, 0.07f, 0.1f) : s * R(rng, 0.035f, 0.055f);
-            for (var attempt = 0; attempt < 40; attempt++)
-            {
-                if (FindClear(rng, placed, size * 1.1f, size, w - size, h * 0.4f, h - (size * 0.5f), 1.05f) is not { } at)
-                {
-                    break;
-                }
-
-                if (Math.Abs(at.X - (w / 2f)) < (w * 0.46f) + size && Math.Abs(at.Y - (h / 2f)) < (h * 0.2f) + size)
-                {
-                    continue;
-                }
-
-                Shamrock(c, at.X, at.Y, size, R(rng, -40, 40), greens[rng.Next(greens.Length)]);
-                placed.Add((at.X, at.Y, size * 1.1f));
-                break;
-            }
-        }
-
-        PotOfGold(c, pot.X, pot.Y, s * 0.12f, rng);
-    }
-
-    /// <summary>
-    /// A small pub sign hanging from a wrought-iron bracket on the right edge, below the title: green board, gold
-    /// border and lettering. Returns the board's bounds so other decorations can keep clear of it.
-    /// </summary>
-    private static SKRect PubSign(SKCanvas c, int w, int h, float s)
-    {
-        var armY = h * 0.69f;
-        var boardW = s * 0.2f;
-        var boardH = s * 0.11f;
-        var right = w - (s * 0.02f);
-        var board = new SKRect(right - (s * 0.02f) - boardW, armY + (s * 0.03f), right - (s * 0.02f), armY + (s * 0.03f) + boardH);
-
-        // Bracket: an arm out from the wall braced by a curve above it (clear of the board), and two short chains.
-        using (var iron = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeWidth = s * 0.008f, Color = new SKColor(0x1C, 0x1C, 0x1C) })
-        {
-            c.DrawLine(w, armY, board.Left - (s * 0.01f), armY, iron);
-            using var scroll = new SKPath();
-            scroll.MoveTo(w, armY - (s * 0.06f));
-            scroll.CubicTo(w - (s * 0.06f), armY - (s * 0.06f), w - (s * 0.08f), armY - (s * 0.01f), w - (s * 0.12f), armY);
-            iron.StrokeWidth = s * 0.005f;
-            c.DrawPath(scroll, iron);
-            iron.StrokeWidth = s * 0.004f;
-            c.DrawLine(board.Left + (boardW * 0.15f), armY, board.Left + (boardW * 0.15f), board.Top, iron);
-            c.DrawLine(board.Right - (boardW * 0.15f), armY, board.Right - (boardW * 0.15f), board.Top, iron);
-        }
-
-        using (var green = new SKPaint { IsAntialias = true, Shader = SKShader.CreateLinearGradient(new SKPoint(0, board.Top), new SKPoint(0, board.Bottom), new[] { new SKColor(0x1B, 0x6B, 0x3A), new SKColor(0x0D, 0x40, 0x22) }, SKShaderTileMode.Clamp), ImageFilter = SKImageFilter.CreateDropShadow(0, s * 0.006f, s * 0.008f, s * 0.008f, SKColors.Black.WithAlpha(140)) })
-        {
-            c.DrawRoundRect(board, s * 0.01f, s * 0.01f, green);
-        }
-
-        using (var trim = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = s * 0.004f, Color = new SKColor(0xD4, 0xAF, 0x37) })
-        {
-            var inner = board;
-            inner.Inflate(-s * 0.008f, -s * 0.008f);
-            c.DrawRoundRect(inner, s * 0.006f, s * 0.006f, trim);
-        }
-
-        using var font = new SKFont(TitleTypeface.Value, boardH * 0.3f);
-        using var letters = new SKPaint { IsAntialias = true, Color = new SKColor(0xF2, 0xD0, 0x6B) };
-        c.DrawText("PADDY'S", board.MidX, board.Top + (boardH * 0.46f), SKTextAlign.Center, font, letters);
-        font.Size = boardH * 0.26f;
-        c.DrawText("PUB", board.MidX, board.Top + (boardH * 0.82f), SKTextAlign.Center, font, letters);
-        return board;
-    }
-
-    /// <summary>A rainbow arching across the sky above the title, its feet hidden in clouds at the edges.</summary>
-    private static void Rainbow(SKCanvas c, int w, int h, float s)
-    {
-        var bands = new[] { new SKColor(0xE5, 0x39, 0x35), new SKColor(0xFB, 0x8C, 0x00), new SKColor(0xFD, 0xD8, 0x35), new SKColor(0x43, 0xA0, 0x47), new SKColor(0x1E, 0x88, 0xE5), new SKColor(0x8E, 0x24, 0xAA) };
-        var band = s * 0.022f;
-        var foot = h * 0.34f;
-        c.Save();
-        c.ClipRect(new SKRect(0, 0, w, foot));
-        using var paint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = band * 1.04f };
-        for (var i = 0; i < bands.Length; i++)
-        {
-            var rx = (w * 0.56f) - (i * band);
-            var ry = (h * 0.29f) - (i * band);
-            paint.Color = bands[i].WithAlpha(185);
-            c.DrawOval(new SKRect((w / 2f) - rx, foot - ry, (w / 2f) + rx, foot + ry), paint);
-        }
-
-        c.Restore();
-    }
-
     /// <summary>A soft white cloud made of overlapping puffs, merged into one shape.</summary>
     private static void Cloud(SKCanvas c, float x, float y, float r)
     {
@@ -1237,138 +614,14 @@ internal static partial class CoverArt
         c.DrawPath(merged, paint);
     }
 
-    /// <summary>A black pot heaped with gold coins, sitting on the bottom edge at (x, bottom); r is about its radius.</summary>
-    private static void PotOfGold(SKCanvas c, float x, float bottom, float r, Random rng)
-    {
-        var rimY = bottom - (r * 1.25f);
-
-        // Coins heaped above the rim: back rows first, each coin a shaded disc with a raised edge.
-        using var coin = new SKPaint { IsAntialias = true };
-        for (var row = 0; row < 4; row++)
-        {
-            var rowY = rimY - (r * 0.42f) + (row * r * 0.12f);
-            var half = r * (0.45f + (row * 0.15f));
-            for (var cx = x - half; cx <= x + half; cx += r * 0.2f)
-            {
-                var cr = r * 0.14f;
-                var px = cx + R(rng, -r * 0.03f, r * 0.03f);
-                var py = rowY - (float)(Math.Cos((px - x) / (r * 1.1f) * Math.PI / 2) * r * 0.12f);
-                using var coinShade = SKShader.CreateRadialGradient(new SKPoint(px - (cr * 0.3f), py - (cr * 0.3f)), cr * 1.3f, new[] { new SKColor(0xFF, 0xF1, 0x76), new SKColor(0xFF, 0xC1, 0x07), new SKColor(0xB8, 0x86, 0x0B) }, new[] { 0f, 0.55f, 1f }, SKShaderTileMode.Clamp);
-                coin.Shader = coinShade;
-                c.DrawOval(new SKRect(px - cr, py - (cr * 0.75f), px + cr, py + (cr * 0.75f)), coin);
-            }
-        }
-
-        coin.Shader = null;
-
-        // Pot body and rim.
-        using var pot = new SKPath();
-        pot.MoveTo(x - (r * 0.95f), rimY);
-        pot.CubicTo(x - (r * 1.35f), rimY + (r * 0.5f), x - (r * 1.0f), bottom, x - (r * 0.5f), bottom);
-        pot.LineTo(x + (r * 0.5f), bottom);
-        pot.CubicTo(x + (r * 1.0f), bottom, x + (r * 1.35f), rimY + (r * 0.5f), x + (r * 0.95f), rimY);
-        pot.Close();
-        using (var body = new SKPaint { IsAntialias = true, Shader = SKShader.CreateRadialGradient(new SKPoint(x - (r * 0.4f), rimY + (r * 0.3f)), r * 1.5f, new[] { new SKColor(0x4A, 0x4A, 0x58), new SKColor(0x1C, 0x1C, 0x24), new SKColor(0x08, 0x08, 0x0C) }, new[] { 0f, 0.45f, 1f }, SKShaderTileMode.Clamp) })
-        {
-            c.DrawPath(pot, body);
-        }
-
-        using (var rim = new SKPaint { IsAntialias = true, Shader = SKShader.CreateLinearGradient(new SKPoint(0, rimY - (r * 0.1f)), new SKPoint(0, rimY + (r * 0.1f)), new[] { new SKColor(0x55, 0x55, 0x62), new SKColor(0x22, 0x22, 0x2A) }, SKShaderTileMode.Clamp) })
-        {
-            c.DrawRoundRect(new SKRect(x - (r * 1.02f), rimY - (r * 0.09f), x + (r * 1.02f), rimY + (r * 0.09f)), r * 0.09f, r * 0.09f, rim);
-        }
-
-        // Glints on the gold.
-        using var glint = new SKPaint { IsAntialias = true, StrokeCap = SKStrokeCap.Round, StrokeWidth = r * 0.02f, Color = SKColors.White.WithAlpha(230) };
-        foreach (var (gx, gy) in new[] { (-0.3f, -0.62f), (0.25f, -0.5f), (0.02f, -0.75f) })
-        {
-            float px = x + (gx * r), py = rimY + (gy * r * 0.6f), gr = r * 0.07f;
-            c.DrawLine(px - gr, py, px + gr, py, glint);
-            c.DrawLine(px, py - gr, px, py + gr, glint);
-        }
-    }
-
-    private static void Shamrock(SKCanvas c, float x, float y, float size, float rotation, SKColor colour)
-    {
-        c.Save();
-        c.Translate(x, y);
-        c.RotateDegrees(rotation);
-
-        using (var stem = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeCap = SKStrokeCap.Round, StrokeWidth = size * 0.1f, Color = Darken(colour, 0.8f) })
-        using (var stemPath = new SKPath())
-        {
-            stemPath.MoveTo(0, 0);
-            stemPath.QuadTo(size * 0.15f, size * 0.55f, size * 0.05f, size * 1.05f);
-            c.DrawPath(stemPath, stem);
-        }
-
-        // Three heart-shaped leaves with their points meeting in the middle.
-        using var leaf = new SKPaint { IsAntialias = true, Color = colour };
-        using var vein = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = size * 0.035f, Color = Lighten(colour, 0.35f).WithAlpha(180) };
-        foreach (var angle in new[] { 0f, 120f, 240f })
-        {
-            c.Save();
-            c.RotateDegrees(angle + 180);
-            c.Translate(0, -size * 0.35f);
-            using var heart = Heart(size * 0.95f);
-            c.DrawPath(heart, leaf);
-            c.DrawLine(0, size * 0.32f, 0, -size * 0.25f, vein);
-            c.Restore();
-        }
-
-        c.Restore();
-    }
-
     private static SKColor Darken(SKColor col, float factor)
         => new((byte)(col.Red * factor), (byte)(col.Green * factor), (byte)(col.Blue * factor));
 
     // ---------- Out of season: a night at the pictures (film strip, popcorn, clapperboard) ----------
 
-    private static void Sparkle(SKCanvas c, int w, int h, Random rng)
+    private static void Sparkle(SKCanvas c, int w, int h, SKColor tint, Random rng)
     {
-        float s = Math.Min(w, h);
-
-        // Soft bokeh and twinkles in the top band only, none touching.
-        var placed = new List<(float X, float Y, float R)>();
-        using (var bokeh = new SKPaint { IsAntialias = true })
-        {
-            for (var i = 0; i < 12; i++)
-            {
-                var r = s * R(rng, 0.02f, 0.05f);
-                if (FindClear(rng, placed, r, 0, w, r, (h * 0.3f) - r, 1.1f) is { } at)
-                {
-                    bokeh.Color = SKColors.White.WithAlpha((byte)rng.Next(18, 40));
-                    c.DrawCircle(at, r, bokeh);
-                    placed.Add((at.X, at.Y, r));
-                }
-            }
-        }
-
-        using (var star = new SKPaint { IsAntialias = true, Color = SKColors.White.WithAlpha(210) })
-        {
-            for (var i = 0; i < 9; i++)
-            {
-                var r = R(rng, s * 0.01f, s * 0.022f);
-                if (FindClear(rng, placed, r, 0, w, r, (h * 0.3f) - r, 1.2f) is not { } at)
-                {
-                    continue;
-                }
-
-                using var p = new SKPath();
-                p.MoveTo(at.X, at.Y - r);
-                p.QuadTo(at.X, at.Y, at.X + r, at.Y);
-                p.QuadTo(at.X, at.Y, at.X, at.Y + r);
-                p.QuadTo(at.X, at.Y, at.X - r, at.Y);
-                p.QuadTo(at.X, at.Y, at.X, at.Y - r);
-                p.Close();
-                c.DrawPath(p, star);
-                placed.Add((at.X, at.Y, r));
-            }
-        }
-
-        FilmStrip(c, w, h, s, rng);
-        Popcorn(c, s * 0.15f, h * 0.995f, s * 0.2f, rng);
-        Clapperboard(c, w - (s * 0.16f), h * 0.99f, s * 0.22f);
+        FestCinema(c, w, h, tint, rng);
     }
 
     /// <summary>A strip of film running across the bottom, tilted a little, with sprocket holes and coloured frames.</summary>
@@ -1691,6 +944,44 @@ internal static partial class CoverArt
             }
 
             return hash;
+        }
+    }
+
+    /// <summary>
+    /// A stone river wall along <paramref name="y"/>, so buildings on the bank stand on something rather than float on
+    /// the water: a coping stone along the top caught by the light, block joints, and a dark wet line at its foot.
+    /// </summary>
+    private static void RiverWall(SKCanvas c, int w, float y, float s, SKColor stone, SKColor light)
+    {
+        var height = s * 0.03f;
+        var face = new SKRect(-2, y - (height * 0.35f), w + 2, y + (height * 0.65f));
+        using (var shader = SKShader.CreateLinearGradient(new SKPoint(0, face.Top), new SKPoint(0, face.Bottom), new[] { stone, Darken(stone, 0.45f) }, null, SKShaderTileMode.Clamp))
+        using (var wall = new SKPaint { IsAntialias = true, Shader = shader })
+        {
+            c.DrawRect(face, wall);
+        }
+
+        using (var joint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = Math.Max(1, s * 0.0012f), Color = SKColors.Black.WithAlpha(90) })
+        {
+            var mid = face.Top + (face.Height * 0.5f);
+            c.DrawLine(face.Left, mid, face.Right, mid, joint);
+            var block = s * 0.05f;
+            for (var x = 0f; x < w; x += block)
+            {
+                c.DrawLine(x, face.Top, x, mid, joint);
+                c.DrawLine(x + (block / 2), mid, x + (block / 2), face.Bottom, joint);
+            }
+        }
+
+        using (var coping = new SKPaint { IsAntialias = true, Color = light })
+        {
+            c.DrawRect(face.Left, face.Top - (s * 0.003f), face.Width, s * 0.005f, coping);
+        }
+
+        using (var wetBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.003f))
+        using (var wet = new SKPaint { IsAntialias = true, Color = SKColors.Black.WithAlpha(160), MaskFilter = wetBlur })
+        {
+            c.DrawRect(face.Left, face.Bottom - (s * 0.002f), face.Width, s * 0.006f, wet);
         }
     }
 }
