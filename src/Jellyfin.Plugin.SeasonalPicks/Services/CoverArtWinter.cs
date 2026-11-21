@@ -138,14 +138,18 @@ internal static partial class CoverArt
         float s = Math.Min(w, h);
         var wide = w > h;
         var cx = w / 2f;
-        var floor = h * (wide ? 0.975f : 0.94f);
+        var floor = h * (wide ? 0.93f : 0.94f);
         var fw = wide ? s * 0.92f : w * 0.8f;
         var mantelY = h * 0.69f;
 
         // A warm, dim room lit by the fire.
         WinterWash(c, w, 0, h, new[] { new SKColor(0x10, 0x06, 0x04, 210), new SKColor(0x1E, 0x0C, 0x06, 150), new SKColor(0x2A, 0x10, 0x06, 170) }, new[] { 0f, 0.55f, 1f });
         WinterGlow(c, cx, floor - (s * 0.12f), s * 1.0f, new SKColor(0xFF, 0x86, 0x2C, 95), add: true);
-        WinterWash(c, w, floor, h, new[] { new SKColor(0x4A, 0x2A, 0x16), new SKColor(0x2A, 0x16, 0x0C) });
+        WinterWash(c, w, floor, h, new[] { new SKColor(0x7A, 0x4A, 0x26), new SKColor(0x4A, 0x2A, 0x14) });
+        using (var skirting = new SKPaint { Color = new SKColor(0x2A, 0x14, 0x0A) })
+        {
+            c.DrawRect(0, floor - (s * 0.012f), w, s * 0.012f, skirting);
+        }
 
         // Faint striped wallpaper.
         using (var stripe = new SKPaint { Color = new SKColor(0xFF, 0xE0, 0xB0, 7) })
@@ -296,8 +300,9 @@ internal static partial class CoverArt
         }
         else
         {
-            WinterPresent(c, w * 0.045f, floor + (s * 0.012f), s * 0.07f, s * 0.09f, new SKColor(0xC6, 0x28, 0x28), new SKColor(0xFF, 0xD0, 0x50));
-            WinterPresent(c, w * 0.955f, floor + (s * 0.012f), s * 0.07f, s * 0.06f, new SKColor(0x2E, 0x7D, 0x32), new SKColor(0xE5, 0x39, 0x35));
+            // On the stone hearth at its two front corners, where they clearly stand on something.
+            WinterPresent(c, w * 0.13f, h * 0.985f, s * 0.07f, s * 0.075f, new SKColor(0xC6, 0x28, 0x28), new SKColor(0xFF, 0xD0, 0x50));
+            WinterPresent(c, w * 0.87f, h * 0.985f, s * 0.075f, s * 0.055f, new SKColor(0x2E, 0x7D, 0x32), new SKColor(0xE5, 0x39, 0x35));
         }
 
         // Dark vignette at the top corners so the room closes in round the title.
