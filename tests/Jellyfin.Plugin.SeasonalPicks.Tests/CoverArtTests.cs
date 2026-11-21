@@ -150,13 +150,28 @@ public class CoverArtTests
     [Fact]
     public void The_scene_changes_each_week_and_can_be_pinned()
     {
-        Assert.Equal(new[] { 0, 1, 2, 3, 0 }, Enumerable.Range(0, 5).Select(week => CoverArt.SceneFor(CoverTheme.Halloween, 0, week)));
+        // Shuffled, but every scene comes round once per cycle and none shows two steps running, across cycles too.
+        foreach (var theme in new[] { CoverTheme.Halloween, CoverTheme.Christmas, CoverTheme.Hearts, CoverTheme.Snow, CoverTheme.Lightsabers })
+        {
+            var count = CoverArt.Scenes(theme).Length;
+            var run = Enumerable.Range(0, count * 6).Select(step => CoverArt.SceneFor(theme, 0, step)).ToArray();
+            for (var i = 1; i < run.Length; i++)
+            {
+                Assert.NotEqual(run[i - 1], run[i]);
+            }
+
+            for (var cycle = 0; cycle < 6; cycle++)
+            {
+                Assert.Equal(Enumerable.Range(0, count), run.Skip(cycle * count).Take(count).OrderBy(x => x));
+            }
+        }
+
         Assert.Equal(2, CoverArt.SceneFor(CoverTheme.Halloween, 3, 0));
-        Assert.Equal(0, CoverArt.SceneFor(CoverTheme.Lightsabers, 0, 3)); // one scene: always it
+        Assert.Equal(0, CoverArt.SceneFor(CoverTheme.Sparkle, 0, 3)); // one scene: always it
 
         var a = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, week: 0);
         var b = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, week: 1);
-        var pinned = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, new CoverStyle { Scene = 1 }, week: 1);
+        var pinned = CoverService.Generate(Array.Empty<string>(), "#FF7518", "Halloween", "Suggested", false, CoverTheme.Halloween, new CoverStyle { Scene = CoverArt.SceneFor(CoverTheme.Halloween, 0, 0) + 1 }, week: 1);
         Assert.NotEqual(a, b);
         Assert.Equal(a, pinned);
     }

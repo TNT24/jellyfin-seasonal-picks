@@ -110,20 +110,28 @@ public class SeasonRule
         }
 
         var day = date.Date;
-        DateTime start;
+        return Math.Max(0, (day - SeasonStart(day)).Days / 7);
+    }
+
+    /// <summary>
+    /// Which step of the cover's scene cycle a date is on: the week of the season, plus one for each year, so a
+    /// one-day season shows its next scene the following year and longer ones start on a different scene each year.
+    /// 0 when the season is not on.
+    /// </summary>
+    public int SceneStep(DateTime date)
+        => IsActive(date) ? WeekOfSeason(date) + SeasonStart(date.Date).Year : 0;
+
+    private DateTime SeasonStart(DateTime day)
+    {
         if (MovingWindow(day.Year) is { } window)
         {
-            start = window.Start;
-        }
-        else
-        {
-            // A window that wraps the new year and is in its January part opened last year.
-            var year = (day.Month * 100) + day.Day >= (StartMonth * 100) + StartDay ? day.Year : day.Year - 1;
-            var month = Math.Clamp(StartMonth, 1, 12);
-            start = new DateTime(year, month, Math.Clamp(StartDay, 1, DateTime.DaysInMonth(year, month)));
+            return window.Start;
         }
 
-        return Math.Max(0, (day - start).Days / 7);
+        // A window that wraps the new year and is in its January part opened last year.
+        var year = (day.Month * 100) + day.Day >= (StartMonth * 100) + StartDay ? day.Year : day.Year - 1;
+        var month = Math.Clamp(StartMonth, 1, 12);
+        return new DateTime(year, month, Math.Clamp(StartDay, 1, DateTime.DaysInMonth(year, month)));
     }
 
     /// <summary>Western (Gregorian) Easter Sunday: the anonymous Gregorian algorithm.</summary>
