@@ -853,23 +853,30 @@ internal static partial class CoverArt
         var blueTip = new SKPoint(w * (w > h ? 0.68f : 0.7f), tipY);
         var redTip = new SKPoint(w - blueTip.X, tipY);
 
-        // A rocky ridge in the foreground, rim-lit by the blades.
-        using var ridge = new SKPath();
-        ridge.MoveTo(0, h);
-        ridge.LineTo(0, h * 0.86f);
-        var x = 0f;
-        while (x < w)
+        // Desert dunes in the foreground, dusky violet and lit by the blades (a jagged near-black ridge read as a
+        // random black block). A far, paler dune first, then the near one.
+        using (var far = new SKPath())
         {
-            var step = s * R(rng, 0.04f, 0.09f);
-            x += step;
-            var y = h * (0.86f + (0.05f * (float)Math.Pow(Math.Abs((x / w) - 0.5f) * 2, 2) * -1)) + (s * R(rng, -0.02f, 0.02f));
-            ridge.LineTo(x - (step * 0.5f), y - (s * R(rng, 0.0f, 0.025f)));
-            ridge.LineTo(x, y);
+            far.MoveTo(0, h);
+            far.LineTo(0, h * 0.84f);
+            far.CubicTo(w * 0.25f, h * 0.8f, w * 0.45f, h * 0.88f, w * 0.7f, h * 0.83f);
+            far.QuadTo(w * 0.88f, h * 0.8f, w, h * 0.82f);
+            far.LineTo(w, h);
+            far.Close();
+            using var farShader = SKShader.CreateLinearGradient(new SKPoint(0, h * 0.8f), new SKPoint(0, h), new[] { new SKColor(0x4A, 0x36, 0x5A, 235), new SKColor(0x22, 0x18, 0x2C, 245) }, null, SKShaderTileMode.Clamp);
+            using var farSand = new SKPaint { IsAntialias = true, Shader = farShader };
+            c.DrawPath(far, farSand);
         }
 
+        using var ridge = new SKPath();
+        ridge.MoveTo(0, h);
+        ridge.LineTo(0, h * 0.9f);
+        ridge.CubicTo(w * 0.2f, h * 0.86f, w * 0.35f, h * 0.93f, w * 0.55f, h * 0.9f);
+        ridge.CubicTo(w * 0.72f, h * 0.87f, w * 0.85f, h * 0.92f, w, h * 0.88f);
         ridge.LineTo(w, h);
         ridge.Close();
-        using (var rock = new SKPaint { IsAntialias = true, Color = new SKColor(0x05, 0x05, 0x0B) })
+        using (var sandShader = SKShader.CreateLinearGradient(new SKPoint(0, h * 0.86f), new SKPoint(0, h), new[] { new SKColor(0x38, 0x26, 0x40), new SKColor(0x16, 0x0E, 0x1C) }, null, SKShaderTileMode.Clamp))
+        using (var rock = new SKPaint { IsAntialias = true, Shader = sandShader })
         {
             c.DrawPath(ridge, rock);
         }
@@ -1791,6 +1798,9 @@ internal static partial class CoverArt
                 c.DrawLine(x, y, x + len, y, shimmer);
             }
         }
+
+        // The town's river wall, so the houses stand on a bank rather than float on the water.
+        RiverWall(c, w, shore, s, new SKColor(0x3A, 0x20, 0x30), warm.WithAlpha(110));
 
         // A few lanterns floating on the water, and a pair rising close to the camera.
         foreach (var fx in w > h ? new[] { 0.42f, 0.55f, 0.66f, 0.9f } : new[] { 0.45f, 0.6f, 0.92f })

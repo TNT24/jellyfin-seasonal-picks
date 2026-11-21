@@ -138,7 +138,7 @@ internal static partial class CoverArt
         float s = Math.Min(w, h);
         var wide = w > h;
         var cx = w / 2f;
-        var floor = h * 0.975f;
+        var floor = h * (wide ? 0.975f : 0.94f);
         var fw = wide ? s * 0.92f : w * 0.8f;
         var mantelY = h * 0.69f;
 

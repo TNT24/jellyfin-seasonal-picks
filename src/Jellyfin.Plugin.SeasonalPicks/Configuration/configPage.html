@@ -81,6 +81,12 @@
         #SeasonalPicksConfigPage .sp-designer-preview img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 8px; background: var(--sp-soft); box-shadow: 0 2px 12px rgba(0,0,0,.3); }
         #SeasonalPicksConfigPage .sp-designer-preview img.wide { aspect-ratio: 16 / 9; }
         #SeasonalPicksConfigPage .sp-designer-preview .sp-hint { grid-column: 1 / -1; margin: 0; }
+        #SeasonalPicksConfigPage .sp-scenes { display: grid; grid-template-columns: repeat(auto-fill, minmax(84px, 1fr)); gap: .5em; margin: -.4em 0 1.2em; }
+        #SeasonalPicksConfigPage .sp-scenes button { all: unset; cursor: pointer; display: grid; gap: .25em; font-size: .8em; text-align: center; opacity: .75; }
+        #SeasonalPicksConfigPage .sp-scenes button:hover, #SeasonalPicksConfigPage .sp-scenes button[aria-pressed="true"] { opacity: 1; }
+        #SeasonalPicksConfigPage .sp-scenes img { width: 100%; aspect-ratio: 1; object-fit: cover; border-radius: 6px; background: var(--sp-soft); outline: 2px solid transparent; outline-offset: 2px; }
+        #SeasonalPicksConfigPage .sp-scenes button[aria-pressed="true"] img { outline-color: var(--c, #00a4dc); }
+        #SeasonalPicksConfigPage .sp-scenes button:focus-visible img { outline-color: #00a4dc; }
         #SeasonalPicksConfigPage .sp-designer .inputContainer, #SeasonalPicksConfigPage .sp-designer .selectContainer { margin-bottom: .9em; }
         #SeasonalPicksConfigPage .sp-row { display: flex; flex-wrap: wrap; gap: .6em 1.2em; align-items: center; margin-bottom: .9em; }
         #SeasonalPicksConfigPage .sp-row .checkboxContainer { margin: 0; }
@@ -543,7 +549,49 @@
             function sceneSelectHtml(scene) {
                 var opts = '<option value="0">Changes each week</option>';
                 for (var i = 1; i <= 4; i++) opts += '<option value="' + i + '"' + (scene === i ? ' selected' : '') + '>Scene ' + i + '</option>';
-                return '<div class="selectContainer" data-scene-box><select is="emby-select" data-s="Scene" label="Scene">' + opts + '</select></div>';
+                return '<div data-scene-box><div class="selectContainer"><select is="emby-select" data-s="Scene" label="Scene">' + opts + '</select></div>' +
+                    '<div class="sp-scenes" data-scene-strip role="group" aria-label="Scenes"></div></div>';
+            }
+
+            // A small picture of each scene under the Scene list; clicking one pins that scene. Redrawn only when
+            // the scenes, decoration, name or colour change, not on every tweak to the title or sliders.
+            function showSceneThumbs(card, list) {
+                var strip = card.querySelector('[data-scene-strip]');
+                if (!strip) return;
+                var design = designOf(card);
+                var key = list.join('|') + '#' + design.Theme + '#' + design.Name + '#' + design.Color;
+                if (strip._key !== key) {
+                    strip._key = key;
+                    var seq = strip._seq = (strip._seq || 0) + 1;
+                    strip.innerHTML = list.map(function (n, i) {
+                        return '<button type="button" data-scene-pick="' + (i + 1) + '" title="Always use: ' + esc(n) + '"><img alt=""><span>' + esc(n) + '</span></button>';
+                    }).join('');
+                    if (!strip._wired) {
+                        strip._wired = true;
+                        strip.addEventListener('click', function (e) {
+                            var b = e.target.closest('[data-scene-pick]');
+                            if (!b) return;
+                            var select = card.querySelector('[data-s="Scene"]');
+                            var pick = b.getAttribute('data-scene-pick');
+                            // Clicking the pinned scene again goes back to changing each week.
+                            select.value = select.value === pick ? '0' : pick;
+                            select.dispatchEvent(new Event('change', { bubbles: true }));
+                        });
+                    }
+                    list.forEach(function (n, i) {
+                        var d = JSON.parse(JSON.stringify(design));
+                        d.Cover.Scene = i + 1;
+                        renderCover(d, false, false).then(function (r) {
+                            if (seq !== strip._seq) return;
+                            var img = strip.querySelectorAll('img')[i];
+                            if (img) showImage(img, r.blob);
+                        }, function () { });
+                    });
+                }
+                var current = card.querySelector('[data-s="Scene"]').value;
+                strip.querySelectorAll('[data-scene-pick]').forEach(function (b) {
+                    b.setAttribute('aria-pressed', b.getAttribute('data-scene-pick') === current ? 'true' : 'false');
+                });
             }
             function showScenes(card, names, current) {
                 var select = card.querySelector('[data-s="Scene"]');
@@ -555,6 +603,7 @@
                 select.innerHTML = opts;
                 select.value = String(value <= list.length ? value : 0);
                 card.querySelector('[data-scene-box]').hidden = list.length < 2;
+                if (list.length >= 2) showSceneThumbs(card, list);
             }
 
             function designerHtml(style, theme) {

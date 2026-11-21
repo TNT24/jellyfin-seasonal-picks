@@ -1197,10 +1197,7 @@ internal static partial class CoverArt
             c.DrawLine(x, y, x + (s * R(rng, 0.008f, 0.03f)), y, ripple);
         }
 
-        using (var shore = new SKPaint { IsAntialias = true, Color = new SKColor(0x05, 0x05, 0x10) })
-        {
-            c.DrawRect(0, water - (s * 0.004f), w, s * 0.008f, shore);
-        }
+        RiverWall(c, w, water, s, new SKColor(0x2A, 0x28, 0x40), new SKColor(0xFF, 0xD8, 0x90, 120));
 
         // Glittering sparks drifting down, off the title.
         using var spark = new SKPaint { IsAntialias = true, BlendMode = SKBlendMode.Plus };

@@ -946,4 +946,42 @@ internal static partial class CoverArt
             return hash;
         }
     }
+
+    /// <summary>
+    /// A stone river wall along <paramref name="y"/>, so buildings on the bank stand on something rather than float on
+    /// the water: a coping stone along the top caught by the light, block joints, and a dark wet line at its foot.
+    /// </summary>
+    private static void RiverWall(SKCanvas c, int w, float y, float s, SKColor stone, SKColor light)
+    {
+        var height = s * 0.03f;
+        var face = new SKRect(-2, y - (height * 0.35f), w + 2, y + (height * 0.65f));
+        using (var shader = SKShader.CreateLinearGradient(new SKPoint(0, face.Top), new SKPoint(0, face.Bottom), new[] { stone, Darken(stone, 0.45f) }, null, SKShaderTileMode.Clamp))
+        using (var wall = new SKPaint { IsAntialias = true, Shader = shader })
+        {
+            c.DrawRect(face, wall);
+        }
+
+        using (var joint = new SKPaint { IsAntialias = true, Style = SKPaintStyle.Stroke, StrokeWidth = Math.Max(1, s * 0.0012f), Color = SKColors.Black.WithAlpha(90) })
+        {
+            var mid = face.Top + (face.Height * 0.5f);
+            c.DrawLine(face.Left, mid, face.Right, mid, joint);
+            var block = s * 0.05f;
+            for (var x = 0f; x < w; x += block)
+            {
+                c.DrawLine(x, face.Top, x, mid, joint);
+                c.DrawLine(x + (block / 2), mid, x + (block / 2), face.Bottom, joint);
+            }
+        }
+
+        using (var coping = new SKPaint { IsAntialias = true, Color = light })
+        {
+            c.DrawRect(face.Left, face.Top - (s * 0.003f), face.Width, s * 0.005f, coping);
+        }
+
+        using (var wetBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.003f))
+        using (var wet = new SKPaint { IsAntialias = true, Color = SKColors.Black.WithAlpha(160), MaskFilter = wetBlur })
+        {
+            c.DrawRect(face.Left, face.Bottom - (s * 0.002f), face.Width, s * 0.006f, wet);
+        }
+    }
 }

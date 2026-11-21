@@ -1093,7 +1093,7 @@ internal static partial class CoverArt
         Stars(c, w, h * 0.3f, 50, s, rng);
 
         // The storm: a swirl of green light over the tallest tower, with dark cloud banked round it.
-        var eye = new SKPoint(w * (wide ? 0.8f : 0.76f), h * 0.14f);
+        var eye = new SKPoint(w * (wide ? 0.88f : 0.93f), h * 0.14f);
         var storm = s * (wide ? 0.21f : 0.19f);
         SpookyGlow(c, eye.X, eye.Y, storm * 2f, new SKColor(0x50, 0xE0, 0x60, 80), 0.55f);
         using (var cloudBlur = SKMaskFilter.CreateBlur(SKBlurStyle.Normal, s * 0.025f))
@@ -1147,8 +1147,8 @@ internal static partial class CoverArt
         // Far skyline in the haze, the haunted tower, a green fog, then the nearer blocks.
         var far = h * 0.79f;
         SpookySkyline(c, -s * 0.02f, w + (s * 0.02f), far, s * 0.06f, s * 0.13f, s, new SKColor(0x1A, 0x36, 0x30, 230), new SKColor(0xA0, 0xE0, 0xB0, 90), 0.2f, rng);
-        var towerX = w * (wide ? 0.8f : 0.76f);
-        SpookyDecoTower(c, towerX, far + (h * 0.02f), eye.Y + (storm * 0.35f), s * 0.09f, eye);
+        var towerX = w * (wide ? 0.88f : 0.94f);
+        SpookyDecoTower(c, towerX, far + (h * 0.02f), eye.Y + (storm * 0.35f), s * (wide ? 0.08f : 0.065f), eye);
         SpookyFog(c, w, far + (h * 0.01f), s * 0.035f, new SKColor(0x80, 0xFF, 0x90, 50), s, rng);
         var near = h * 0.87f;
         SpookySkyline(c, -s * 0.02f, w + (s * 0.02f), near, s * 0.05f, s * 0.13f, s, new SKColor(0x08, 0x12, 0x10, 245), new SKColor(0xFF, 0xD0, 0x80, 200), 0.3f, rng);

@@ -302,6 +302,16 @@ public class CoverService
             };
             canvas.DrawRect(0, 0, width, height, gradient);
         }
+        else if (theme != CoverTheme.None && Percent(style.Decorations, 255) > 0)
+        {
+            // Behind a scene the posters are softened, so they read as colour and light rather than competing
+            // with the artwork; a design with no scene keeps them sharp.
+            var soft = Math.Min(width, height) * 0.012f;
+            using var soften = new SKPaint { ImageFilter = SKImageFilter.CreateBlur(soft, soft, SKShaderTileMode.Clamp) };
+            canvas.SaveLayer(soften);
+            DrawPosterGrid(canvas, posterPaths, width, height, wide);
+            canvas.Restore();
+        }
         else
         {
             DrawPosterGrid(canvas, posterPaths, width, height, wide);
