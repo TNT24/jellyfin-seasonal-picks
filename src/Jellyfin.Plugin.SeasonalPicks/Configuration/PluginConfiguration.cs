@@ -22,6 +22,9 @@ public class PluginConfiguration : BasePluginConfiguration
     /// <summary>Share of picks reserved for in-season movies (when a season is active).</summary>
     public int SeasonalPercent { get; set; } = 40;
 
+    /// <summary>While a season is on, pick only in-season films (the list may be shorter). The usual mix if none fit.</summary>
+    public bool SeasonalOnly { get; set; }
+
     /// <summary>Share of the remaining (non-seasonal) picks that are rediscoveries; the rest are unwatched.</summary>
     public int RediscoverPercent { get; set; } = 30;
 
@@ -165,21 +168,8 @@ public class PluginConfiguration : BasePluginConfiguration
 
         if (ConfigVersion < 2)
         {
-            // v2: longer keyword and tag lists (famous titles, TMDb keywords). Merged into same-named seasons,
-            // keeping whatever the user added or changed.
-            var defaults = SeasonRule.Defaults();
-            foreach (var s in Seasons)
-            {
-                var d = defaults.FirstOrDefault(x => string.Equals(x.Name, s.Name, StringComparison.OrdinalIgnoreCase));
-                if (d is null)
-                {
-                    continue;
-                }
-
-                s.Keywords = s.Keywords.Concat(d.Keywords).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-                s.Tags = s.Tags.Concat(d.Tags).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
-            }
-
+            // v2: longer keyword and tag lists (famous titles, TMDb keywords).
+            MergeDefaultKeywords();
             ConfigVersion = 2;
         }
 
@@ -256,6 +246,30 @@ public class PluginConfiguration : BasePluginConfiguration
             ConfigVersion = 7;
         }
 
+        if (ConfigVersion < 8)
+        {
+            // v8: more keywords and tags for every built-in season, merged in like v2 (the user's own are kept).
+            MergeDefaultKeywords();
+            ConfigVersion = 8;
+        }
+
         return ConfigVersion != start;
+    }
+
+    /// <summary>Adds the default keywords and tags to same-named seasons, keeping whatever the user added or changed.</summary>
+    private void MergeDefaultKeywords()
+    {
+        var defaults = SeasonRule.Defaults();
+        foreach (var s in Seasons)
+        {
+            var d = defaults.FirstOrDefault(x => string.Equals(x.Name, s.Name, StringComparison.OrdinalIgnoreCase));
+            if (d is null)
+            {
+                continue;
+            }
+
+            s.Keywords = s.Keywords.Concat(d.Keywords).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+            s.Tags = s.Tags.Concat(d.Tags).Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+        }
     }
 }

@@ -335,7 +335,7 @@ public class PicksService
             }
 
             var exclude = list.Select(p => keysById[p.ItemId]).ToHashSet();
-            var replacement = PickEngine.PickReplacement(candidates, list[index].Kind, exclude, Random.Shared, season);
+            var replacement = PickEngine.PickReplacement(candidates, list[index].Kind, exclude, Random.Shared, season, cfg.SeasonalOnly);
             if (replacement is null)
             {
                 list.RemoveAt(index);

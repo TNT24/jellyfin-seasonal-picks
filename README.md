@@ -109,6 +109,8 @@ Then:
 4. Community rating nudges the weight (unrated = neutral).
 5. No first-listed genre may fill more than *Max share per genre* (30%) of the list while other genres are available. In-season picks are exempt but count towards it.
 
+With **During a season, pick only films that fit it** turned on, the list is only in-season films while a season is on, even if that leaves it shorter than *Movies per user*. If nothing fits, the usual mix is used. A finished in-season pick is only replaced by another in-season film.
+
 When a user finishes a pick or marks it played, it's replaced straight away (playlist, season playlist and, for the mirror user, the mirror folder). "Not now" / "Never" on the web screen do the same.
 
 ## Seasons

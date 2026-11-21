@@ -165,14 +165,18 @@ public class SeasonRule
             StartMonth = 10, StartDay = 1, EndMonth = 10, EndDay = 31,
             Genres = new[] { "Horror" },
             // Tags: TMDb keywords, which Jellyfin stores as tags.
-            Tags = new[] { "halloween", "trick or treating", "haunted house", "jack-o'-lantern" },
+            Tags = new[] { "halloween", "trick or treating", "haunted house", "jack-o'-lantern", "halloween party", "costume party", "witchcraft", "ghost story" },
             Keywords = new[]
             {
-                "halloween", "trick-or-treat", "trick or treat", "jack-o'-lantern", "pumpkin",
-                "haunted", "haunting", "ghost", "ghosts", "poltergeist", "witch", "witches",
+                "halloween", "hallowe'en", "all hallows' eve", "all hallows eve", "samhain", "trick-or-treat", "trick or treat",
+                "trick-or-treaters", "jack-o'-lantern", "jack-o'-lanterns", "pumpkin", "pumpkins", "pumpkin patch", "costume party",
+                "haunted", "haunting", "haunted house", "haunted mansion", "ghost", "ghosts", "poltergeist", "seance", "séance",
+                "witch", "witches", "witchcraft", "coven", "warlock", "spooky",
                 "vampire", "vampires", "dracula", "frankenstein", "mummy", "zombie", "zombies",
                 "werewolf", "werewolves", "possessed", "exorcism", "exorcist",
-                "headless horseman", "sleepy hollow", "hocus pocus", "beetlejuice", "casper", "addams family"
+                "headless horseman", "sleepy hollow", "hocus pocus", "beetlejuice", "casper", "addams family",
+                "michael myers", "jack skellington", "nightmare before christmas", "trick 'r treat", "coraline", "corpse bride",
+                "frankenweenie", "paranorman", "monster house", "hotel transylvania", "goosebumps", "practical magic"
             },
             Boost = 3
         },
@@ -181,12 +185,16 @@ public class SeasonRule
             Name = "Christmas",
             Color = "#C8102E",
             StartMonth = 11, StartDay = 20, EndMonth = 12, EndDay = 31,
-            Tags = new[] { "christmas", "holiday", "christmas party", "christmas eve", "christmas tree", "christmas movie", "santa claus" },
+            Tags = new[] { "christmas", "holiday", "christmas party", "christmas eve", "christmas tree", "christmas movie", "santa claus", "christmas carol", "christmas present", "hanukkah" },
             Keywords = new[]
             {
-                "christmas", "xmas", "christmas eve", "santa", "santa claus", "north pole", "reindeer", "rudolph",
-                "mistletoe", "sleigh", "yuletide", "jingle", "nativity", "scrooge", "grinch", "krampus",
-                "nutcracker", "home alone", "polar express"
+                "christmas", "xmas", "christmas eve", "christmas day", "santa", "santa claus", "saint nick", "st. nick",
+                "kris kringle", "father christmas", "north pole", "reindeer", "rudolph", "elves' workshop", "santa's workshop",
+                "mistletoe", "sleigh", "yuletide", "yule", "jingle", "nativity", "scrooge", "ebenezer", "grinch", "krampus",
+                "nutcracker", "gingerbread", "tinsel", "carolers", "carol singers", "advent calendar",
+                "hanukkah", "chanukah", "winter wonderland",
+                "home alone", "polar express", "it's a wonderful life", "miracle on 34th street", "love actually", "bad santa",
+                "jingle all the way", "a christmas story", "christmas vacation"
             },
             Boost = 4
         },
@@ -199,8 +207,11 @@ public class SeasonRule
             Tags = new[] { "easter", "easter bunny", "easter egg", "easter egg hunt" },
             Keywords = new[]
             {
-                "easter", "easter bunny", "easter egg", "egg hunt", "peter rabbit",
-                "prince of egypt", "ten commandments", "passion of the christ"
+                "easter", "easter bunny", "easter egg", "easter eggs", "egg hunt", "easter sunday", "good friday",
+                "palm sunday", "holy week", "the last supper", "jesus christ", "jesus of nazareth", "chocolate eggs",
+                "peter rabbit", "watership down", "rise of the guardians",
+                "prince of egypt", "ten commandments", "passion of the christ", "ben-hur", "king of kings",
+                "jesus christ superstar", "the robe", "the greatest story ever told"
             },
             Boost = 2.5
         },
@@ -211,7 +222,7 @@ public class SeasonRule
             StartMonth = 2, StartDay = 1, EndMonth = 2, EndDay = 14,
             Genres = new[] { "Romance" },
             Tags = new[] { "valentine's day" },
-            Keywords = new[] { "valentine", "valentine's", "valentine's day", "cupid" },
+            Keywords = new[] { "valentine", "valentines", "valentine's", "valentine's day", "galentine's", "cupid", "cupid's", "love potion", "14th of february", "february 14th" },
             Boost = 2.5
         },
         new SeasonRule
@@ -221,7 +232,11 @@ public class SeasonRule
             Theme = "Fireworks",
             StartMonth = 12, StartDay = 27, EndMonth = 1, EndDay = 2,
             Tags = new[] { "new year's eve", "new year", "new year's party", "countdown" },
-            Keywords = new[] { "new year's eve", "new year's", "new year", "new years eve", "stroke of midnight", "countdown to midnight" },
+            Keywords = new[]
+            {
+                "new year's eve", "new year's", "new year", "new years eve", "new year's day", "new year's resolution", "hogmanay",
+                "auld lang syne", "stroke of midnight", "countdown to midnight", "midnight kiss", "ball drop", "200 cigarettes"
+            },
             Boost = 3.5
         },
 
@@ -234,7 +249,15 @@ public class SeasonRule
             StartEasterOffset = -47, EndEasterOffset = -47, // Shrove Tuesday, 47 days before Easter Sunday
             StartMonth = 2, StartDay = 17, EndMonth = 2, EndDay = 17,
             Tags = new[] { "pancakes", "cooking", "chef", "restaurant" },
-            Keywords = new[] { "pancake", "pancakes", "crepe", "crepes", "crêpe", "waffle", "waffles", "chef", "ratatouille", "chocolat", "julie & julia", "the menu", "the hundred-foot journey" },
+            Keywords = new[]
+            {
+                "pancake", "pancakes", "pancake day", "shrove tuesday", "mardi gras", "crepe", "crepes", "crêpe", "crêpes",
+                "waffle", "waffles", "chef", "chefs", "cook", "cooking", "baker", "bakery", "baking", "patisserie", "culinary",
+                "restaurant", "cuisine", "ratatouille", "chocolat", "julie & julia", "the menu", "the hundred-foot journey",
+                "babette's feast", "big night", "no reservations", "burnt", "boiling point", "tampopo", "eat drink man woman",
+                "like water for chocolate", "the lunchbox", "sweet bean", "the taste of things", "jiro dreams of sushi",
+                "cloudy with a chance of meatballs"
+            },
             Boost = 3,
             HideOutOfSeason = false
         },
@@ -250,7 +273,10 @@ public class SeasonRule
             {
                 "chinese new year", "lunar new year", "spring festival", "kung fu", "hong kong", "shanghai", "beijing",
                 "mulan", "kung fu panda", "crouching tiger", "house of flying daggers", "in the mood for love",
-                "the farewell", "crazy rich asians", "everything everywhere all at once", "turning red", "raya"
+                "the farewell", "crazy rich asians", "everything everywhere all at once", "turning red", "raya",
+                "lantern festival", "dragon dance", "lion dance", "red envelope", "shaolin", "wuxia", "jackie chan", "bruce lee",
+                "ip man", "enter the dragon", "drunken master", "kung fu hustle", "big trouble in little china", "shang-chi",
+                "the joy luck club", "raise the red lantern", "farewell my concubine", "a touch of zen", "hidden dragon"
             },
             Boost = 4,
             HideOutOfSeason = false
@@ -259,13 +285,25 @@ public class SeasonRule
         // Film days: a film's own day. They push its films to the front on the day but never hide them the rest of the year.
         FilmDay("Star Wars Day", "#FFE81F", 5, 4, 5, 5, "Lightsabers",
             new[] { "star wars" },
-            new[] { "star wars", "jedi", "sith", "skywalker", "darth vader", "rogue one", "the force awakens", "the empire strikes back" }),
+            new[]
+            {
+                "star wars", "jedi", "sith", "skywalker", "darth vader", "rogue one", "the force awakens", "the empire strikes back",
+                "a new hope", "the phantom menace", "attack of the clones", "clone wars", "the last jedi", "obi-wan", "han solo",
+                "chewbacca", "yoda", "mandalorian", "lightsaber", "lightsabers", "death star", "galactic empire", "rebel alliance",
+                "ewok", "ewoks", "tatooine"
+            }),
         FilmDay("Ghostbusters Day", "#4CAF50", 6, 8, 6, 8, "Ghosts",
             new[] { "ghostbusters" },
-            new[] { "ghostbusters", "ghostbuster", "stay puft", "slimer" }),
+            new[] { "ghostbusters", "ghostbuster", "stay puft", "slimer", "proton pack", "ecto-1", "gozer", "zuul", "venkman", "marshmallow man" }),
         FilmDay("Back to Hogwarts", "#740001", 9, 1, 9, 1, "Castle",
             new[] { "harry potter", "wizarding world" },
-            new[] { "harry potter", "hogwarts", "fantastic beasts", "wizarding world", "dumbledore", "voldemort" }),
+            new[]
+            {
+                "harry potter", "hogwarts", "fantastic beasts", "wizarding world", "dumbledore", "voldemort", "hermione",
+                "hogsmeade", "quidditch", "diagon alley", "muggle", "muggles", "grindelwald", "newt scamander", "azkaban",
+                "philosopher's stone", "sorcerer's stone", "chamber of secrets", "goblet of fire", "order of the phoenix",
+                "half-blood prince", "deathly hallows", "gryffindor", "slytherin"
+            }),
 
         // UK dates. Like film days they don't hide their films the rest of the year.
         FilmDay("St Patrick's Day", "#169B62", 3, 17, 3, 17, "Shamrock",
@@ -273,11 +311,18 @@ public class SeasonRule
             new[]
             {
                 "ireland", "irish", "dublin", "belfast", "galway", "leprechaun", "st. patrick's day", "saint patrick",
-                "the commitments", "banshees of inisherin", "the quiet man", "the guard", "in bruges", "the wind that shakes the barley"
+                "the commitments", "banshees of inisherin", "the quiet man", "the guard", "in bruges", "the wind that shakes the barley",
+                "connemara", "aran islands", "st. patrick", "st patrick's", "shamrock", "the secret of kells", "song of the sea",
+                "wolfwalkers", "the quiet girl", "sing street", "my left foot", "the field", "philomena", "michael collins",
+                "the magdalene sisters", "angela's ashes", "waking ned", "the snapper", "leap year", "far and away", "the boondock saints"
             }),
         FilmDay("Bonfire Night", "#FF6D00", 11, 1, 11, 5, "Bonfire",
             new[] { "guy fawkes", "bonfire", "fireworks", "gunpowder plot" },
-            new[] { "guy fawkes", "bonfire night", "gunpowder plot", "v for vendetta", "remember, remember", "fireworks" })
+            new[]
+            {
+                "guy fawkes", "guy fawkes night", "bonfire night", "bonfire", "gunpowder plot", "gunpowder", "v for vendetta",
+                "remember, remember", "fifth of november", "5th of november", "fireworks", "firework", "sparklers", "catherine wheel"
+            })
     };
 
     private static SeasonRule FilmDay(string name, string color, int sm, int sd, int em, int ed, string theme, string[] tags, string[] keywords) => new()

@@ -468,6 +468,13 @@ public class PickEngine
         // Mild in-season lift for the general picks too.
         double General(Candidate c) => c.Weight * (1 + (c.SeasonStrength * 0.5));
 
+        // Seasonal only: the list is just in-season films, even if that leaves it short.
+        if (anySeasonActive && cfg.SeasonalOnly && candidates.Any(c => c.Season is not null))
+        {
+            Take(candidates.Where(c => c.Season is not null), count, c => c.Weight * c.SeasonStrength * c.Season!.Boost, true, false);
+            return picks.OrderBy(_ => rng.Next()).ToList();
+        }
+
         if (anySeasonActive)
         {
             // Seasonal picks aren't capped (Halloween is allowed to be mostly horror) but they count towards the cap.
@@ -505,7 +512,8 @@ public class PickEngine
     }
 
     /// <summary>One replacement pick, preferring the same kind (and season) as the pick being swapped out.</summary>
-    public static PickEntry? PickReplacement(List<Candidate> candidates, PickKind kind, ISet<string> excludeKeys, Random rng, SeasonRule? season = null)
+    /// <param name="seasonalOnly">A seasonal pick is only swapped for another seasonal one (none left = null).</param>
+    public static PickEntry? PickReplacement(List<Candidate> candidates, PickKind kind, ISet<string> excludeKeys, Random rng, SeasonRule? season = null, bool seasonalOnly = false)
     {
         var pool = candidates.Where(c => !excludeKeys.Contains(c.Key)).ToList();
         if (season is not null)
@@ -520,6 +528,11 @@ public class PickEngine
             PickKind.NewRelease => pool.Where(c => c.IsNewRelease).ToList(),
             _ => pool.Where(c => c.Pool == kind).ToList()
         };
+
+        if (seasonalOnly && kind == PickKind.Seasonal && sameKind.Count == 0)
+        {
+            return null;
+        }
 
         var seasonal = kind == PickKind.Seasonal && sameKind.Count > 0;
         var c = Ordered(sameKind.Count > 0 ? sameKind : pool, x => seasonal ? x.Weight * x.SeasonStrength * x.Season!.Boost : x.Weight, rng).FirstOrDefault();

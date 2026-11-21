@@ -2,6 +2,10 @@
 
 The settings page shows this list under **What's new**. The newest version goes first.
 
+## 1.8.0 - 2026-11-21
+- New: "During a season, pick only films that fit it". While a season such as Christmas is on, the picks are only films that fit it, even if that makes the list shorter. If none fit, you get the usual mix. It's under the shares on the settings page.
+- Every built-in season and special day knows many more words and famous titles, so more of your films are found for it. Words you added yourself are kept.
+
 ## 1.7.0 - 2026-11-18
 - Discord: today's picks are one short card instead of a card per film. It's a numbered list with each film's year, runtime and age rating, the top pick's poster beside it, and the season and its end date at the bottom.
 - Discord: during a season such as Christmas, today's picks are that season's picks, the same films as its playlist. With season playlists turned off, the main picks that fit the season come first.

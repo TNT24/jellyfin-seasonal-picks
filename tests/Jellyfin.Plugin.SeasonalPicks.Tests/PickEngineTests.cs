@@ -266,6 +266,41 @@ public class PickEngineTests
     }
 
     [Fact]
+    public void Seasonal_only_picks_just_in_season_films_even_if_short()
+    {
+        var cfg = new PluginConfiguration { PickCount = 10, SeasonalOnly = true };
+        var horror = Enumerable.Range(0, 4).Select(i => Film("Haunted House " + i, "A haunted house.", new[] { "Horror" }));
+        var other = Enumerable.Range(0, 30).Select(i => Film("Drama " + i, "People talk.", new[] { "Drama" }));
+        var candidates = Pool(October, cfg, horror.Concat(other));
+
+        var picks = PickEngine.Select(candidates, cfg, true, new Random(3));
+
+        Assert.Equal(4, picks.Count);
+        Assert.All(picks, p => Assert.Equal(PickKind.Seasonal, p.Kind));
+    }
+
+    [Fact]
+    public void Seasonal_only_uses_the_usual_mix_when_nothing_fits()
+    {
+        var cfg = new PluginConfiguration { PickCount = 10, SeasonalOnly = true };
+        var candidates = Pool(October, cfg, Enumerable.Range(0, 30).Select(i => Film("Drama " + i, "People talk.", new[] { "Drama" })));
+
+        Assert.Equal(10, PickEngine.Select(candidates, cfg, true, new Random(3)).Count);
+    }
+
+    [Fact]
+    public void Seasonal_only_replacement_never_falls_back_to_other_films()
+    {
+        var cfg = new PluginConfiguration();
+        var a = Film("Haunted", "A haunted house.", tmdb: "10");
+        var c = Film("Talk", "People talk.", tmdb: "12");
+        var candidates = Pool(October, cfg, new[] { a, c });
+
+        Assert.Null(PickEngine.PickReplacement(candidates, PickKind.Seasonal, new HashSet<string> { "tmdb:10" }, new Random(1), null, seasonalOnly: true));
+        Assert.NotNull(PickEngine.PickReplacement(candidates, PickKind.Seasonal, new HashSet<string> { "tmdb:10" }, new Random(1)));
+    }
+
+    [Fact]
     public void Season_playlist_only_holds_that_seasons_films()
     {
         var cfg = new PluginConfiguration();

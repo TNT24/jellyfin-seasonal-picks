@@ -184,6 +184,11 @@
                             </div>
                         </div>
                         <label class="checkboxContainer">
+                            <input is="emby-checkbox" type="checkbox" id="SeasonalOnly">
+                            <span>During a season, pick only films that fit it</span>
+                        </label>
+                        <div class="fieldDescription">Overrides the shares above while a season is on. The list can be shorter than "Movies per user" if not enough films fit; if none do, the usual mix is used.</div>
+                        <label class="checkboxContainer">
                             <input is="emby-checkbox" type="checkbox" id="CollectionAware">
                             <span>Follow collections: suggest the next film in one you've started, skip films whose earlier parts aren't watched</span>
                         </label>
@@ -485,7 +490,7 @@
             var THEMES = [['auto', 'Automatic (from the name)'], ['Christmas', 'Christmas tree, presents and snow'], ['Snow', 'Snow and snowflakes'], ['Halloween', 'Pumpkins, bats and moon'], ['Easter', 'Easter bunny, eggs and blossom'], ['Hearts', 'Hearts'], ['Summer', 'Sun and waves'], ['Fireworks', 'Fireworks over a skyline'], ['Shamrock', 'Shamrocks'], ['Space', 'Stars and a planet'], ['Lightsabers', 'Lightsabers in space'], ['Ghosts', 'Ghosts and slime'], ['Castle', 'Castle and floating candles'], ['Bonfire', 'Bonfire and fireworks'], ['Pancakes', 'Stack of pancakes'], ['LunarNewYear', 'Red lanterns and blossom'], ['Sparkle', 'A night at the pictures'], ['None', 'None (just the background)']];
             var POSITIONS = [['Top', 'Top'], ['Middle', 'Middle'], ['Bottom', 'Bottom']];
             var BACKGROUNDS = [['Posters', 'Posters of the picks'], ['Picture', 'My picture'], ['Plain', 'Plain season colour']];
-            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow', 'DiscordAnnounceSeasons', 'DiscordImages'];
+            var CHECKS = ['EnablePlaylists', 'PlaylistNameShowsSeason', 'PlaylistShowsReasons', 'ReplaceWatchedPicks', 'SeasonalOnly', 'EnableSeasonPlaylists', 'CollectionAware', 'EnableMirror', 'MirrorTriggerLibraryScan', 'MirrorRemoveOtherFiles', 'EnableSeasonalCovers', 'AutoGenerateCovers', 'EnableWebScreen', 'EnableHomeRow', 'DiscordAnnounceSeasons', 'DiscordImages'];
             var MONTHS = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
 
             // Ready-made days and seasons for "Add a day or season". Day = pushes its films forward on the day, never hides them.
